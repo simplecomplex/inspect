@@ -774,6 +774,9 @@ class Inspect {
   /**
    * Checks if user is allowed to output to that target.
    *
+   * @throws \LogicException
+   *   UNCAUGHT, if arg $target not supported.
+   *
    * @param string $target
    *   Values: log|file|frontend log|get.
    *   Default: get.
@@ -781,7 +784,45 @@ class Inspect {
    * @return boolean
    */
   public static function permit($target = 'get') {
-    return TRUE;
+    static $permit = array(
+      'get' => NULL,
+      'log' => TRUE,
+      'file' => TRUE,
+      'frontend log' => NULL,
+    );
+
+    // If (previously?) established as TRUE/FALSE (not NULL).
+    if (($perm = $permit[$target]) || $perm === FALSE) {
+      return $perm;
+    }
+
+    if (static::cliMode()) {
+      $permit = array(
+        'get' => TRUE,
+        'log' => TRUE,
+        'file' => TRUE,
+        'frontend log' => FALSE, // Doesn't make sense.
+      );
+      return $permit[$target];
+    }
+
+    $perm = FALSE;
+    switch ('' . $target) {
+      case 'get':
+      case 'frontend log':
+        if (ini_get('display_errors')) {
+          $perm = TRUE;
+        }
+        $permit['get'] = $permit['frontend log'] = $perm;
+        break;
+      default:
+        throw new \LogicException(
+          'Permission not found, unsupported output target[' . $target . ']',
+          Inspect::ERROR_ALGORITHM
+        );
+    }
+
+    return $perm;
   }
 
   /**
@@ -899,8 +940,12 @@ class Inspect {
    * @see Inspect::permit()
    * @see Inspect::init()
    *
-   * @throws \Exception
-   *   UNCAUGHT, if cumulate inspection output length exceeds maximum.
+   * @throws \RuntimeException
+   *   UNCAUGHT, if called after max execution time percentage limiter has been passed (code: Inspect::ERROR_EXECTIME).
+   * @throws \OverflowException
+   *   UNCAUGHT, if cumulate inspection output length exceeds maximum (code: Inspect::ERROR_OUTPUTLENGTH).
+   * @throws \LogicException
+   *   UNCAUGHT, if current depth exceeds max depth (code: Inspect::ERROR_ALGORITHM).
    *
    * @param mixed $var
    * @param integer $_curDepth
@@ -917,23 +962,23 @@ class Inspect {
       && static::$maxExecTimeout > -1
       && time() > static::$maxExecTimeout
     ) {
-      throw new \Exception(
+      throw new \RuntimeException(
         'Inspection aborted: was called after ' . static::configGet('inspect_exectime_percent', 90) . '% of PHP max_execution_time[' . static::$maxExecTime
-          . '] had passed, using options depth[' . $this->depth . '] and truncate[' . $this->truncate . '], try less depth or more truncation.',
+        . '] had passed, using options depth[' . $this->depth . '] and truncate[' . $this->truncate . '], try less depth or more truncation.',
         Inspect::ERROR_EXECTIME
       );
     }
     // Output length check.
     if ($this->outputLength > $this->output_max) {
-      throw new \Exception(
+      throw new \OverflowException(
         'Inspection aborted: output length ' . $this->outputLength . ' exceeds maximum ' . $this->output_max
-          . ', using options depth[' . $this->depth . '] and truncate[' . $this->truncate . '], try less depth or more truncation.',
+        . ', using options depth[' . $this->depth . '] and truncate[' . $this->truncate . '], try less depth or more truncation.',
         Inspect::ERROR_OUTPUTLENGTH
       );
     }
     // Recursion limit check.
     if ($_curDepth > $this->depth) {
-      throw new \Exception(
+      throw new \LogicException(
         'Algo error, current depth ' . $_curDepth . ' exceeds max depth ' . $this->depth . '.',
         Inspect::ERROR_ALGORITHM
       );

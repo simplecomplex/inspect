@@ -4,3 +4,6 @@ inspect 6.x, 2015-02-12
 - Fixed namespace; uppercase'd ...\Inspect.
 - Moved the css and js dirs into the src dir.
 - Added MIT license.
+- Permissions to get and frontend log now reflect the PHP display_errors setting.
+- ::permit() throw LogicException if unsupported output target.
+- ::nspct() throw specific RuntimeException|OverflowException|LogicException instead of generic Exception.
