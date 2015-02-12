@@ -1,0 +1,14 @@
+{
+    "config": {
+        "vendor-dir": "lib/vendor"
+    },
+    "repositories": [
+        {
+            "type": "vcs",
+            "url": "https://github.com/simplecomplex/inspect"
+        }
+    ],
+    "require": {
+        "simplecomplex/inspect": "dev-develop"
+    }
+}
