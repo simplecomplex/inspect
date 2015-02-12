@@ -1,0 +1,6 @@
+inspect 6.x, 2015-02-12
+-----------------------
+- Ported from Drupal module Inspect 7.x-6.3.
+- Fixed namespace; uppercase'd ...\Inspect.
+- Moved the css and js dirs into the src dir.
+- Added MIT license.
