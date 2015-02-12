@@ -17,18 +17,18 @@ ini_set('display_errors', 1);
 // Include SimpleComplex\Inspect\Inspect.php via Composer's autoloader,
 // or include it 'manually'.
 require 'lib/vendor/autoload.php';
-//include 'lib/vendor/SimpleComplex/inspect/src/Inspect.php';
+//include 'lib/vendor/simplecomplex/inspect/src/Inspect.php';
 
 use SimpleComplex\Inspect\Inspect;
 
 $html = array(
   'head' => '<!DOCTYPE html>
 <html lang="en" dir="ltr">
-<link type="text/css" rel="stylesheet" href="/lib/vendor/SimpleComplex/inspect/css/inspect_format_output.css" media="all" />
+<link type="text/css" rel="stylesheet" href="/lib/vendor/simplecomplex/inspect/css/inspect_format_output.css" media="all" />
 <!-- Include jQuery to get expansible/collapsible object/array listings. -->
 <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js" ></script>
-<script src="/lib/vendor/SimpleComplex/inspect/js/inspect.js"></script>
-<script src="/lib/vendor/SimpleComplex/inspect/js/inspect_format_output.js"></script>
+<script src="/lib/vendor/simplecomplex/inspect/js/inspect.js"></script>
+<script src="/lib/vendor/simplecomplex/inspect/js/inspect_format_output.js"></script>
 <head>
 <meta charset="utf-8" />
 <title>Inspect example unextended</title>
