@@ -854,7 +854,7 @@ class Inspect {
         }
         // Save, they are kind of expensive to establish.
         $paths[] = static::$pathLength;
-        static::configSet('inspect_paths', $paths);
+        static::configSet('', 'paths', $paths);
       }
       unset($paths);
 
@@ -1258,12 +1258,14 @@ class Inspect {
           $truncedTo = $trunc;
         }
 
+        //@formatter:off
         $this->outputLength += strlen( // Deliberately not multibyte strlen().
           $output .= (!$truncedTo ? (!$pathRem ? '' : '|-|!' ) :
             ('|' . $truncedTo . (!$pathRem ? '' : '|!' ) ) )
             . ') '
             . $this->quote_begin . (!$pathRem ? '' : '...' ) . $var . (!$truncedTo ? '' : '...') . $this->quote_end
         );
+        //@formatter:on
         return $output;
 
       case 'resource':
@@ -1834,6 +1836,7 @@ class Inspect {
       }
     }
     // Option no_preface not supported.
+    //@formatter:off
     return static::logToFile(
       (!$inspect->message ? '' : ($inspect->message . ':' . $inspect->newline) )
         . '[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo)
@@ -1847,6 +1850,7 @@ class Inspect {
       $inspect->severity,
       $inspect->by_user
     );
+    //@formatter:on
   }
 
   /**
@@ -1916,6 +1920,7 @@ class Inspect {
       $tagStart = '<' . $u . '  class="module-inspect-collapsible">';
       $tagEnd = '</' . $u . '>';
     }
+    //@formatter:off
     return $tagStart
       . (!$inspect->no_preface ?
         (!$inspect->message ?
@@ -1929,6 +1934,7 @@ class Inspect {
       . (!$inspect->name || $inspect->name == 'none' ? '' : (' ' . static::plaintext($inspect->name)) ) . $inspect->newline
       . ($inspect->no_fileline ? '' : (static::fileLine(TRUE, $inspect->wrappers) . $inspect->newline) )
       . $output . $tagEnd . $inspect->newline;
+    //@formatter:on
   }
 
   /**
@@ -1987,6 +1993,7 @@ class Inspect {
           . ':' . $inspect->newline
         );
 
+        //@formatter:off
         if ($exception && is_object($exception)) {
           $em = htmlspecialchars(
             // Escape exception message; may contain unexpected characters that are inappropriate for a logging implementation.
@@ -2000,6 +2007,7 @@ class Inspect {
         else {
           $em = static::fileLine(TRUE, $inspect->wrappers);
         }
+        //@formatter:on
 
         return static::logToStandard(
           $ms . $em,
@@ -2573,11 +2581,13 @@ class Inspect {
       }
     }
     if ($nFrame > -1 && (!$wrappers || !empty($trace[$nFrame += $wrappers]['file']))) {
+      //@formatter:off
       return '@' . (
         $hidePaths ? basename($trace[$nFrame]['file']) :
           ('document_root/' . str_replace('\\', '/', preg_replace(static::$paths, '', $trace[$nFrame]['file'])))
         )
         . ':' . (isset($trace[$nFrame]['line']) ? $trace[$nFrame]['line'] : '?');
+      //@formatter:on
     }
     return '@unknown';
   }
@@ -2889,10 +2899,7 @@ class Inspect {
   /**
    * Set and save configuration variable.
    *
-   * This implementation does nothing, except throwing an exception.
-   *
-   * @throws \LogicException
-   *   UNCAUGHT, do override this method in extending class if necessary.
+   * This implementation does nothing, extending class should override.
    *
    * @param string $domain
    *   Default: inspect.
@@ -2901,10 +2908,6 @@ class Inspect {
    */
   protected static function configSet($domain = 'inspect', $name, $value) {
     // Save where?
-    throw new \LogicException(
-      'Cannot set conf var domain[' . $name . '] name[' . $name . '], must override method configSet() in extending class',
-      Inspect::ERROR_ALGORITHM
-    );
   }
 
   /**
