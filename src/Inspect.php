@@ -389,11 +389,11 @@ class Inspect {
     // Important defaults; values must be checked after using arg $options.
     $safeDefaults = array(
       'depth' => $this->depth = static::DEPTH_DEFAULT,
-      'truncate' => $this->truncate = static::configGet('inspect_truncate', static::TRUNCATE_DEFAULT),
+      'truncate' => $this->truncate = static::configGet('', 'truncate', static::TRUNCATE_DEFAULT),
     );
     switch ('' . $kind) {
       case 'trace':
-        $this->limit = static::configGet('inspect_trace_limit', static::TRACE_LIMIT_DEFAULT);
+        $this->limit = static::configGet('', 'trace_limit', static::TRACE_LIMIT_DEFAULT);
         break;
       default:
         $kind = 'inspect';
@@ -832,7 +832,7 @@ class Inspect {
     if (!static::$init) {
       // Find real path, and document root (if possible), for removal from absolute paths.
       // The reason document root may differ from real path is symbolic links.
-      if (($paths = static::configGet('inspect_paths'))) {
+      if (($paths = static::configGet('', 'paths'))) {
         // Last bucket is path length.
         static::$pathLength = array_pop($paths);
         static::$paths = $paths;
@@ -867,7 +867,7 @@ class Inspect {
       // Establish max execution time abort - if any max at all.
       if ((static::$maxExecTime = $max = ini_get('max_execution_time'))) {
         static::$maxExecTimeout = floor($t / 1000)
-          + floor($max * static::configGet('inspect_exectime_percent', 90) / 100);
+          + floor($max * static::configGet('', 'exectime_percent', 90) / 100);
       }
       else {
         static::$maxExecTimeout = -1;
@@ -963,7 +963,7 @@ class Inspect {
       && time() > static::$maxExecTimeout
     ) {
       throw new \RuntimeException(
-        'Inspection aborted: was called after ' . static::configGet('inspect_exectime_percent', 90) . '% of PHP max_execution_time[' . static::$maxExecTime
+        'Inspection aborted: was called after ' . static::configGet('', 'exectime_percent', 90) . '% of PHP max_execution_time[' . static::$maxExecTime
         . '] had passed, using options depth[' . $this->depth . '] and truncate[' . $this->truncate . '], try less depth or more truncation.',
         Inspect::ERROR_EXECTIME
       );
@@ -1511,7 +1511,7 @@ class Inspect {
     // Init first time called.
     if (!$called) {
       $called = TRUE;
-      if (static::configGet('inspect_session_counters')) {
+      if (static::configGet('', 'session_counters')) {
         if (isset($_COOKIE['inspect__sc']) && preg_match('/^[a-zA-Z\d]+\:\d{1,5}\:\d{1,5}$/', $_COOKIE['inspect__sc'])) {
           $c = explode(':', $_COOKIE['inspect__sc']);
           static::$sessionCounters = $counters = array(
@@ -1560,7 +1560,7 @@ class Inspect {
     static $called;
     if (!$called) {
       $called = TRUE;
-      if (static::configGet('inspect_session_counters')) {
+      if (static::configGet('', 'session_counters')) {
         ++static::$sessionCounters['page_load'];
         static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
       }
@@ -2336,7 +2336,7 @@ class Inspect {
     );
 
     // Make sure severity isnt too severe; frontend should probably not be allowed to log an 'emergency'.
-    if ($severity < ($maxSeverity = static::configGet('inspect_fronttoback_sevmax', static::$severityToInteger['error']))) {
+    if ($severity < ($maxSeverity = static::configGet('', 'fronttoback_sevmax', static::$severityToInteger['error']))) {
       $severity = $maxSeverity;
     }
 
@@ -2405,7 +2405,7 @@ class Inspect {
    * @return integer
    */
   public static function outputMax($check = FALSE) {
-    return static::configGet('inspect_output_max', static::OUTPUT_DEFAULT);
+    return static::configGet('', 'output_max', static::OUTPUT_DEFAULT);
   }
 
   /**
@@ -2426,7 +2426,7 @@ class Inspect {
     static $_dir;
     if (!($dir = $_dir)) {
       if ($dir === NULL) {
-        $dir = static::configGet('inspect_file_path', '../inspect');
+        $dir = static::configGet('', 'file_path', '../inspect');
       }
       else {
         return FALSE;
@@ -2858,23 +2858,53 @@ class Inspect {
   }
 
   /**
+   * Get config var.
+   *
+   * This implementation attempts to get from server environment variables.
+   * And it only supports the domain 'inspect'.
+   *
+   *  Server environment variable names used:
+   *  - lib_simplecomplex_inspect_truncate
+   *  - lib_simplecomplex_inspect_trace_limit
+   *  - lib_simplecomplex_inspect_paths
+   *  - lib_simplecomplex_inspect_exectime_percent
+   *  - lib_simplecomplex_inspect_session_counters
+   *  - lib_simplecomplex_inspect_fronttoback_sevmax
+   *  - lib_simplecomplex_inspect_output_max
+   *  - lib_simplecomplex_inspect_file_path
+   *
+   * @param string $domain
+   *   Default: inspect.
    * @param string $name
    * @param mixed $default
    *   Default: NULL.
    *
    * @return mixed
    */
-  protected static function configGet($name, $default = NULL) {
+  protected static function configGet($domain = 'inspect', $name, $default = NULL) {
     // Environment vars.
-    return ($val = getenv($name)) !== FALSE ? $val : $default;
+    return ($val = getenv('lib_simplecomplex_' . $domain . '_' . $name)) !== FALSE ? $val : $default;
   }
 
   /**
+   * Set and save configuration variable.
+   *
+   * This implementation does nothing, except throwing an exception.
+   *
+   * @throws \LogicException
+   *   UNCAUGHT, do override this method in extending class if necessary.
+   *
+   * @param string $domain
+   *   Default: inspect.
    * @param string $name
    * @param mixed $value
    */
-  protected static function configSet($name, $value) {
+  protected static function configSet($domain = 'inspect', $name, $value) {
     // Save where?
+    throw new \LogicException(
+      'Cannot set conf var domain[' . $name . '] name[' . $name . '], must override method configSet() in extending class',
+      Inspect::ERROR_ALGORITHM
+    );
   }
 
   /**

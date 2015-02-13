@@ -1,3 +1,7 @@
+inspect 6.x, 2015-02-13
+-----------------------
+- Configuration vars are now domain specific.
+
 inspect 6.x, 2015-02-12
 -----------------------
 - Ported from Drupal module Inspect 7.x-6.3.
