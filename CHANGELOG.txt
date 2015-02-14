@@ -4,6 +4,7 @@ inspect 1.x, 2015-02-14
 - Fixed UTF-8 validity checker and byte truncater.
 - Make sure session counting is initialised (if conf session_counters),
   even if we don't listen to any request init event.
+- configGet/Set() must be called with non-empty arg $domain if inspect var.
 
 inspect 1.x, 2015-02-13
 -----------------------
