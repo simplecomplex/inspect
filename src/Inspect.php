@@ -2950,6 +2950,8 @@ class Inspect {
     // Save where?
   }
 
+  // @todo: make cookieGet method, to allow extenders to abstract from $_COOKIE.
+
   /**
    * @param string $name
    * @param mixed $value
