@@ -2,6 +2,8 @@ inspect 6.x, 2015-02-14
 -----------------------
 - Removed method cliMode(), use PHP_SAPI === 'cli' instead.
 - Fixed UTF-8 validity checker and byte truncater.
+- Make sure session counting is initialised (if conf session_counters),
+  even if we don't listen to any request init event.
 
 inspect 6.x, 2015-02-13
 -----------------------

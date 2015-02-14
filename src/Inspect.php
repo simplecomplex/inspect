@@ -146,7 +146,7 @@ class Inspect {
   /**
    * (tracer) Simple option: Maximum stack frame depth.
    *
-   * Defaults to conf var 'inspect_trace_limit' or static::TRACE_LIMIT_DEFAULT.
+   * Defaults to conf var 'trace_limit' or static::TRACE_LIMIT_DEFAULT.
    *
    * @var integer|NULL
    */
@@ -171,7 +171,7 @@ class Inspect {
   /**
    * Output constriction option: Truncate string values.
    *
-   * Defaults to conf var 'inspect_truncate' or static::TRUNCATE_DEFAULT.
+   * Defaults to conf var 'truncate' or static::TRUNCATE_DEFAULT.
    *
    * @var integer|NULL
    */
@@ -830,6 +830,10 @@ class Inspect {
    */
   protected static function init() {
     if (!static::$init) {
+      // Make sure session counting is initialised (if conf session_counters),
+      // even if we don't listen to any request init event.
+      static::sessionCounters();
+
       // Find real path, and document root (if possible), for removal from absolute paths.
       // The reason document root may differ from real path is symbolic links.
       if (($paths = static::configGet('', 'paths'))) {
@@ -892,7 +896,7 @@ class Inspect {
    *   Array/object value of $options (any number of options):
    *   - (integer) depth (default 10, max 10)
    *   - (integer) truncate (default 1000, max 100000)
-   *   - (integer|float) output_max (default variable inspect_output_max) float less than 1 will be multiplied by default max.
+   *   - (integer|float) output_max (default conf var output_max) float less than 1 will be multiplied by default max.
    *   - (bool) hide_scalars: hide values of scalar vars, and type of resource (also supported as value 'hide_scalars')
    *   - (bool) hide_paths: only relevant for log (paths always hidden for get) (also supported as value 'hide_paths')
    *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be truncated to 255 (default empty, use 'none' to omit)
@@ -1490,7 +1494,7 @@ class Inspect {
   /**
    * Get (or init) session counter(s).
    *
-   * Counters will only be set and updated if conf var inspect_session_counters,
+   * Counters will only be set and updated if conf var session_counters,
    * because this feature uses a cookie, and it also adds a slight performance hit to each and every request.
    *
    *  Counters:
@@ -1555,7 +1559,7 @@ class Inspect {
   /**
    * Increases session counter's page load number and sets updated session counter cookie.
    *
-   * Counters will only be set and updated if conf var inspect_session_counters,
+   * Counters will only be set and updated if conf var session_counters,
    * because this feature uses a cookie, and it also adds a slight performance hit to each and every request.
    */
   public static function updatePageLoadNumber() {
@@ -1563,6 +1567,10 @@ class Inspect {
     if (!$called) {
       $called = TRUE;
       if (static::configGet('', 'session_counters')) {
+        // Make sure session counting is initialised,
+        // even if we don't listen to any request init event.
+        static::sessionCounters();
+
         ++static::$sessionCounters['page_load'];
         static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
       }
@@ -2419,7 +2427,7 @@ class Inspect {
   /**
    * Secures existance of filing directory; optionally subdir to that.
    *
-   * Uses environment var 'inspect_file_path'; defaults to '../inspect'.
+   * Uses conf var 'file_path'; defaults to '../inspect'.
    *
    * @param string $sub_dir
    *   Default: empty.
