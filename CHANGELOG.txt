@@ -1,3 +1,7 @@
+inspect 6.x, 2015-02-14
+-----------------------
+- Removed method cliMode(), use PHP_SAPI === 'cli' instead.
+
 inspect 6.x, 2015-02-13
 -----------------------
 - Configuration vars are now domain specific.

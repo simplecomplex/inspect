@@ -524,7 +524,7 @@ class Inspect {
     }
 
     // Override options when target:get in CLI mode; don't ever enclose output HTML tag.
-    if ($target == 'get' && static::cliMode()) {
+    if ($target == 'get' && PHP_SAPI === 'cli') {
       $this->enclose_tag = '';
     }
 
@@ -796,7 +796,7 @@ class Inspect {
       return $perm;
     }
 
-    if (static::cliMode()) {
+    if (PHP_SAPI === 'cli') {
       $permit = array(
         'get' => TRUE,
         'log' => TRUE,
@@ -2857,14 +2857,6 @@ class Inspect {
    */
   protected static function docRoot() {
     return getcwd();
-  }
-
-  /**
-   * @return boolean
-   */
-  protected static function cliMode() {
-    // Nicked from Drupal 7.
-    return (!isset($_SERVER['SERVER_SOFTWARE']) && (PHP_SAPI == 'cli' || (is_numeric($_SERVER['argc']) && $_SERVER['argc'] > 0)));
   }
 
   /**
