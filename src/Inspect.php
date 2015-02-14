@@ -1596,28 +1596,32 @@ class Inspect {
   public static function requestTimeMilli() {
     // This method will be obsolete when everybody uses PHP>=5.4.
     if (!($rtm =& static::$requestTimeMilli)) {
-      $rtm = ($rts = (int) $_SERVER['REQUEST_TIME']) * 1000;
       if (!empty($_SERVER['REQUEST_TIME_FLOAT'])) {
         $rtm = round($_SERVER['REQUEST_TIME_FLOAT'] * 1000, 3);
       }
-      elseif (
-        (
-          (!empty($_SERVER['HTTP_X_REQUEST_RECEIVED_PROCESSING']) && ($v = $_SERVER['HTTP_X_REQUEST_RECEIVED_PROCESSING']))
-          || (
-            function_exists('apache_request_headers') && ($a = apache_request_headers())
-            && array_key_exists('X-Request-Received-Processing', $a) && ($v = $a['X-Request-Received-Processing'])
+      else {
+        $rtm = ($rts = (int) $_SERVER['REQUEST_TIME']) * 1000;
+        //@formatter:off
+        if (
+          (
+            (!empty($_SERVER['HTTP_X_REQUEST_RECEIVED_PROCESSING']) && ($v = $_SERVER['HTTP_X_REQUEST_RECEIVED_PROCESSING']))
+            || (
+              function_exists('apache_request_headers') && ($a = apache_request_headers())
+              && array_key_exists('X-Request-Received-Processing', $a) && ($v = $a['X-Request-Received-Processing'])
+            )
           )
-        )
-        && strlen($v) < 31 && preg_match('/^t\=\d{16,17}\ D\=\d{1,9}/', $v) // Deliberately not multibyte strlen().
-      ) {
-        $a = explode(' ', $v);
-        $proc = (float) substr($a[1], 2); // Deliberately not multibyte substr().
-        // If received time can be reduced to positive integer, and that is close to REQUEST_TIME.
-        if ( ($iRec = (int) round(($flRec = (float) substr($a[0], 2)) / 1000000)) > 0 // Deliberately not multibyte strlen().
-          && $iRec <= $rts + 1 && $iRec >= $rts - 1
+          && strlen($v) < 31 && preg_match('/^t\=\d{16,17}\ D\=\d{1,9}/', $v) // Deliberately not multibyte strlen().
         ) {
-          $rtm = round(($flRec + $proc) / 1000, 3);
+          $a = explode(' ', $v);
+          $proc = (float) substr($a[1], 2); // Deliberately not multibyte substr().
+          // If received time can be reduced to positive integer, and that is close to REQUEST_TIME.
+          if (($iRec = (int) round(($flRec = (float) substr($a[0], 2)) / 1000000)) > 0 // Deliberately not multibyte strlen().
+            && $iRec <= $rts + 1 && $iRec >= $rts - 1
+          ) {
+            $rtm = round(($flRec + $proc) / 1000, 3);
+          }
         }
+        //@formatter:on
       }
     }
     return $rtm;
