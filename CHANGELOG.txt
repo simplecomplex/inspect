@@ -1,6 +1,7 @@
 inspect 6.x, 2015-02-14
 -----------------------
 - Removed method cliMode(), use PHP_SAPI === 'cli' instead.
+- Fixed UTF-8 validity checker and byte truncater.
 
 inspect 6.x, 2015-02-13
 -----------------------

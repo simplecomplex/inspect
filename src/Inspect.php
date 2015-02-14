@@ -2693,8 +2693,13 @@ class Inspect {
    * @return boolean
    */
   protected static function validUtf8($str) {
-    // Nicked from Drupal.
-    return $str === '' ? TRUE : preg_match('/^./us', $str) == 1;
+    return $str === '' ? TRUE :
+      // The PHP regex u modifier forces the whole subject to be evaluated
+      // as UTF-8. And if any byte sequence isn't valid UTF-8 preg_match()
+      // will return zero for no-match.
+      // The s modifier makes dot match newline; without it a string consisting
+      // of a newline solely would result in a false negative.
+      preg_match('/./us', $str);
   }
 
   /**
@@ -2816,24 +2821,57 @@ class Inspect {
   /**
    * Truncate multibyte safe until ASCII length is equal to/less than arg length.
    *
+   * Does not check if arg $str is valid UTF-8.
+   *
    * @param string $str
    * @param integer $length
-   *   Fails if non-integer (like double or string) and PHP>=5.4.
+   *   Byte length (~ ASCII char length).
    *
    * @return string
    */
   protected static function truncateBytes($str, $length) {
-    // Nicked from Drupal 7.
     if (strlen($str) <= $length) {
       return $str;
     }
-    if ((ord($str[$length]) < 0x80) || (ord($str[$length]) >= 0xC0)) {
-      return substr($str, 0, $length);
-    }
-    // Scan backwards to beginning of the byte sequence.
-    while (--$length >= 0 && ord($str[$length]) >= 0x80 && ord($str[$length]) < 0xC0);
 
-    return substr($str, 0, $length);
+    // Truncate to UTF-8 char length (>= byte length).
+    $str = static::mb_substr($str, 0, $length);
+    // If all ASCII.
+    if (($le = strlen($str)) == $length) {
+      return $str;
+    }
+
+    // This algo will truncate one UTF-8 char too many,
+    // if the string ends with a UTF-8 char, because it doesn't check
+    // if a sequence of continuation bytes is complete.
+    // Thus the check preceding this algo (actual byte length matches
+    // required max length) is vital.
+    do {
+      --$le;
+      // String not valid UTF-8, because never found an ASCII or leading UTF-8
+      // byte to break before.
+      if ($le < 0) {
+        return '';
+      }
+      // An ASCII byte.
+      elseif (($ord = ord($str{$le})) < 128) {
+        // We can break before an ASCII byte.
+        $ascii = TRUE;
+        $leading = FALSE;
+      }
+      // A UTF-8 continuation byte.
+      elseif ($ord < 192) {
+        $ascii = $leading = FALSE;
+      }
+      // A UTF-8 leading byte.
+      else {
+        $ascii = FALSE;
+        // We can break before a leading UTF-8 byte.
+        $leading = TRUE;
+      }
+    } while($le > $length || (!$ascii && !$leading));
+
+    return substr($str, 0, $le);
   }
 
   /**
