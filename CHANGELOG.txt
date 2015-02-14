@@ -1,17 +1,21 @@
-inspect 6.x, 2015-02-14
+inspect 1.x, 2015-02-14
 -----------------------
 - Removed method cliMode(), use PHP_SAPI === 'cli' instead.
 - Fixed UTF-8 validity checker and byte truncater.
 - Make sure session counting is initialised (if conf session_counters),
   even if we don't listen to any request init event.
 
-inspect 6.x, 2015-02-13
+inspect 1.x, 2015-02-13
 -----------------------
 - Configuration vars are now domain specific.
 
-inspect 6.x, 2015-02-12
+inspect 1.x, 2015-02-12
 -----------------------
 - Ported from Drupal module Inspect 7.x-6.3.
+  The concepts and essential code of Inspect was originally developed in
+  non-Drupal contexts (like ZZ; a SourceForge project).
+  And since Drupal Inspect 7.x-6.0 that backbone has been designed specifically
+  to be usable in any PHP context, not only the Drupal context.
 - Fixed namespace; uppercase'd ...\Inspect.
 - Added MIT license.
 - Permissions to get and frontend log now reflect the PHP display_errors setting.
