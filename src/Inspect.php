@@ -1293,6 +1293,9 @@ class Inspect {
    * @return string
    */
   protected function trc($exception = NULL) {
+    // For IDE; prevent uninitialised notifications.
+    $nFrame = $sTrc = $sTrcEnd = NULL;
+
     try {
       // Received Exception, by arg.
       if ($exception) {
@@ -1468,8 +1471,8 @@ class Inspect {
     catch (\Exception $xc) {
       // Inspect::nspct() may abort too.
       if (($errorCode = $xc->getCode()) == Inspect::ERROR_OUTPUTLENGTH) {
-        $this->limitReduced = $nFrame; // $nFrame is defined if that error occurs.
-        return $sTrc . $sTrcEnd; // $sTrc and $sTrcEnd are defined if that error occurs.
+        $this->limitReduced = $nFrame;
+        return $sTrc . $sTrcEnd;
       }
 
       // Other error.
@@ -1519,8 +1522,8 @@ class Inspect {
     if (!$called) {
       $called = TRUE;
       if (static::configGet('inspect', 'session_counters')) {
-        if (isset($_COOKIE['inspect__sc']) && preg_match('/^[a-zA-Z\d]+\:\d{1,5}\:\d{1,5}$/', $_COOKIE['inspect__sc'])) {
-          $c = explode(':', $_COOKIE['inspect__sc']);
+        if (($c = static::cookieGet('inspect__sc')) && preg_match('/^[a-zA-Z\d]+\:\d{1,5}\:\d{1,5}$/', $c)) {
+          $c = explode(':', $c);
           static::$sessionCounters = $counters = array(
             'session' => $c[0], // Session number.
             'page_load' => $c[1], // Page load number.
@@ -2068,7 +2071,7 @@ class Inspect {
   /**
    * Alias of trace().
    *
-   * @param \Exception|falsy $exception
+   * @param \Exception|NULL $exception
    * @param mixed $options
    *
    * @return boolean|NULL
@@ -2949,6 +2952,15 @@ class Inspect {
    */
   protected static function configSet($domain, $name, $value) {
     // Save where?
+  }
+
+  /**
+   * @param string $name
+   *
+   * @return string|NULL
+   */
+  protected static function cookieGet($name) {
+    return isset($_COOKIE[$name]) ? $_COOKIE[$name] : NULL;
   }
 
   /**

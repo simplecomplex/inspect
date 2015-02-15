@@ -1,3 +1,7 @@
+inspect 1.x, 2015-02-15
+-----------------------
+- Abstracted cookie retrieval to allow overriding cookie handling by extenders.
+
 inspect 1.x, 2015-02-14
 -----------------------
 - Removed method cliMode(), use PHP_SAPI === 'cli' instead.
