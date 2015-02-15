@@ -1265,7 +1265,8 @@ class Inspect {
         //@formatter:off
         $this->outputLength += strlen( // Deliberately not multibyte strlen().
           $output .= (!$truncedTo ? (!$pathRem ? '' : '|-|!' ) :
-            ('|' . $truncedTo . (!$pathRem ? '' : '|!' ) ) )
+              ('|' . $truncedTo . (!$pathRem ? '' : '|!' ) )
+            )
             . ') '
             . $this->quote_begin . (!$pathRem ? '' : '...' ) . $var . (!$truncedTo ? '' : '...') . $this->quote_end
         );
@@ -1851,13 +1852,13 @@ class Inspect {
     //@formatter:off
     return static::logToFile(
       (!$inspect->message ? '' : ($inspect->message . ':' . $inspect->newline) )
-        . '[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo)
-        . ' - depth:' . $inspect->depth . ']'
-        . (!$inspect->name || $inspect->name == 'none' ? '' : (' ' . $inspect->name) ) . $inspect->newline
-        . ($inspect->no_fileline ? '' :
-          (static::fileLine($inspect->hide_paths, $inspect->wrappers) . $inspect->newline)
-        )
-        . $output,
+      . '[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo)
+      . ' - depth:' . $inspect->depth . ']'
+      . (!$inspect->name || $inspect->name == 'none' ? '' : (' ' . $inspect->name) ) . $inspect->newline
+      . ($inspect->no_fileline ? '' :
+        (static::fileLine($inspect->hide_paths, $inspect->wrappers) . $inspect->newline)
+      )
+      . $output,
       $inspect->category,
       $inspect->severity,
       $inspect->by_user
@@ -1934,18 +1935,18 @@ class Inspect {
     }
     //@formatter:off
     return $tagStart
-      . (!$inspect->no_preface ?
-        (!$inspect->message ?
-          ('[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo)
-            . ' - depth:' . $inspect->depth . ']') :
-          ('[' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo) . '] '
-            . $inspect->message . ':' . $inspect->newline . '[Inspect - depth:' . $inspect->depth . ']')
-        ) :
-        (!$inspect->message ? '' : (static::plaintext($inspect->message) . ':' . $inspect->newline) )
-      )
-      . (!$inspect->name || $inspect->name == 'none' ? '' : (' ' . static::plaintext($inspect->name)) ) . $inspect->newline
-      . ($inspect->no_fileline ? '' : (static::fileLine(TRUE, $inspect->wrappers) . $inspect->newline) )
-      . $output . $tagEnd . $inspect->newline;
+    . (!$inspect->no_preface ?
+      (!$inspect->message ?
+        ('[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo)
+          . ' - depth:' . $inspect->depth . ']') :
+        ('[' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo) . '] '
+          . $inspect->message . ':' . $inspect->newline . '[Inspect - depth:' . $inspect->depth . ']')
+      ) :
+      (!$inspect->message ? '' : (static::plaintext($inspect->message) . ':' . $inspect->newline) )
+    )
+    . (!$inspect->name || $inspect->name == 'none' ? '' : (' ' . static::plaintext($inspect->name)) ) . $inspect->newline
+    . ($inspect->no_fileline ? '' : (static::fileLine(TRUE, $inspect->wrappers) . $inspect->newline) )
+    . $output . $tagEnd . $inspect->newline;
     //@formatter:on
   }
 
@@ -2007,14 +2008,14 @@ class Inspect {
 
         //@formatter:off
         if ($exception && is_object($exception)) {
+          // Escape exception message; may contain unexpected characters that are inappropriate for a logging implementation.
           $em = htmlspecialchars(
-            // Escape exception message; may contain unexpected characters that are inappropriate for a logging implementation.
-            addcslashes(str_replace($inspect->needles, $inspect->replacers, $exception->getMessage()), "\0..\37"),
-            ENT_QUOTES, // PHP 5.4: ENT_QUOTES | ENT_SUBSTITUTE
-            'UTF-8',
-            FALSE // No double encoding
-          )
-          . $inspect->newline . '@' . basename($exception->getFile()) . ':' . $exception->getLine();
+              addcslashes(str_replace($inspect->needles, $inspect->replacers, $exception->getMessage()), "\0..\37"),
+              ENT_QUOTES, // PHP 5.4: ENT_QUOTES | ENT_SUBSTITUTE
+              'UTF-8',
+              FALSE // No double encoding
+            )
+            . $inspect->newline . '@' . basename($exception->getFile()) . ':' . $exception->getLine();
         }
         else {
           $em = static::fileLine(TRUE, $inspect->wrappers);
@@ -2595,10 +2596,10 @@ class Inspect {
     if ($nFrame > -1 && (!$wrappers || !empty($trace[$nFrame += $wrappers]['file']))) {
       //@formatter:off
       return '@' . (
-        $hidePaths ? basename($trace[$nFrame]['file']) :
-          ('document_root/' . str_replace('\\', '/', preg_replace(static::$paths, '', $trace[$nFrame]['file'])))
-        )
-        . ':' . (isset($trace[$nFrame]['line']) ? $trace[$nFrame]['line'] : '?');
+      $hidePaths ? basename($trace[$nFrame]['file']) :
+        ('document_root/' . str_replace('\\', '/', preg_replace(static::$paths, '', $trace[$nFrame]['file'])))
+      )
+      . ':' . (isset($trace[$nFrame]['line']) ? $trace[$nFrame]['line'] : '?');
       //@formatter:on
     }
     return '@unknown';
@@ -2949,8 +2950,6 @@ class Inspect {
   protected static function configSet($domain, $name, $value) {
     // Save where?
   }
-
-  // @todo: make cookieGet method, to allow extenders to abstract from $_COOKIE.
 
   /**
    * @param string $name
