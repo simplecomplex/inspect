@@ -1653,7 +1653,7 @@ class Inspect {
    *   - (string) message, will be truncated to 255 (default empty)
    *   - (string) category: logging category (default inspect)
    *   - (string) type: alias of category
-   *   - (integer) severity: default ~ 'debug'
+   *   - (integer|string) severity: default ~ 'debug'
    *   - (integer) wrappers: the (inspect) function/method is wrapped in one or more local logging functions/methods (default zero)
    *   - (string|array) filter: filter out that|those key name(s) (default empty)
    *   - (array) needles: list of additional char|string needles to be used in str_replace
