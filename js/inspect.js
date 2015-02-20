@@ -435,7 +435,7 @@
       }
       if (typeof ar === 'string' && ar.indexOf('\n') > -1 && (le = (ar = ar.split('\n')).length)) {
         for (i = 0; i < le; i++) {
-          if (i && (p = (v = ar[i]).lastIndexOf('@')) > -1 && v.indexOf('/inspect/inspect.js') === -1) {
+          if (i && (p = (v = ar[i]).lastIndexOf('@')) > -1 && v.indexOf('/inspect.js') === -1) {
             if (wrps) {
               if ((i += wrps) >= le) {
                 return '@too_many_wrappers';
