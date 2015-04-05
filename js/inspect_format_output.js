@@ -23,7 +23,8 @@
       // jQuery().bind('ready') is another queue than jQuery().ready().
       var _cls = 'module-inspect-collapsible', _shw = 1, _fld = 1;
       if(!window.inspect ||
-        (inspect.browser.msie && inspect.browser.msie < 9)) { // IE<9 cannot handle folding.
+        // IE<9 cannot handle folding.
+        (inspect.browser.msie && inspect.browser.msie < 9)) {
         return;
       }
       /**
@@ -344,8 +345,10 @@
          * Also works on profile output.
          *
          * @param {boolean|integer} [find]
-         *  - boolean true: work on all non-formatted inspection and profile outputs (in context or window)
-         *  - otherwise ignored (like if used in jQuery().each(), where the first (index) argument is a number)
+         *  - boolean true: work on all non-formatted inspection and profile
+         *    outputs (in context or window)
+         *  - otherwise ignored (like if used in jQuery().each(), where the
+         *    first (index) argument is a number)
          * @param {element|jquery} [context]
          * @returns {void}
          */

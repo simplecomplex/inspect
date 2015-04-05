@@ -11,7 +11,8 @@
 /**
  * inspect variable dumper and error tracer.
  *
- * Doesn't require jQuery, but these functions will fail silently without it: .log(), .traceLog(), .events(), .eventsLog(), .eventsGet().
+ * Doesn't require jQuery, but these functions will fail silently without it:
+ * .log(), .traceLog(), .events(), .eventsLog(), .eventsGet().
  *
  * @param {function} [$]
  *  - jQuery is optional
@@ -168,7 +169,8 @@
      * - jquery
      * - emptyish and bad: undefined, null, NaN, infinite
      * - custom or prototyped native: all classes having a typeOf() method.
-     * RegExp is an object of type regexp (not a function - gecko/webkit/chromium).
+     * RegExp is an object of type regexp (not a function -
+     * gecko/webkit/chromium).
      * Does not check if Date object is NaN.
      *
      * @ignore
@@ -191,7 +193,8 @@
           if (u === null) {
             return 'null';
           }
-          //  Accessing properties of object may err for various reasons, like missing permission (Gecko).
+          // Accessing properties of object may err for various reasons, like
+          // missing permission (Gecko).
           try {
             if (u.typeOf && typeof u.typeOf === 'function') {
               return u.typeOf();
@@ -209,7 +212,8 @@
               return 'document.documentElement';
             }
             if (u.getAttributeNode) { // element
-              //  document has getElementsByTagName, but not getAttributeNode -  document.documentElement has both
+              // document has getElementsByTagName, but not getAttributeNode
+              // - document.documentElement has both.
               return u.tagName.toLowerCase === 'img' ? 'image' : 'element';
             }
             if (u.nodeType) {
@@ -279,11 +283,11 @@
         if (u === undefined) {
           return '(undefined)\n';
         }
-        //  override the falsy func_body default -----
+        // Override the falsy func_body default ------
         if (!d && fb === undefined && _conf.inspect.func_body) {
           fb = true;
         }
-        //  check type by typeof ---------------------
+        // Check type by typeof ----------------------
         switch ((t = typeof u)) {
           case 'object':
             if (u === null) {
@@ -297,7 +301,7 @@
               u.replace(/\n/g, '_NL_').replace(/\r/g, '_CR_').replace(/\t/g, '_TB_') +
               _strQt[1] + '\n';
         }
-        //  check by typeOf() ------------------------
+        // Check by typeOf() -------------------------
         ind = new Array(d + 2).join('.  ');
         switch ((t = _typeOf(u))) {
           case 'number':
@@ -311,19 +315,21 @@
           case 'date':
             return '(date) ' + (u.toISOString ? u.toISOString() : u) + '\n';
           case 'function':
-            //  find static members of the function
+            // Find static members of the function.
             try {
               for (p in u) {
                 if (u.hasOwnProperty(p) && p !== 'prototype') {
                   ++nInst;
-                  buf += ind + p + ': ' + _nspct(u[p], protos, fb, m - 1, d + 1); // recursion
+                  // Recursion.
+                  buf += ind + p + ': ' + _nspct(u[p], protos, fb, m - 1, d + 1);
                 }
               }
             }
             catch (er1) {
             }
             v = u.toString();
-            if (fb && (i = (v = v.replace(/\r/g, '').replace(/\n$/, '')).search(/[\ ]+\}$/)) > -1) { // remove indentation of function as a whole
+            // Remove indentation of function as a whole.
+            if (fb && (i = (v = v.replace(/\r/g, '').replace(/\n$/, '')).search(/[\ ]+\}$/)) > -1) {
               v = v.replace(new RegExp('\\n' + new Array(v.length - i).join('\\ '), 'g'), '\n');
             }
             return '(' + t + ':' + nInst + ') {\n' +
@@ -338,15 +344,18 @@
           case 'document.documentElement':
             return '(' + t + ')\n';
           case 'element':
-            return '(' + t + ':' + (u.tagName ? u.tagName.toLowerCase() : '') + // events may have elements, with no tagName
+            // Events may have elements, with no tagName.
+            return '(' + t + ':' + (u.tagName ? u.tagName.toLowerCase() : '') +
               ') ' + (u.id || '-') + '|' + (u.className || '-') +
               (!(u = u.getAttribute('name')) ? '' : ('|' + u)) + '\n';
           case 'textNode':
           case 'attributeNode':
           case 'otherNode':
             s = '(' + t + (t === 'otherNode' ? ':' + u.nodeType + ') ' : ' ');
-            try { // dumping nodeValue in IE<8 will fail
-              return s + _nspct(u.nodeValue, protos, fb, m - 1, d + 1); // recursion
+            // Dumping nodeValue in IE<8 will fail.
+            try {
+              // Recursion.
+              return s + _nspct(u.nodeValue, protos, fb, m - 1, d + 1);
             }
             catch (er2) {
             }
@@ -358,15 +367,19 @@
         }
         //  object -------------------------------------------------------
         isArr = (t === 'array');
-        buf = ['', '', '']; // instance properties, prototypal attributes, prototypal methods
+        // Instance properties, prototypal attributes, prototypal methods.
+        buf = ['', '', ''];
         em = '';
         try {
           pT = 'not iterable';
           for (p in u) {
             pT = _typeOf(v = u[p]);
-            //  event misses hasOwnProperty method in some browsers, so we have to check if hasOwnProperty exists
+            // Event misses hasOwnProperty method in some browsers, so we have
+            // to check if hasOwnProperty exists.
             if (u.hasOwnProperty && u.hasOwnProperty(p)) {
-              if (isArr) { // do always check for non-numeric instance properties if array (error)
+              // Do always check for non-numeric instance properties if array
+              // (error).
+              if (isArr) {
                 if (('' + p).search(/\D/) > -1) {
                   buf[0] += 'ERROR, non-numeric instance property [' + p + '] in array:\n';
                 }
@@ -386,7 +399,8 @@
             }
             if (m > 0) {
               s = p + ': ' +
-                (v && pT === t && v === u ? (!d ? 'ref THIS\n' : 'ref SELF\n') : // reference check
+                // Reference check.
+                (v && pT === t && v === u ? (!d ? 'ref THIS\n' : 'ref SELF\n') :
                   _nspct(v, protos, fb, m - 1, d + 1)); // recursion
               if (!isProt) {
                 buf[0] += (ind + s);
@@ -401,8 +415,10 @@
             if (m > 0) {
               for (p = 0; p < nInst; p++) {
                 buf[0] += ind + p + ': ' +
-                  ((v = u[p]) && pT === t && v === u ? (!d ? 'ref THIS\n' : 'ref SELF\n') : // reference check
-                    _nspct(v, protos, fb, m - 1, d + 1)); // recursion
+                  // Reference check.
+                  ((v = u[p]) && pT === t && v === u ? (!d ? 'ref THIS\n' : 'ref SELF\n') :
+                    // Recursion.
+                    _nspct(v, protos, fb, m - 1, d + 1));
               }
             }
           }
@@ -459,7 +475,8 @@
      *  - (string) fileLine
      *  - (string) category: logging category (default: 'info')
      *  - (string) type: alias of category
-     *  - (string|integer) severity: syslog RFC 5424 number or equivalent string (error is 3 'error')
+     *  - (string|integer) severity: syslog RFC 5424 number or equivalent string
+     *    (error is 3 'error')
      *  - (string) kind: inspect|trace|info, default: info
      *  - (integer) wrappers
      *
@@ -650,9 +667,11 @@
      * (object) options (any number of):
      *  - (integer) depth (default and absolute max: 10)
      *  - (string) message (default empty)
-     *  - (boolean) protos (default not: do only report number of prototypal properties of objects)
+     *  - (boolean) protos (default not: do only report number of prototypal
+     *    properties of objects)
      *  - (boolean) func_body (default not: do not print function body)
-     *  - (boolean|integer) wrappers (default zero: this function is not wrapped in one or more local logging functions/methods)
+     *  - (boolean|integer) wrappers (default zero: this function is not wrapped
+     *    in one or more local logging functions/methods)
      *
      * (integer) option:
      *  - interpreted as depth
@@ -669,11 +688,13 @@
      *  - only child versus immediate parent
      *  - doesnt allow to recurse deeper than 10
      *
-     * Prototype properties are marked with prefix '... ', function's static members with prefix '.. '.
+     * Prototype properties are marked with prefix '... ', function's static
+     * members with prefix '.. '.
      * Detects if an Array property doesnt have numeric key.
      * Risky procedures are performed within try-catch.
      *
-     * inspect doesn't require jQuery, but these functions will fail silently without it: .log(), .traceLog(), .events(), .eventsLog(), .eventsGet().
+     * inspect doesn't require jQuery, but these functions will fail silently
+     * without it: .log(), .traceLog(), .events(), .eventsLog(), .eventsGet().
      *
      * @name inspect
      * @constructor
@@ -695,8 +716,10 @@
         );
     };
     /**
-     * Use for checking if that window.inspect is actually the one we are looking for (see example).
-     * The name of the property is just something unlikely to exist (and the class name backwards).
+     * Use for checking if that window.inspect is actually the one we are
+     * looking for (see example).
+     * The name of the property is just something unlikely to exist (and the
+     * class name backwards).
      * @example
 //  Check if inspect exists, and that it's the active sort.
 if(typeof window.inspect === 'function' && inspect.tcepsni) {
@@ -788,7 +811,8 @@ if(typeof window.inspect === 'function' && inspect.tcepsni) {
      * - jquery
      * - emptyish and bad: undefined, null, NaN, infinite
      * - custom or prototyped native: all classes having a typeOf() method.
-     * RegExp is an object of type regexp (not a function - gecko/webkit/chromium).
+     * RegExp is an object of type regexp (not a function -
+     * gecko/webkit/chromium).
      * Does not check if Date object is NaN.
      *
      * @function
@@ -802,7 +826,8 @@ if(typeof window.inspect === 'function' && inspect.tcepsni) {
      *
      * (object) options (any number of):
      *  - (string) message (default empty)
-     *  - (boolean|integer) wrappers (default zero: this function is not wrapped in one or more local logging functions/methods)
+     *  - (boolean|integer) wrappers (default zero: this function is not wrapped
+     *    in one or more local logging functions/methods)
      *
      * (string) options is interpreted as message.
      *
@@ -855,7 +880,8 @@ catch(er) {
      *
      * (object) options (any number of):
      *  - (string) message (default empty)
-     *  - (integer) wrappers (default zero: inspect.traceLog() is not wrapped in one or more local logging functions/methods)
+     *  - (integer) wrappers (default zero: inspect.traceLog() is not wrapped
+     *    in one or more local logging functions/methods)
      *  - (string) category (default: inspect trace)
      *  - (string) severity (default: debug)
      *
@@ -906,14 +932,18 @@ catch(er) {
         if (!(le = a.length)) {
           return '0: none';
         }
-        nKs = !(keys = names) ? 0 : keys.length; // use arg names as keys
+        // Use arg names as keys.
+        nKs = !(keys = names) ? 0 : keys.length;
       }
-      else if (!(le = ((keys = _oKeys(a)).length))) { // arguments or object having no length
+      // arguments or object having no length.
+      else if (!(le = ((keys = _oKeys(a)).length))) {
         return '0: none';
       }
-      else if (keys[0] === '0') { // arguments, arrayish
+      // arguments, arrayish
+      else if (keys[0] === '0') {
         t = 'array';
-        nKs = !(keys = names) ? 0 : keys.length; // use arg names as keys
+        // Use arg names as keys.
+        nKs = !(keys = names) ? 0 : keys.length;
       }
       else { // object
         nKs = le;
@@ -929,7 +959,8 @@ catch(er) {
     /**
      * Inspect event listeners added via jQuery, and send output to console.
      *
-     * List events of all elements matched by the jQuery selector, as array of objects containing an element and a listener list.
+     * List events of all elements matched by the jQuery selector, as array of
+     * objects containing an element and a listener list.
      * Defaults to display bodies of functions (options func_body).
      *
      * @function
@@ -951,7 +982,8 @@ catch(er) {
     /**
      * Inspect event listeners added via jQuery, and get output as string.
      *
-     * List events of all elements matched by the jQuery selector, as array of objects containing an element and a listener list.
+     * List events of all elements matched by the jQuery selector, as array of
+     * objects containing an element and a listener list.
      * Defaults to display bodies of functions (options func_body).
      *
      * @function
@@ -962,7 +994,9 @@ catch(er) {
      *  - see inspect()
      * @return {string}
      */
-    f.eventsGet = function(selector, options) { // hidden 4th argument: resolved options
+    f.eventsGet = function(selector, options) {
+      // Hidden 4th argument: resolved options.
+
       var o = arguments[3] || _rslv(options), ms = o.message || '', fb = o.func_body, s, u = selector, jq = $(u), d, a = [];
       if (!jq.get(0)) {
         s = 'arg selector, type ' + _typeOf(u) + ', value [' + u + '], matches no element(s)';
@@ -971,8 +1005,10 @@ catch(er) {
         if (fb === undefined) {
           fb = true;
         }
-        //  No support for jQuery events listed under 'jquery[long hex number]' bucket (observed via judy); cant replicate that pattern.
-        jq.each(function() { // Using jQuery.each() to avoid reset values during iteration.
+        // No support for jQuery events listed under 'jquery[long hex number]'
+        // bucket (observed via judy); cant replicate that pattern.
+        // Using jQuery.each() to avoid reset values during iteration.
+        jq.each(function() {
           a.push({
             element: this,
             listeners: (d = $(this).data()) && d.events && d.hasOwnProperty('events') ? d.events : null
@@ -985,7 +1021,8 @@ catch(er) {
     /**
      * Inspect event listeners added via jQuery, and log output to backend.
      *
-     * List events of all elements matched by the jQuery selector, as array of objects containing an element and a listener list.
+     * List events of all elements matched by the jQuery selector, as array of
+     * objects containing an element and a listener list.
      * Defaults to display bodies of functions (options func_body).
      *
      * Additional options:
@@ -1038,7 +1075,8 @@ catch(er) {
      *  - (string) fileLine
      *  - (string) category: logging category (default: 'info')
      *  - (string) type: alias of category
-     *  - (string|integer) severity: syslog RFC 5424 number or equivalent string (error is 3 'error')
+     *  - (string|integer) severity: syslog RFC 5424 number or equivalent string
+     *    (error is 3 'error')
      *  - (string) kind: inspect|trace|info, default: 'info'
      *  - (integer) wrappers
      *
@@ -1060,7 +1098,8 @@ catch(er) {
      * Log error trace or variable inspection to console and/or backend log.
      *
      * Options like inspect(), except:
-     *  - (integer) output_to: bitmask; 1 ~ console | 2 ~ backend log | 3 ~ both (default)
+     *  - (integer) output_to: bitmask; 1 ~ console | 2 ~ backend log | 3 ~ both
+     *    (default)
      *  - (string) output_to: 'console' | 'log'; default both
      *
      * @function
@@ -1072,7 +1111,9 @@ catch(er) {
      */
     f.errorHandler = function(error, variable, options) {
       var o = _rslv(options), ms = o.message || '', to = o.output_to || 3,
-        wrps = o.wrappers; // Shan't add one, because _fL() looks for 'inspect', and that also matches this function.
+        // Shan't add one, because _fL() looks for 'inspect', and that also
+        // matches this function.
+        wrps = o.wrappers;
       if (to !== 2) {
         if (error) {
           _cnsl(
@@ -1176,10 +1217,12 @@ catch(er) {
        *  - mozilla ~ Firefox, but version is simply true (not float)
        *  - chrome ~ Google Chrome
        *  - safari
-       *  - webkit ~ Google Chrome or Apple Safari, version is (Apple)Webkit version as float
+       *  - webkit ~ Google Chrome or Apple Safari, version is (Apple)Webkit
+       *    version as float
        *  - opera
        *  - type ~ identifier as string
-       *  - version ~ version number as string (for Firefox: the Firefox version, not the Gecko version).
+       *  - version ~ version number as string (for Firefox: the Firefox
+       *    version, not the Gecko version).
        *  - userAgent ~ raw useragent
        *
        * @example
