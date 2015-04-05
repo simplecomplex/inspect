@@ -24,11 +24,14 @@ inspect 1.x, 2015-02-13
 
 inspect 1.x, 2015-02-12
 -----------------------
-- Ported from Drupal module Inspect 7.x-6.3.
+- Ported back from Drupal module Inspect 7.x-6.3.
   The concepts and essential code of Inspect was originally developed in
   non-Drupal contexts (like ZZ; a SourceForge project).
-  And since Drupal Inspect 7.x-6.0 that backbone has been designed specifically
-  to be usable in any PHP context, not only the Drupal context.
+  And no other developer than yours sincerely has delivered a single line of
+  code to this library. The bodies of some methods of the (Drupal) Inspect
+  7.x-6.3 version were straight copies of Drupal 7 core (validUtf8(),
+  truncateBytes(), cliMode()); however these methods will consist of unique
+  code (or simply disappear) before the first release of the library.
 - Fixed namespace; uppercase'd ...\Inspect.
 - Added MIT license.
 - Permissions to get and frontend log now reflect the PHP display_errors setting.
