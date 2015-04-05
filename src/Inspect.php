@@ -56,7 +56,8 @@ class Inspect {
   /**
    * Absolute max. length of an inspection/trace output.
    *
-   * Doesn't apply when logging to standard log (PHP error_log()); then 1Kb if syslog and 4Kb if file log.
+   * Doesn't apply when logging to standard log (PHP error_log()); then 1Kb if
+   * syslog and 4Kb if file log.
    *
    * @type integer
    */
@@ -185,7 +186,7 @@ class Inspect {
   public $output_max;
 
   /**
-   * The (inspect) function/method is wrapped in one or more wrapping logging functions/methods.
+   * The (inspect) method is wrapped in one or more wrapping logging methods.
    *
    * @var integer
    */
@@ -206,7 +207,8 @@ class Inspect {
   public $severity = 7;
 
   /**
-   * '$var_name' or "\$var_name", must be escaped, will be truncated to 255 (use 'none' to omit).
+   * '$var_name' or "\$var_name", must be escaped, will be truncated to 255
+   * (use 'none' to omit).
    *
    * @var string|NULL
    */
@@ -278,7 +280,8 @@ class Inspect {
   public $pre_indent = '';
 
   /**
-   * Formatting option: Indentation of object/array buckets - gets multiplied by current depth.
+   * Formatting option: Indentation of object/array buckets - gets multiplied
+   * by current depth.
    *
    * @var string
    */
@@ -313,14 +316,15 @@ class Inspect {
   public $no_preface;
 
   /**
-   * Formatting option: Don't display file and line of call to inspect function/method.
+   * Formatting option: Don't display file and line of call to inspect method.
    *
    * @var boolean|NULL
    */
   public $no_fileline;
 
   /**
-   * Complex formatting option: Create one-lined formatting instead of multi-lined.
+   * Complex formatting option: Create one-lined formatting instead of
+   * multi-lined.
    *
    * @var boolean|NULL
    */
@@ -451,10 +455,12 @@ class Inspect {
     }
 
     if ($opts) {
-      // Remove (protected instance) properties that aren't allowed to be overridden by $options argument.
+      // Remove (protected instance) properties that aren't allowed to be
+      // overridden by $options argument.
       unset($opts['kind'], $opts['target'], $opts['key'], $opts['limitReduced'], $opts['outputLength']);
 
-      // Some options may also be set as value (and thus numeric key) ~ interpreted as truthy boolean.
+      // Some options may also be set as value (and thus numeric key)
+      // ~ interpreted as truthy boolean.
       $copy = $opts;
       foreach ($copy as $key => $value) {
         if (is_numeric($key) && in_array($value, static::$optionsByValue, TRUE)) {
@@ -464,7 +470,8 @@ class Inspect {
       }
       unset($copy);
 
-      // output_max may be an (absolute) integer or a float to be multiplied by class var $outputMax.
+      // output_max may be an (absolute) integer or a float to be multiplied
+      // by class var $outputMax.
       if (!empty($opts['output_max']) && ($v = $opts['output_max']) > 0) {
         if ($v < 1) {
           $this->output_max = (int)floor($this->output_max * $v);
@@ -523,7 +530,8 @@ class Inspect {
       }
     }
 
-    // Override options when target:get in CLI mode; don't ever enclose output HTML tag.
+    // Override options when target:get in CLI mode; don't ever enclose output
+    // HTML tag.
     if ($target == 'get' && PHP_SAPI === 'cli') {
       $this->enclose_tag = '';
     }
@@ -535,7 +543,8 @@ class Inspect {
     if ($this->truncate < 0 || $this->truncate > static::TRUNCATE_MIN) {
       $this->truncate = $safeDefaults['truncate'];
     }
-    // Convert string severity to integer, and handle out-of-range/unsupported value.
+    // Convert string severity to integer, and handle out-of-range/unsupported
+    // value.
     $this->severity = static::severity($this->severity);
 
     switch ($kind) {
@@ -552,7 +561,8 @@ class Inspect {
       $this->hide_paths = TRUE;
     }
 
-    // Escape name and message options - and beware of non-string (array) values.
+    // Escape name and message options - and beware of non-string (array)
+    // values.
     if ($this->name && $this->name !== 'none') {
       if (is_scalar($value = $this->name)) {
         // Dont escape if target is file.
@@ -607,7 +617,8 @@ class Inspect {
    * @var array
    */
   protected static $sessionCounters = array(
-    // Session initialized to 'na' instead of 'n/a' because regexes (PHP and JS) only a-zA-Z\d.
+    // Session initialized to 'na' instead of 'n/a' because regexes (PHP and JS)
+    // only allow a-zA-Z\d.
     'session' => 'na',
     'page_load' => 0,
     'request' => 1,
@@ -630,7 +641,9 @@ class Inspect {
   protected static $pathLength;
 
   /**
-   * Document root and - if symlinked root real path (__FILE__ vs. SCRIPT_FILENAME) - with trailing slash, and as regular expression(s) (/^.../)
+   * Document root and - if symlinked root real path (__FILE__ vs.
+   * SCRIPT_FILENAME) - with trailing slash, and as regular expression(s)
+   * (/^.../)
    *
    * @see Inspect::init()
    *
@@ -660,7 +673,8 @@ class Inspect {
   /**
    * PHP max_execution_time as measured at init().
    *
-   * We save the value because it may change during execution; this value will be displayed in error message.
+   * We save the value because it may change during execution; this value
+   * will be displayed in error message.
    *
    * @see Inspect::init()
    *
@@ -669,7 +683,8 @@ class Inspect {
   protected static $maxExecTime = 0;
 
   /**
-   * nspct() will abort if called later than this time ($_maxExecTimePercent percent of max execution time).
+   * nspct() will abort if called later than this time ($_maxExecTimePercent
+   * percent of max execution time).
    *
    * -1 means no max.
    *
@@ -830,11 +845,12 @@ class Inspect {
    */
   protected static function init() {
     if (!static::$init) {
-      // Make sure session counting is initialised (if conf session_counters),
-      // even if we don't listen to any request init event.
+      // Make sure session counting is initialised, even if we don't listen to
+      // any request init event (conf session_counters).
       static::sessionCounters();
 
-      // Find real path, and document root (if possible), for removal from absolute paths.
+      // Find real path, and document root (if possible), for removal from
+      // absolute paths.
       // The reason document root may differ from real path is symbolic links.
       if (($paths = static::configGet('inspect', 'paths'))) {
         // Last bucket is path length.
@@ -847,7 +863,8 @@ class Inspect {
         $le1 = !empty($_SERVER['SCRIPT_FILENAME']) ? static::mb_strlen($docRoot = dirname($_SERVER['SCRIPT_FILENAME'])) : 0;
         // Find longest path.
         $osNix = DIRECTORY_SEPARATOR == '/';
-        static::$pathLength = ($le0 < $le1 ? $le0 : $le1) - ($osNix ? 0 : 2); // And remove drive C:, for Windows.
+        // And remove drive C:, for Windows.
+        static::$pathLength = ($le0 < $le1 ? $le0 : $le1) - ($osNix ? 0 : 2);
         static::$paths = $paths = array(
           $osNix ? ('/^' . preg_quote($realPath, '/') . '\//') :
             ('/^(' . $realPath{0} . '\:)?' . str_replace('/', '[\\\\\/]', preg_quote(str_replace('\\', '/', static::mb_substr($realPath, 2)))) . '[\\\\\/]/i')
@@ -877,9 +894,11 @@ class Inspect {
         static::$maxExecTimeout = -1;
       }
 
-      // Prepare default options - make get options equal file options if drush/CLI request.
+      // Prepare default options - make get options equal file options if CLI
+      // request.
       if (PHP_SAPI === 'cli') {
-        static::$defaultsByTarget['get'] += static::$defaultsByTarget['file']; // Append.
+        // Array append.
+        static::$defaultsByTarget['get'] += static::$defaultsByTarget['file'];
       }
 
       static::$init = TRUE;
@@ -896,60 +915,83 @@ class Inspect {
    *   Array/object value of $options (any number of options):
    *   - (integer) depth (default 10, max 10)
    *   - (integer) truncate (default 1000, max 100000)
-   *   - (integer|float) output_max (default conf var output_max) float less than 1 will be multiplied by default max.
-   *   - (bool) hide_scalars: hide values of scalar vars, and type of resource (also supported as value 'hide_scalars')
-   *   - (bool) hide_paths: only relevant for log (paths always hidden for get) (also supported as value 'hide_paths')
-   *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be truncated to 255 (default empty, use 'none' to omit)
+   *   - (integer|float) output_max: default conf var output_max,
+   *     float less than 1 will be multiplied by default max.
+   *   - (bool) hide_scalars: hide values of scalar vars, and type of resource
+   *     (also supported as value 'hide_scalars')
+   *   - (bool) hide_paths: only relevant for log (paths always hidden for get),
+   *     also supported as value 'hide_paths')
+   *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be
+   *      truncated to 255 (default empty, use 'none' to omit)
    *   - (string) message, will be truncated to 255 (default empty)
    *   - (string) category: logging category (default inspect)
    *   - (string) type: alias of category
    *   - (integer) severity: default 7|'debug'
-   *   - (string|array) filter: filter out that|those key name(s) (default empty)
-   *   - (array) needles: additional list of char|string needles to be used in str_replace
-   *   - (array) replacers: additional list of char|string replacers to be used in str_replace
-   *   - (boolean) one_lined: create one-lined formatting (getting only, and also supported as value 'one_lined')
+   *   - (string|array) filter: filter out that|those key name(s),
+   *     default empty
+   *   - (array) needles: additional list of char|string needles to be used
+   *     in str_replace
+   *   - (array) replacers: additional list of char|string replacers to be used
+   *     in str_replace
+   *   - (boolean) one_lined: create one-lined formatting (getting only,
+   *     and also supported as value 'one_lined')
    *   - (boolean) no_preface: truthy to omit [Inspect... preface
    *   - (string) quote_begin: char|string used as initial quote (default >>)
    *   - (string) quote_end: char|string used as final quote (default <<)
    *   - (array) delimiters: between object/array buckets (default newlines)
    *   - (string) indent: indentation of object/array buckets (default 2 spaces)
-   *   - (string) enclose_tag: html enclosure tag for the log as a whole (default pre)
+   *   - (string) enclose_tag: html enclosure tag for the log as a whole
+   *     (default pre)
    *   - (string) newline: newline character (default newline)
    *
    *   String truncation:
-   *   - truncate option less than one (hide strings) doesnt apply to strings that solely consist of digits (stringed integers)
-   *   - a string bucket of an object/array keyed pass or password (lowercase) will always be hidden (no matter it's content)
+   *   - truncate option less than one (hide strings) doesnt apply to strings
+   *     that solely consist of digits (stringed integers)
+   *   - a string bucket of an object/array keyed pass or password (lowercase)
+   *     will always be hidden (no matter it's content)
    *
    *   Removes paths at the beginning of variables:
    *   - always removes document root
-   *   - always removes relative and absolute paths when getting (optional when logging)
-   *   - path removal takes place before escaping and truncating (except for overly long strings)
+   *   - always removes relative and absolute paths when getting (optional when
+   *     logging)
+   *   - path removal takes place before escaping and truncating (except for
+   *     overly long strings)
    *
    *   Reports non-integer numbers:
    *   - double as float
    *   - NaN as NaN and infinite as infinite
    *
    *   Reports string lengths and path removal (path reduced to filename):
-   *   - un-truncated string, and when hiding scalar values: (multibyte length|ascii length)
+   *   - un-truncated string, and when hiding scalar values:
+   *     (multibyte length|ascii length)
    *   - truncated string: (multibyte length|ascii length|truncation length)
-   *   - if path removed: there will be a fourth flag (exclamation mark), if no truncation truncation length will be hyphen
+   *   - if path removed: there will be a fourth flag (exclamation mark),
+   *     if no truncation truncation length will be hyphen
    *
    *   Recursive:
-   *   - always stops at 20th (Inspect::DEPTH_MAX) recursion or less (~ the depth option)
-   *   - when buckets of an object/array is analyzed, buckets of buckets will be analyzed to one lesser depth
-   *   - detects if a bucket of an object references the object itself (marked *RECURSION*)
-   *   - detects GLOBALS array's self-referencing GLOBALS bucket (marked *RECURSION*)
-   *   - doesnt check identity for arrays (not possible in PHP), nor 'same-ness' (too heavy, and prone to err)
+   *   - always stops at 20th (Inspect::DEPTH_MAX) recursion or less (~ the
+   *     depth option)
+   *   - when buckets of an object/array is analyzed, buckets of buckets will be
+   *     analyzed to one lesser depth
+   *   - detects if a bucket of an object references the object itself
+   *     (marked *RECURSION*)
+   *   - detects GLOBALS array's self-referencing GLOBALS bucket
+   *     (marked *RECURSION*)
+   *   - doesnt check identity for arrays (not possible in PHP), nor 'same-ness'
+   *     (too heavy, and prone to err)
    *
    * @see Inspect::permit()
    * @see Inspect::init()
    *
    * @throws \RuntimeException
-   *   UNCAUGHT, if called after max execution time percentage limiter has been passed (code: Inspect::ERROR_EXECTIME).
+   *   UNCAUGHT, if called after max execution time percentage limiter has been
+   *   passed (code: Inspect::ERROR_EXECTIME).
    * @throws \OverflowException
-   *   UNCAUGHT, if cumulate inspection output length exceeds maximum (code: Inspect::ERROR_OUTPUTLENGTH).
+   *   UNCAUGHT, if cumulate inspection output length exceeds maximum
+   *   (code: Inspect::ERROR_OUTPUTLENGTH).
    * @throws \LogicException
-   *   UNCAUGHT, if current depth exceeds max depth (code: Inspect::ERROR_ALGORITHM).
+   *   UNCAUGHT, if current depth exceeds max depth
+   *   (code: Inspect::ERROR_ALGORITHM).
    *
    * @param mixed $var
    * @param integer $_curDepth
@@ -1005,7 +1047,8 @@ class Inspect {
         }
         else {
           if ($var instanceof \Countable && $var instanceof \Traversable) {
-            // Require Traversable too, because otherwise the count may not reflect the foreach.
+            // Require Traversable too, because otherwise the count may not
+            // reflect the foreach.
             $nSubs = count($var);
           }
           // stdClass cannot be counted; count public instance vars as array.
@@ -1014,7 +1057,8 @@ class Inspect {
           }
           $output .= $nSubs . ')' . (!$nSubs ? '' : ' {...}');
         }
-        $this->outputLength += strlen($output); // Deliberately not multibyte strlen().
+        // Deliberately not multibyte strlen().
+        $this->outputLength += strlen($output);
         return $output;
       }
       // Dive into container buckets.
@@ -1026,8 +1070,9 @@ class Inspect {
         $nSubs = 0;
         $subOutput = '';
         // Different iterations for object vs array, because:
-        // - array ust iterate by explicit reference,
-        //   whereas object may fail fatally doing that (An iterator cannot be used with foreach by reference)
+        // - array iterate by explicit reference, whereas object may fail
+        //   fatally doing that (An iterator cannot be used with foreach
+        //   by reference)
         // - they must have different self reference checks
         // - array must be checked for (all) numeric indices
         if ($tArr) {
@@ -1041,7 +1086,8 @@ class Inspect {
             // GLOBALS check, skip self reference.
             if ($key === 'GLOBALS' && is_array($sub) && array_key_exists('GLOBALS', $sub)) {
               $numArr = FALSE;
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . 'GLOBALS: (array) *RECURSION*'
               );
               $subOutput .= $u;
@@ -1051,17 +1097,20 @@ class Inspect {
               $numArr = FALSE;
             }
             if ($this->filter && in_array($key, $this->filter, TRUE)) {
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . $key . ': F'
               );
               $subOutput .= $u;
             }
             else {
               $this->key = $key; // Pass key, for password check.
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . $key . ': '
               );
-              $subOutput .= $u . $this->nspct($sub, $_curDepth + 1); // recursion
+              // Recursion.
+              $subOutput .= $u . $this->nspct($sub, $_curDepth + 1);
             }
           }
           unset($sub); // Clear iteration reference.
@@ -1080,24 +1129,29 @@ class Inspect {
           $this->outputLength += strlen( // Deliberately not multibyte strlen().
             $output
           );
-          foreach ($var as $key => $sub) { // not &$sub, iterating object is implicitly by reference
+          // Not &$sub, iterating object is implicitly by reference.
+          foreach ($var as $key => $sub) {
             $delim = (++$nSubs) > 1 ? $delimLater : $delimFirst;
-            if ($sub === $var) { // check for identity (self reference)
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+            if ($sub === $var) { // Check for identity (self reference).
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . $key . ': (' . $tObj . ') *RECURSION*'
               );
               $subOutput .= $u;
               continue;
             }
             if ($this->filter && in_array($key, $this->filter, TRUE)) {
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . $key . ': F'
               );
               $subOutput .= $u;
             }
             else {
-              $this->key = $key; // Pass key, for password check.
-              $this->outputLength += strlen( // Deliberately not multibyte strlen().
+              // Pass key, for password check.
+              $this->key = $key;
+              // Deliberately not multibyte strlen().
+              $this->outputLength += strlen(
                 $u = $delim . $key . ': '
               );
               $subOutput .= $u . $this->nspct($sub, $_curDepth + 1); // recursion
@@ -1143,7 +1197,8 @@ class Inspect {
         return $output;
 
       case 'string':
-        // (string:n0|n1|n2): n0 ~ multibyte length, n1 ~ ascii length, n2 only occurs if truncation.
+        // (string:n0|n1|n2): n0 ~ multibyte length, n1 ~ ascii length,
+        // n2 only occurs if truncation.
         $output = '(string:';
         // Get multibyte length and ascii length, and check for invalid UTF-8.
         $leRaw = strlen($var); // Deliberately not multibyte strlen().
@@ -1164,7 +1219,8 @@ class Inspect {
           );
           return $output;
         }
-        // If very long string, truncate to absolute max before working on the string internals.
+        // If very long string, truncate to absolute max before working on the
+        // string internals.
         $truncedTo = 0;
         if ($leMb > ($trunc = $this->truncate) && $leMb > ($trunc_min = static::TRUNCATE_MIN)) {
           $var = static::mb_substr($var, 0, $trunc_min);
@@ -1173,15 +1229,19 @@ class Inspect {
         // If truncate is zero.
         $pw = $_curDepth > 0 && ($this->key === 'pass' || $this->key === 'password');
         if ($pw || $trunc < 1) {
-          // Look for stringed integer (consists solely of digits), but only if not truncated.
+          // Look for stringed integer (consists solely of digits),
+          // but only if not truncated.
           if (!$pw && !$truncedTo && preg_match('/^\d+$/', $var)) {
-            $this->outputLength += strlen( // Deliberately not multibyte strlen().
-              $output .= ') ' . $this->quote_begin . $var . $this->quote_end // Stringed integer.
+            // Deliberately not multibyte strlen().
+            $this->outputLength += strlen(
+              // Stringed integer.
+              $output .= ') ' . $this->quote_begin . $var . $this->quote_end
             );
             return $output;
           }
           $this->outputLength += strlen( // Deliberately not multibyte strlen().
-            $output .= '|0) ' . $this->quote_begin . '...' . $this->quote_end // |0 ~ flag truncation
+            // |0 ~ flag truncation
+            $output .= '|0) ' . $this->quote_begin . '...' . $this->quote_end
           );
           return $output;
         }
@@ -1195,9 +1255,11 @@ class Inspect {
             if (strpos($var, '/') !== FALSE) {
               // Remove any path.
               if ($this->hide_paths) {
-                // Removes any kind of path - also document root - except when Windows.
+                // Removes any kind of path - also document root
+                // - except when Windows.
                 if ($var{0} === '/' // Absolute path.
-                  || ( $var{0} === '.' && (strpos($var, '../') === 0 || strpos($var, './') === 0) ) // Relative.
+                  // Relative.
+                  || ( $var{0} === '.' && (strpos($var, '../') === 0 || strpos($var, './') === 0) )
                 ) {
                   $pathRem = TRUE;
                   $leMb = static::mb_strlen($var = basename($var));
@@ -1215,8 +1277,9 @@ class Inspect {
             }
           }
           // Windows \.
-          // Doesn't attempt to remove/replace backslashed paths (except document root),
-          // because such cannot be detected safely. Backslash matching is close to impossible.
+          // Doesn't attempt to remove/replace backslashed paths (except
+          // document root), because such cannot be detected safely. Backslash
+          // matching is close to impossible.
           else {
             // Remove C:/ and ./ and ../.
             if ($this->hide_paths && strpos($var, '/') && preg_match('/^[a-zA-Z]:\/.+|\.\.?\/.+/', $var)) {
@@ -1239,7 +1302,8 @@ class Inspect {
         // Replace listed neeedles with harmless symbols.
         $var = str_replace($this->needles, $this->replacers, $var);
 
-        // Escape lower ASCIIs and backslashes - they may not be appropriate for a logging implementation.
+        // Escape lower ASCIIs and backslashes - they may not be appropriate for
+        // a logging implementation.
         if (!$pathRem && $this->target == 'log') {
           // Lower ASCII.
           $var = addcslashes($var, "\0..\37");
@@ -1334,7 +1398,8 @@ class Inspect {
 
         // Enforce the trace limit.
         if (count($trace) > $this->limit) {
-          array_splice($trace, $this->limit + 1); // plus one because we need the bucket holding the initial event
+          // Plus one because we need the bucket holding the initial event.
+          array_splice($trace, $this->limit + 1);
         }
       }
 
@@ -1347,11 +1412,13 @@ class Inspect {
         $sTrc = 'Exception (' . $xcClass . ') - code: ' . intval($exception->getCode()) . $delim;
         $file = trim($exception->getFile());
         $line = (($u = $exception->getLine()) ? trim($u) : '?');
-        // Escape exception message; may contain unexpected characters that are inappropriate for a logging implementation.
+        // Escape exception message; may contain unexpected characters that are
+        // inappropriate for a logging implementation.
         $xcMessage = addcslashes(str_replace($this->needles, $this->replacers, $exception->getMessage()), "\0..\37");
         $message = 'message: ' . $xcMessage . $delim;
 
-        // If more severe than debug: pass exception message to overall message, if that is empty.
+        // If more severe than debug: pass exception message to overall message,
+        // if that is empty.
         if ($this->severity < static::$severityToInteger['debug'] && !$this->message) {
           if ($this->target != 'file') {
             $this->message = static::mb_substr(
@@ -1373,7 +1440,6 @@ class Inspect {
       }
       else {
         $sTrc = 'Backtrace' . $delim;
-        // Find inspect method/function, which commanded creation of synthetic trace.
         $frame = array_shift($trace);
         if (isset($frame['class'])) {
           $sFunc = 'static method: ' . $frame['class'] . '::' . (isset($frame['function']) ? ($frame['function'] . '()') : '') . $delim;
@@ -1401,7 +1467,8 @@ class Inspect {
       $sTrcEnd = 'END ' . $this->trace_spacer;
 
       // Iterate stack frames.
-      $sTrcLength = strlen($sTrc) + strlen($sTrcEnd); // Deliberately not multibyte strlen().
+      // Deliberately not multibyte strlen().
+      $sTrcLength = strlen($sTrc) + strlen($sTrcEnd);
       $nFrame = -1;
       foreach ($trace as &$frame) {
         $sFrm = (++$nFrame) . ' ' . $this->trace_spacer . $delim;
@@ -1421,18 +1488,22 @@ class Inspect {
           . 'line: ' . (isset($frame['line']) ? trim($frame['line']) : '?') . $delim;
 
         // Class, object, function, type.
-        $sFunc = isset($frame['function']) && strlen($u = $frame['function']) ? $u : ''; // Deliberately not multibyte strlen().
-        $sCls = isset($frame['class']) && strlen($u = $frame['class']) ? $u : ''; // Deliberately not multibyte strlen().
+        // Deliberately not multibyte strlen().
+        $sFunc = isset($frame['function']) && strlen($u = $frame['function']) ? $u : '';
+        // Deliberately not multibyte strlen().
+        $sCls = isset($frame['class']) && strlen($u = $frame['class']) ? $u : '';
         $sType = isset($frame['type']) ? trim($frame['type']) : '';
         $sObj = '';
         if (isset($frame['object'])) {
           if (($o = $frame['object'])) {
-            // We dont know if class bucket is present when object is, but using class is cheaper.
+            // We dont know if class bucket is present when object is, but using
+            // class is cheaper.
             $sObj = $sCls ? $sCls : get_class($o);
             if ($sFunc) {
               $sFunc = 'method: (' . $sObj . ')' . ($sType ? $sType : '->') . $sFunc;
             }
-            else { // Is this possible at all? Simply object, no method call??
+            // Is this possible at all? Simply object, no method call?
+            else {
               $sObj = 'object (' . $sObj . ')';
             }
           }
@@ -1458,7 +1529,8 @@ class Inspect {
             . $delim;
         }
         // Skip current frame if total output now exceeds max.
-        if (($sTrcLength += strlen($sFrm)) > $this->output_max) { // Deliberately not multibyte strlen().
+        // Deliberately not multibyte strlen().
+        if (($sTrcLength += strlen($sFrm)) > $this->output_max) {
           $this->limitReduced = $nFrame;
           break;
         }
@@ -1499,11 +1571,14 @@ class Inspect {
    * Get (or init) session counter(s).
    *
    * Counters will only be set and updated if conf var session_counters,
-   * because this feature uses a cookie, and it also adds a slight performance hit to each and every request.
+   * because this feature uses a cookie, and it also adds a slight performance
+   * hit to each and every request.
    *
    *  Counters:
-   *  - session: not a number, a custom session id (case-sensitive hex, approx. 16 chars long), or simply 'na' (as in n/a)
-   *  - page_load: number of request in session that produced 'page' (non-AJAX) output
+   *  - session: not a number, a custom session id (case-sensitive hex, approx.
+   *    16 chars long), or simply 'na' (as in n/a)
+   *  - page_load: number of request in session that produced 'page' (non-AJAX)
+   *    output
    *  - request: number of requests in session
    *
    * @param string $name
@@ -1534,7 +1609,8 @@ class Inspect {
           $c = explode('.', uniqid('', TRUE));
           static::$sessionCounters = $counters = array(
             'session' => Inspect::baseConvert($c[0], 16, 62) . Inspect::baseConvert($c[1], 16, 62),
-            'page_load' => 0, // Will be increased when page delivery is guaranteed (hook_preprocess_html).
+            // Will be increased when page delivery is guaranteed.
+            'page_load' => 0,
             'request' => 1
           );
         }
@@ -1561,10 +1637,12 @@ class Inspect {
   }
 
   /**
-   * Increases session counter's page load number and sets updated session counter cookie.
+   * Increases session counter's page load number and sets updated session
+   * counter cookie.
    *
    * Counters will only be set and updated if conf var session_counters,
-   * because this feature uses a cookie, and it also adds a slight performance hit to each and every request.
+   * because this feature uses a cookie, and it also adds a slight performance
+   * hit to each and every request.
    */
   public static function updatePageLoadNumber() {
     static $called;
@@ -1582,13 +1660,17 @@ class Inspect {
   }
 
   /**
-   * Get request time start - in milliseconds - more accurately than the REQUEST_TIME constant.
+   * Get request time start - in milliseconds - more accurately than the
+   * REQUEST_TIME constant.
    *
-   * The value is usually slightly higher than REQUEST_TIME, apparantly the latter is a floor'ed value.
+   * The value is usually slightly higher than REQUEST_TIME, apparantly the
+   * latter is a floor'ed value.
    *
-   * Uses either $_SERVER['REQUEST_TIME_FLOAT'] (PHP>=5.4), request header X-Request-Received-Processed, or REQUEST_TIME.
+   * Uses either $_SERVER['REQUEST_TIME_FLOAT'] (PHP>=5.4), request header
+   * X-Request-Received-Processed, or REQUEST_TIME.
    *
-   * To enable use of the custom request header (Apache only), add the following to document root .htaccess:
+   * To enable use of the custom request header (Apache only), add the following
+   * to document root .htaccess:
    * @code
    * <IfModule mod_headers.c>
    *   RequestHeader set X-Request-Received-Processing "%t %D"
@@ -1614,12 +1696,16 @@ class Inspect {
               && array_key_exists('X-Request-Received-Processing', $a) && ($v = $a['X-Request-Received-Processing'])
             )
           )
-          && strlen($v) < 31 && preg_match('/^t\=\d{16,17}\ D\=\d{1,9}/', $v) // Deliberately not multibyte strlen().
+          // Deliberately not multibyte strlen().
+          && strlen($v) < 31 && preg_match('/^t\=\d{16,17}\ D\=\d{1,9}/', $v)
         ) {
           $a = explode(' ', $v);
-          $proc = (float) substr($a[1], 2); // Deliberately not multibyte substr().
-          // If received time can be reduced to positive integer, and that is close to REQUEST_TIME.
-          if (($iRec = (int) round(($flRec = (float) substr($a[0], 2)) / 1000000)) > 0 // Deliberately not multibyte strlen().
+          // Deliberately not multibyte substr().
+          $proc = (float) substr($a[1], 2);
+          // If received time can be reduced to positive integer, and that is
+          // close to REQUEST_TIME.
+          // Deliberately not multibyte strlen().
+          if (($iRec = (int) round(($flRec = (float) substr($a[0], 2)) / 1000000)) > 0
             && $iRec <= $rts + 1 && $iRec >= $rts - 1
           ) {
             $rtm = round(($flRec + $proc) / 1000, 3);
@@ -1647,42 +1733,60 @@ class Inspect {
    *   Array/object value of $options (any number of options):
    *   - (integer) depth (default 10, max 20)
    *   - (integer) truncate (default 1000, max 100000)
-   *   - (boolean) hide_scalars: hide values of scalar vars, and type of resource (also supported as value 'hide_scalars')
-   *   - (boolean) hide_paths: only optional for log (mandatory for get) (also supported as value 'hide_paths') NB: document root is always hidden.
-   *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be truncated to 255 (use 'none' to omit)
+   *   - (boolean) hide_scalars: hide values of scalar vars, and type of
+   *     resource (also supported as value 'hide_scalars')
+   *   - (boolean) hide_paths: only optional for log (mandatory for get), also
+   *     supported as value 'hide_paths' (NB: document root is always hidden)
+   *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be
+   *     truncated to 255 (use 'none' to omit)
    *   - (string) message, will be truncated to 255 (default empty)
    *   - (string) category: logging category (default inspect)
    *   - (string) type: alias of category
    *   - (integer|string) severity: default ~ 'debug'
-   *   - (integer) wrappers: the (inspect) function/method is wrapped in one or more local logging functions/methods (default zero)
-   *   - (string|array) filter: filter out that|those key name(s) (default empty)
-   *   - (array) needles: list of additional char|string needles to be used in str_replace
-   *   - (array) replacers: list of additional char|string replacers to be used in str_replace
-   *   - (boolean) one_lined: create one-lined formatting (also supported as value 'one_lined')
-   *   - (boolean) no_fileline: don't display file and line of call to inspect function/method (also supported as value 'no_fileline')
-   *   - (boolean) no_preface: omit [Inspect... preface (also supported as value 'no_preface')
+   *   - (integer) wrappers: the (inspect) function/method is wrapped in one or
+   *     more local logging functions/methods (default zero)
+   *   - (string|array) filter: filter out that|those key name(s)
+   *     (default empty)
+   *   - (array) needles: list of additional char|string needles to be used in
+   *     str_replace
+   *   - (array) replacers: list of additional char|string replacers to be used
+   *     in str_replace
+   *   - (boolean) one_lined: create one-lined formatting (also supported as
+   *     value 'one_lined')
+   *   - (boolean) no_fileline: don't display file and line of call to inspect
+   *     function/method (also supported as value 'no_fileline')
+   *   - (boolean) no_preface: omit [Inspect... preface (also supported as value
+   *     'no_preface')
    *
    *   String truncation:
-   *   - truncate option less than one (hide strings) doesnt apply to strings that solely consist of digits (stringed integers)
-   *   - a string bucket of an object/array keyed pass or password (lowercase) will always be hidden (no matter it's content)
+   *   - truncate option less than one (hide strings) doesnt apply to strings
+   *     that solely consist of digits (stringed integers)
+   *   - a string bucket of an object/array keyed pass or password (lowercase)
+   *     will always be hidden (no matter it's content)
    *
    *   Removes paths at the beginning of variables:
    *   - always removes document root
-   *   - always removes relative and absolute paths when getting (optional, hide_paths, when logging)
+   *   - always removes relative and absolute paths when getting (optional,
+   *     hide_paths, when logging)
    *
    *   Reports non-integer numbers:
    *   - double as float
    *   - NaN as NaN and infinite as infinite
    *
    *   Reports string lengths and path removal (path reduced to filename):
-   *   - un-truncated string, and when hiding scalar values: (multibyte length|ascii length)
+   *   - un-truncated string, and when hiding scalar values:
+   *     (multibyte length|ascii length)
    *   - truncated string: (multibyte length|ascii length|truncation length)
-   *   - if path removed: there will be a fourth flag (exclamation mark), if no truncation truncation length will be hyphen
+   *   - if path removed: there will be a fourth flag (exclamation mark), if no
+   *     truncation truncation length will be hyphen
    *
    *   Recursive:
-   *   - detects if a bucket of an object references the object itself (marked *RECURSION*)
-   *   - detects GLOBALS array's self-referencing GLOBALS bucket (marked *RECURSION*)
-   *   - doesnt check identity for arrays (not possible in PHP), nor 'same-ness' (too heavy, and prone to err)
+   *   - detects if a bucket of an object references the object itself
+   *     (marked *RECURSION*)
+   *   - detects GLOBALS array's self-referencing GLOBALS bucket
+   *     (marked *RECURSION*)
+   *   - doesnt check identity for arrays (not possible in PHP), nor 'same-ness'
+   *     (too heavy, and prone to err)
    *
    * Executes variable analysis within try-catch.
    *
@@ -1763,9 +1867,11 @@ class Inspect {
       )
       . $output;
 
-    // Truncate; is more sensitive when logging than filing or getting, because may end in db query.
+    // Truncate; is more sensitive when logging than filing or getting,
+    // because may end in db query.
     $truncated = FALSE;
-    if (strlen($output) > $inspect->output_max) { // Deliberately not multibyte strlen().
+    // Deliberately not multibyte strlen().
+    if (strlen($output) > $inspect->output_max) {
       $truncated = TRUE;
       $output = static::truncateBytes($output, $inspect->output_max - 5) . '[...]';
     }
@@ -1789,7 +1895,8 @@ class Inspect {
    *   Array/object value of $options are like Inspect::log()'s options, except:
    *   - (boolean) by_user: log to user specific file instead of common file
    *
-   * Deliberately doesn't escape strings, because the target is a file (not HTTP output).
+   * Deliberately doesn't escape strings, because the target is a file
+   * (not HTTP output).
    *
    * @param mixed $var
    * @param mixed $options
@@ -1844,7 +1951,8 @@ class Inspect {
             }
           }
           break;
-        case Inspect::ERROR_EXECTIME: // Max percent of max_execution_time passed.
+        // Max percent of max_execution_time passed.
+        case Inspect::ERROR_EXECTIME:
           $output = '(' . $errorCode . ') ' . $xc->getMessage();
           break;
         default:
@@ -1880,7 +1988,8 @@ class Inspect {
    *   Default: NULL.
    *
    * @return string
-   *   Empty: user isnt permitted to get inspections, or on error (other error than exceeding max. output length).
+   *   Empty: user isnt permitted to get inspections, or on error (other error
+   *   than exceeding max. output length).
    */
   public static function get($var, $options = NULL) {
     if (!static::permit('get')) {
@@ -1924,7 +2033,8 @@ class Inspect {
             }
           }
           break;
-        case Inspect::ERROR_EXECTIME: // Max percent of max_execution_time passed.
+        // Max percent of max_execution_time passed.
+        case Inspect::ERROR_EXECTIME:
           $output = '(' . $errorCode . ') ' . $xc->getMessage();
           break;
         default:
@@ -1956,15 +2066,17 @@ class Inspect {
   /**
    * Inspect and log stack trace to standard log, if permitted.
    *
-   * Logging an error message and/or exception message is always allowed, if severity is more severe than ~debug.
+   * Logging an error message and/or exception message is always allowed, if
+   * severity is more severe than ~debug.
    *
    * Integer value of options evalutuates to severity.
    *
    *   Array/object value of $options are like Inspect::log()'s options, except:
-   *   - (integer) limit: maximum stack frame depth, configurable in the settings page (default 5, max 100)
+   *   - (integer) limit: maximum stack frame depth (default 5, max 100)
    *   - (string) category: inspect trace
    *   - (string) pre_indent
-   *   - (string) trace_spacer: spacer between frames (default hyphen dotted line, length 49)
+   *   - (string) trace_spacer: spacer between frames
+   *     (default hyphen dotted line, length 49)
    *
    * See inspect() for specifics of variable analysis.
    *
@@ -1993,7 +2105,8 @@ class Inspect {
 
     if (!static::permit('log')) {
       // Logging is always permitted when severity is more grave than debug;
-      // however only the exception message and/or $options message will be logged.
+      // however only the exception message and/or $options message will be
+      // logged.
       if ($inspect->severity < static::$severityToInteger['debug']) {
         $ms = !$inspect->message ? '' : (
           htmlspecialchars(
@@ -2011,7 +2124,8 @@ class Inspect {
 
         //@formatter:off
         if ($exception && is_object($exception)) {
-          // Escape exception message; may contain unexpected characters that are inappropriate for a logging implementation.
+          // Escape exception message; may contain unexpected characters that
+          // are inappropriate for a logging implementation.
           $em = htmlspecialchars(
               addcslashes(str_replace($inspect->needles, $inspect->replacers, $exception->getMessage()), "\0..\37"),
               ENT_QUOTES, // PHP 5.4: ENT_QUOTES | ENT_SUBSTITUTE
@@ -2050,8 +2164,10 @@ class Inspect {
       . $inspect->newline
       . $trace;
 
-    // Truncate; is more sensitive when logging than filing or getting, because may end in db query.
-    if (strlen($output) > $inspect->output_max) { // Deliberately not multibyte strlen().
+    // Truncate; is more sensitive when logging than filing or getting, because
+    // may end in db query.
+    // Deliberately not multibyte strlen().
+    if (strlen($output) > $inspect->output_max) {
       $output = static::truncateBytes($output, $inspect->output_max - 5) . '[...]';
     }
     // Enclose in HTML tags?
@@ -2083,12 +2199,14 @@ class Inspect {
   /**
    * Inspect and log stack trace to file, if permitted.
    *
-   * Filing an error message and/or exception message is always allowed, if severity is more severe than ~debug.
+   * Filing an error message and/or exception message is always allowed, if
+   * severity is more severe than ~debug.
    *
-   *   Array/object value of $options are like Inspect::trace()'s options, except:
+   *   Array/object value of $options are like Inspect::trace(), except:
    *   - (boolean) by_user: log to user specific file instead of common file
    *
-   * Deliberately doesn't escape strings, because the target is a file (not HTTP output).
+   * Deliberately doesn't escape strings, because the target is a file
+   * (not HTTP output).
    *
    * @param \Exception|NULL $exception
    *   Default: NULL (~ create new backtrace)
@@ -2109,7 +2227,8 @@ class Inspect {
 
     if (!static::permit('file')) {
       // Logging is always permitted when severity is more grave than debug;
-      // however only the exception message and/or $options message will be logged.
+      // however only the exception message and/or $options message will be
+      //logged.
       if ($inspect->severity < static::$severityToInteger['debug']) {
         $ms = !$inspect->message ? '' : (
           str_replace($inspect->needles, $inspect->replacers, $inspect->message)
@@ -2164,7 +2283,8 @@ class Inspect {
    *   Default: NULL.
    *
    * @return string
-   *   Empty: user isnt permitted to get inspections, or tracing failed (other error than exceeding max. output length).
+   *   Empty: user isnt permitted to get inspections, or tracing failed (other
+   *   error than exceeding max. output length).
    */
   public static function traceGet($exception = NULL, $options = NULL) {
     if (!static::permit('get')) {
@@ -2278,7 +2398,8 @@ class Inspect {
    * Logs message from frontend to backend log.
    *
    *  Required POST vars:
-   *  - (string) message (HTML allowed, will be escaped, max multibyte length 100.000)
+   *  - (string) message (HTML allowed, will be escaped, max multibyte length
+   *    100.000)
    *  - (string) category: will always get 'frontend' prefixed (plaintext)
    *  - (integer) severity
    *  - (integer) logNo
@@ -2289,7 +2410,8 @@ class Inspect {
    *
    *  Optional POST vars.
    *  - (string) caption (plaintext, max multibyte length 255)
-   *  - (string) pageLoadId: ~ session counters (and we just use that GET var instead)
+   *  - (string) pageLoadId: ~ session counters (and we just use that GET var
+   *    instead)
    *
    * @param string $sessionCounter
    * @param integer $logNo
@@ -2298,7 +2420,8 @@ class Inspect {
    *
    * @return void
    *   Exits.
-   *   Sends 403 header if the expected POST vars arent set or their values arent acceptable.
+   *   Sends 403 header if the expected POST vars arent set or their values
+   *   aren't acceptable.
    */
   public static function logFromFrontend($sessionCounter, $logNo, $severity) {
     // Optionals POST vars, which might not get initialized otherwise.
@@ -2309,7 +2432,8 @@ class Inspect {
 
       // GET vars validation.
 
-      // Session counter pattern (cookie inspect__sc + frontend log number): 'ascii-letters-and-numbers:number:number'.
+      // Session counter pattern (cookie inspect__sc + frontend log number):
+      // 'ascii-letters-and-numbers:number:number'.
       || !$sessionCounter || ($sessionCounter !== 'i' && !preg_match('/^[a-zA-Z\d]+:\d{1,5}:\d{1,5}$/', $sessionCounter))
 
       // Log no. must be a number of a reasonable size.
@@ -2325,15 +2449,19 @@ class Inspect {
       || empty($_POST['category']) || static::mb_strlen($category = static::plaintext($_POST['category'])) > 64
 
       // Kind must be a non-empty string, no longer than 32 chars.
-      || empty($_POST['kind']) || strlen($kind = static::plaintext($_POST['kind'])) > 32 // Deliberately not multibyte strlen().
+      // Deliberately not multibyte strlen().
+      || empty($_POST['kind']) || strlen($kind = static::plaintext($_POST['kind'])) > 32
 
-      // Message must be a non-empty string, no longer than 102400 multibyte chars (100Kb + multibyte extra encoding chars).
+      // Message must be a non-empty string, no longer than 102400 multibyte
+      // chars (100Kb + multibyte extra encoding chars).
       || !array_key_exists('message', $_POST) || static::mb_strlen($message = '' . $_POST['message']) > 102400
 
-      // Url (including original GET vars etc.) must be a non-empty string, no longer than 1024 multibyte chars.
+      // Url (including original GET vars etc.) must be a non-empty string,
+      // no longer than 1024 multibyte chars.
       || empty($_POST['url']) || static::mb_strlen($url = static::plaintext($_POST['url'])) > 1024
 
-      // Browser (including original GET vars etc.) must be a non-empty string, no longer than 512 multibyte chars.
+      // Browser (including original GET vars etc.) must be a non-empty string,
+      // no longer than 512 multibyte chars.
       || empty($_POST['browser']) || static::mb_strlen($browser = static::plaintext($_POST['browser'])) > 512
 
       // fileLine must be a non-empty string, no longer than 512 multibyte chars.
@@ -2341,7 +2469,8 @@ class Inspect {
 
       // Optional POST vars validation.
 
-      // Caption must (if set) be a non-empty string, no longer than 255 multibyte chars.
+      // Caption must (if set) be a non-empty string, no longer than 255
+      // multibyte chars.
       || (!empty($_POST['caption']) && static::mb_strlen($caption = static::plaintext($_POST['caption'])) > 255)
     ) {
       header('HTTP/1.1 403 Forbidden');
@@ -2359,7 +2488,8 @@ class Inspect {
       FALSE // No double encoding
     );
 
-    // Make sure severity isnt too severe; frontend should probably not be allowed to log an 'emergency'.
+    // Make sure severity isnt too severe; frontend should probably not be
+    // allowed to log an 'emergency'.
     if ($severity < ($maxSeverity = static::configGet('inspect', 'fronttoback_sevmax', static::$severityToInteger['error']))) {
       $severity = $maxSeverity;
     }
@@ -2424,7 +2554,8 @@ class Inspect {
    * @see Inspect::OUTPUT_DEFAULT
    *
    * @param boolean $check
-   *   Truthy: descendant implementation may establish max. from sources like database; fall-back Inspect::OUTPUT_DEFAULT.
+   *   Truthy: descendant implementation may establish max. from sources like
+   *   database; fall-back Inspect::OUTPUT_DEFAULT.
    *
    * @return integer
    */
@@ -2487,11 +2618,12 @@ class Inspect {
   }
 
   /**
-   * Convert number or hex string to any base through 2 and 62  (~ larger than 16).
+   * Convert number or hex string to any base through 2 and 62.
    *
    * Base 62 produces up to 35% shorter string than base 16.
    *
-   *  Like native base_convert() precision fails for numbers (somewhere) larger than (tested on windows box with ini precision 14):
+   *  Like native base_convert() precision fails for numbers (somewhere) larger
+   *  than (tested on windows box with ini precision 14):
    *  - base 10: 9007199254740991 (> 15 digits)
    *  - base 16: 1fffffffffffff (> 14 digits)
    *
@@ -2526,7 +2658,8 @@ class Inspect {
       default:
         return $remainder;
     }
-    $remainder = (float)$remainder; // Arg $num may be string, and base_convert() returns string.
+    // Arg $num may be string, and base_convert() returns string.
+    $remainder = (float)$remainder;
     if ($toBase > 62) {
       $toBase = 62;
     }
@@ -2537,14 +2670,18 @@ class Inspect {
     // Find power ~ required number of digits.
     $pow = 0;
     $divisor = 1;
-    $limit = 100; // probably way too high, havent seen more than 10 iterations (1fffffffffffff, with precision 14)
+    // Limit:100 probably way too high, havent seen more than 10 iterations
+    // (1fffffffffffff, with precision 14)
+    $limit = 100;
     while ($remainder >= ($test = pow($toBase, ++$pow)) && (--$limit)) {
       $divisor = $test;
       --$limit;
     }
     --$pow;
     // Do modulo procedure.
-    $limit = 100; // probably way too high, havent seen more than 14 iterations (1fffffffffffff, with precision 14)
+    // Limit:100 probably way too high, havent seen more than 14 iterations
+    // (1fffffffffffff, with precision 14).
+    $limit = 100;
     while ($remainder > 0 && (--$limit)) {
       if ($pow) {
         if ($divisor == $remainder) {
@@ -2613,7 +2750,8 @@ class Inspect {
    *
    * Caller must guarantee to escape category and message.
    *
-   * May truncate message to prevent failure; maximum length may be as short as 1 kilobyte (1024 raw chars.).
+   * May truncate message to prevent failure; maximum length may be as short as
+   * 1 kilobyte (1024 raw chars.).
    *
    * @see Inspect::logMessage()
    * @param string $message
@@ -2628,14 +2766,17 @@ class Inspect {
    */
   protected static function logToStandard($message = '', $category = 'inspect', $severity = 'debug') {
     static $outputMax;
-    // No instance output_max here, and in this very basic implementation of the method we only consider the nature of PHP ini:error_log.
+    // No instance output_max here, and in this very basic implementation of
+    // the method we only consider the nature of PHP ini:error_log.
     if (!$outputMax) {
       // Syslog normally allows for 1Kb.
-      // Filing isn't atomical when message length exceeds the file system's max block size (typically 4Kb; ext3 and NTFS).
+      // Filing isn't atomical when message length exceeds the file system's
+      // max block size (typically 4Kb; ext3 and NTFS).
       $outputMax = ini_get('error_log') === 'syslog' ? 1024 : 4096;
     }
 
-    // Get rid of enclosing html tags, and filing truncators (newline, null byte).
+    // Get rid of enclosing html tags, and filing truncators
+    // (newline, null byte).
     if ($message && $message{0} === '<') {
       $message = strip_tags($message);
     }
@@ -2654,9 +2795,11 @@ class Inspect {
   /**
    * Log to custom file.
    *
-   * Deliberately doesn't escape message, because the target is a file (not HTTP output).
+   * Deliberately doesn't escape message, because the target is a file
+   * (not HTTP output).
    *
-   * May truncate message; though maximum length is probably hundreds of kilobytes.
+   * May truncate message; though maximum length is probably hundreds
+   * of kilobytes.
    *
    * @param string $message
    *   Default: empty string.
@@ -2680,8 +2823,10 @@ class Inspect {
     $severity = static::severity($severity);
 
     // Truncate.
-    // No instance output_max here, so we have to resort to the (possibly larger) class value.
-    if (strlen($message) > static::$outputMax) { // Deliberately not multibyte strlen().
+    // No instance output_max here, so we have to resort to the
+    // (possibly larger) class value.
+    // Deliberately not multibyte strlen().
+    if (strlen($message) > static::$outputMax) {
       $message = static::truncateBytes($message, static::$outputMax - 5) . '[...]';
     }
 
@@ -2689,7 +2834,9 @@ class Inspect {
     $rtm = static::$requestTimeMilli;
     return file_put_contents(
       $_logDir . '/inspect_' . date('Ymd', (int) round($rtm / 1000))
-      . (!$by_user ? '' : // For anonymous user: avoid filing concurrency by using the session number.
+      // For anonymous user: avoid filing concurrency by using the session
+      // number.
+      . (!$by_user ? '' :
         ('_user_' . $uid . ($uid ? '' : ('_' . static::$sessionCounters['session'])))
       )
       . '.log',
@@ -2835,7 +2982,8 @@ class Inspect {
   }
 
   /**
-   * Truncate multibyte safe until ASCII length is equal to/less than arg length.
+   * Truncate multibyte safe until ASCII length is equal to/less than arg
+   * length.
    *
    * Does not check if arg $str is valid UTF-8.
    *
@@ -2891,7 +3039,8 @@ class Inspect {
   }
 
   /**
-   * Convert number to string avoiding E-notation for numbers outside system precision range.
+   * Convert number to string avoiding E-notation for numbers outside system
+   * precision range.
    *
    * @param float|integer $num
    *
