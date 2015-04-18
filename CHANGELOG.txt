@@ -1,3 +1,8 @@
+inspect 1.x, 2015-04-18
+-----------------------
+- Frontend: stricter typeOf() array check; some jQuery extensions (old
+  dataTables) were erroneously assessed as array.
+
 inspect 1.x, 2015-04-05
 -----------------------
 - Documentation; max comment line length 80.

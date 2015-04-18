@@ -199,7 +199,9 @@
             if (u.typeOf && typeof u.typeOf === 'function') {
               return u.typeOf();
             }
-            if (typeof u.length === 'number' && !(u.propertyIsEnumerable('length')) && typeof u.splice === 'function') {
+            if (typeof u.length === 'number' && !(u.propertyIsEnumerable('length')) && typeof u.splice === 'function'
+              && Object.prototype.toString.call(u) === '[object Array]'
+            ) {
               return 'array';
             }
             if (u === window) {
