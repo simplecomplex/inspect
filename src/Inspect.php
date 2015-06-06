@@ -193,7 +193,16 @@ class Inspect {
   public $wrappers = 0;
 
   /**
-   * Logging category.
+   * Logging type.
+   *
+   * @var string
+   */
+  public $type = 'inspect';
+
+  /**
+   * Alias of type.
+   *
+   * @deprecated
    *
    * @var string
    */
@@ -338,7 +347,7 @@ class Inspect {
   protected static $defaultsByKind = array(
     'trace' => array(
       'depth' => 2,
-      'category' => 'inspect trace',
+      'type' => 'inspect trace',
       'pre_indent' => '  ',
       'delimiters' => array(
         "\n", // Before first bucket.
@@ -483,10 +492,10 @@ class Inspect {
       }
       unset($opts['output_max'], $v);
 
-      // Support 'type' as alias of 'category'.
-      if (array_key_exists('type', $opts)) {
-        $opts['category'] = $opts['type'];
-        unset($opts['type']);
+      // Support 'category' as alias of 'type'.
+      if (empty($opts['type']) && !empty($opts['category'])) {
+        $opts['type'] = $opts['category'];
+        unset($opts['category']);
       }
 
       // Filter may be string or array.
@@ -529,6 +538,8 @@ class Inspect {
         }
       }
     }
+    // Support 'category' as alias of 'type'.
+    $this->category = $this->type;
 
     // Override options when target:get in CLI mode; don't ever enclose output
     // HTML tag.
@@ -924,8 +935,8 @@ class Inspect {
    *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be
    *      truncated to 255 (default empty, use 'none' to omit)
    *   - (string) message, will be truncated to 255 (default empty)
-   *   - (string) category: logging category (default inspect)
-   *   - (string) type: alias of category
+   *   - (string) type: logging type (default inspect)
+   *   - (string) category: alias of type
    *   - (integer) severity: default 7|'debug'
    *   - (string|array) filter: filter out that|those key name(s),
    *     default empty
@@ -1740,8 +1751,8 @@ class Inspect {
    *   - (string) name: '$var_name' or "\$var_name", must be escaped, will be
    *     truncated to 255 (use 'none' to omit)
    *   - (string) message, will be truncated to 255 (default empty)
-   *   - (string) category: logging category (default inspect)
-   *   - (string) type: alias of category
+   *   - (string) type: logging type (default inspect)
+   *   - (string) category: alias of type
    *   - (integer|string) severity: default ~ 'debug'
    *   - (integer) wrappers: the (inspect) function/method is wrapped in one or
    *     more local logging functions/methods (default zero)
@@ -1884,7 +1895,7 @@ class Inspect {
 
     return static::logToStandard(
       $tagStart . $output . $tagEnd,
-      static::plaintext(static::mb_substr($inspect->category, 0, 64)),
+      static::plaintext(static::mb_substr($inspect->type, 0, 64)),
       $inspect->severity
     );
   }
@@ -1970,7 +1981,7 @@ class Inspect {
         (static::fileLine($inspect->hide_paths, $inspect->wrappers) . $inspect->newline)
       )
       . $output,
-      $inspect->category,
+      $inspect->type,
       $inspect->severity,
       $inspect->by_user
     );
@@ -2073,7 +2084,7 @@ class Inspect {
    *
    *   Array/object value of $options are like Inspect::log()'s options, except:
    *   - (integer) limit: maximum stack frame depth (default 5, max 100)
-   *   - (string) category: inspect trace
+   *   - (string) type: inspect trace
    *   - (string) pre_indent
    *   - (string) trace_spacer: spacer between frames
    *     (default hyphen dotted line, length 49)
@@ -2141,7 +2152,7 @@ class Inspect {
 
         return static::logToStandard(
           $ms . $em,
-          static::plaintext(static::mb_substr($inspect->category, 0, 64)),
+          static::plaintext(static::mb_substr($inspect->type, 0, 64)),
           $inspect->severity
         );
       }
@@ -2179,7 +2190,7 @@ class Inspect {
 
     return static::logToStandard(
       $tagStart . $output . $tagEnd,
-      static::plaintext(static::mb_substr($inspect->category, 0, 64)),
+      static::plaintext(static::mb_substr($inspect->type, 0, 64)),
       $inspect->severity
     );
   }
@@ -2245,7 +2256,7 @@ class Inspect {
 
         return static::logToFile(
           $ms . $em,
-          $inspect->category,
+          $inspect->type,
           $inspect->severity,
           $inspect->by_user
         );
@@ -2264,7 +2275,7 @@ class Inspect {
       . '|depth:' . $inspect->depth . ']|truncate:' . $inspect->truncate . ']'
       . $inspect->newline
       . $trace,
-      $inspect->category,
+      $inspect->type,
       $inspect->severity,
       $inspect->by_user
     );
@@ -2323,7 +2334,7 @@ class Inspect {
    *
    * @param string $message
    *   Default: empty string.
-   * @param string $category
+   * @param string $type
    *   Default: inspect.
    * @param integer|string $severity
    *   Default: 'debug'.
@@ -2332,7 +2343,7 @@ class Inspect {
    *   NULL: user isnt permitted to log inspections.
    *   FALSE: on error.
    */
-  public static function logMessage($message = '', $category = 'inspect', $severity = 'debug') {
+  public static function logMessage($message = '', $type = 'inspect', $severity = 'debug') {
     if (!static::permit('log')) {
       return NULL;
     }
@@ -2355,7 +2366,7 @@ class Inspect {
       . $opts->newline
       . static::fileLine(FALSE, 0)
       . $tagEnd,
-      static::plaintext(static::mb_substr($category, 0, 64)),
+      static::plaintext(static::mb_substr($type, 0, 64)),
       static::severity($severity)
     );
   }
@@ -2365,7 +2376,7 @@ class Inspect {
    *
    * @param string $message
    *   Default: empty string.
-   * @param string $category
+   * @param string $type
    *   Default: inspect.
    * @param integer|string $severity
    *   Default: 'debug'.
@@ -2377,7 +2388,7 @@ class Inspect {
    *   NULL: user isnt permitted to log inspections.
    *   FALSE: on error.
    */
-  public static function fileMessage($message = '', $category = 'inspect', $severity = 'debug', $by_user = FALSE) {
+  public static function fileMessage($message = '', $type = 'inspect', $severity = 'debug', $by_user = FALSE) {
     if (!static::permit('file')) {
       return NULL;
     }
@@ -2388,7 +2399,7 @@ class Inspect {
       str_replace($opts->needles, $opts->replacers, $message)
       . $opts->newline
       . static::fileLine(FALSE, 0),
-      $category,
+      $type,
       static::severity($severity),
       $by_user
     );
@@ -2400,7 +2411,7 @@ class Inspect {
    *  Required POST vars:
    *  - (string) message (HTML allowed, will be escaped, max multibyte length
    *    100.000)
-   *  - (string) category: will always get 'frontend' prefixed (plaintext)
+   *  - (string) type: will always get 'frontend' prefixed (plaintext)
    *  - (integer) severity
    *  - (integer) logNo
    *  - (string) kind: info | inspect | trace
@@ -2445,8 +2456,8 @@ class Inspect {
 
       // Required POST vars validation.
 
-      // Category must be a non-empty string, no longer than 64 chars.
-      || empty($_POST['category']) || static::mb_strlen($category = static::plaintext($_POST['category'])) > 64
+      // Type must be a non-empty string, no longer than 64 chars.
+      || empty($_POST['type']) || static::mb_strlen($type = static::plaintext($_POST['type'])) > 64
 
       // Kind must be a non-empty string, no longer than 32 chars.
       // Deliberately not multibyte strlen().
@@ -2527,7 +2538,7 @@ class Inspect {
 
     static::logToStandard(
       $output . $tagEnd,
-      'frontend ' . $category,
+      'frontend ' . $type,
       $severity
     );
 
@@ -2748,7 +2759,7 @@ class Inspect {
   /**
    * Log to the equivalent of stderr (PHP error_log).
    *
-   * Caller must guarantee to escape category and message.
+   * Caller must guarantee to escape type and message.
    *
    * May truncate message to prevent failure; maximum length may be as short as
    * 1 kilobyte (1024 raw chars.).
@@ -2756,7 +2767,7 @@ class Inspect {
    * @see Inspect::logMessage()
    * @param string $message
    *   Default: empty string.
-   * @param string $category
+   * @param string $type
    *   Default: inspect.
    * @param integer|string $severity
    *   Default: 'debug'.
@@ -2764,7 +2775,7 @@ class Inspect {
    * @return boolean
    *   FALSE: on error.
    */
-  protected static function logToStandard($message = '', $category = 'inspect', $severity = 'debug') {
+  protected static function logToStandard($message = '', $type = 'inspect', $severity = 'debug') {
     static $outputMax;
     // No instance output_max here, and in this very basic implementation of
     // the method we only consider the nature of PHP ini:error_log.
@@ -2780,8 +2791,8 @@ class Inspect {
     if ($message && $message{0} === '<') {
       $message = strip_tags($message);
     }
-    // Prefix severity and category.
-    $message = '[' . static::severity($severity, TRUE) . ':' . $category . '] '
+    // Prefix severity and type.
+    $message = '[' . static::severity($severity, TRUE) . ':' . $type . '] '
       . str_replace(array("\n", "\0"), array('\\n', '_NUL_'), $message);
 
     // Truncate.
@@ -2803,7 +2814,7 @@ class Inspect {
    *
    * @param string $message
    *   Default: empty string.
-   * @param string $category
+   * @param string $type
    *   Default: inspect.
    * @param integer|string $severity
    *   Default: 'debug'.
@@ -2814,12 +2825,12 @@ class Inspect {
    * @return boolean
    *   FALSE: on error.
    */
-  protected static function logToFile($message = '', $category = 'inspect', $severity = 'debug', $by_user = FALSE) {
+  protected static function logToFile($message = '', $type = 'inspect', $severity = 'debug', $by_user = FALSE) {
     static $_logDir;
     if (!$_logDir && !($_logDir = static::ensureDirectory('logs'))) {
       return FALSE;
     }
-    $category = static::plaintext(static::mb_substr($category, 0, 64));
+    $type = static::plaintext(static::mb_substr($type, 0, 64));
     $severity = static::severity($severity);
 
     // Truncate.
@@ -2844,7 +2855,7 @@ class Inspect {
       . ' - ' . date('Y-m-d H:i:s', floor($rtm / 1000)) . ' - user: ' . $uid
       . ' --------------------------------------------------'
       . "\n" . $_SERVER['REQUEST_METHOD'] . ' ' . $_SERVER['REQUEST_URI']
-      . "\nseverity+category: " . static::$severityToString[$severity] . ' - ' . $category
+      . "\nseverity+type: " . static::$severityToString[$severity] . ' - ' . $type
       . "\n" . $message . "\n\n",
       FILE_APPEND
     ) ? TRUE : FALSE;

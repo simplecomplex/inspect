@@ -23,7 +23,7 @@
    * @ignore
    */
   window.inspect = (function() {
-    var _opts = ['depth', 'protos', 'func_body', 'message', 'category', 'severity', 'output_to', 'wrappers'], _nOpts = _opts.length,
+    var _opts = ['depth', 'protos', 'func_body', 'message', 'type', 'severity', 'output_to', 'wrappers'], _nOpts = _opts.length,
     _strQt = ['`', '`'],
     _loc,
     _dmnRgx = new RegExp((_loc = window.location.href).replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1').replace(/([\/\.\-])/g, '\\' + '$1')),
@@ -124,6 +124,10 @@
       else {
         for (i = 0; i < _nOpts; i++) {
           o[ _opts[i] ] = u.hasOwnProperty(_opts[i]) ? u[ _opts[i] ] : undefined;
+        }
+        // 'category' alias of 'type'.
+        if (!o.type && u.category) {
+          o.type = u.category;
         }
         if (o.hasOwnProperty('output_to')) {
           switch ('' + o.output_to) {
@@ -475,8 +479,8 @@
      *  - (string) caption
      *  - (string) message
      *  - (string) fileLine
-     *  - (string) category: logging category (default: 'info')
-     *  - (string) type: alias of category
+     *  - (string) type: logging type
+     *  - (string) category: alias of type
      *  - (string|integer) severity: syslog RFC 5424 number or equivalent string
      *    (error is 3 'error')
      *  - (string) kind: inspect|trace|info, default: info
@@ -488,19 +492,19 @@
      * @private
      * @param {string|object} message
      *  - default: info
-     * @param {string} [category]
-     *  - logging category
+     * @param {string} [type]
+     *  - logging type
      *  - default: info
      * @param {string|integer} [severity]
      *  - default: info
      *  - syslog RFC 5424 number or equivalent string (error is 3 'error')
      * @return void
      */
-    _log = function(message, category, severity) {
+    _log = function(message, type, severity) {
       var u, k, le, i, ms = message, o = _conf.logMessage, url = o.url, cMax = 255, mMax = 102400, data = {
         logNo: (++_logNo),
         sessionCounter: 'i',
-        category: '' + category,
+        type: ('' + type) || 'info',
         severity: severity, // 6 ~ info.
         kind: 'info',
         url: _loc,
@@ -522,14 +526,16 @@
             if (ms.hasOwnProperty(k)) {
               switch (k) {
                 case 'message':
-                case 'category':
+                case 'type':
                 case 'caption':
                 case 'fileLine':
                   data[k] = '' + ms[k];
                   break;
-                case 'type':
-                  // Alias of 'category'.
-                  data.category = '' + ms[k];
+                case 'category':
+                  // Alias of 'type'.
+                  if (ms[k]) {
+                    data.type = '' + ms[k];
+                  }
                   break;
                 case 'severity':
                 case 'wrappers':
@@ -771,7 +777,7 @@ if(typeof window.inspect === 'function' && inspect.tcepsni) {
      * Inspect variable and log output to backend.
      *
      * Additional options:
-     *  - (string) category (default: inspect)
+     *  - (string) type (default: inspect)
      *  - (string) severity (default: debug)
      *
      * Also logs current file and line, url, and browser plus useragent.
@@ -786,8 +792,8 @@ if(typeof window.inspect === 'function' && inspect.tcepsni) {
     f.log = function(u, options) {
       var o = _rslv(options);
       o.kind = 'dump';
-      if (!o.category) {
-        o.category = 'inspect';
+      if (!o.type) {
+        o.type = 'inspect';
       }
       if (!o.severity) {
         o.severity = 'debug';
@@ -884,7 +890,7 @@ catch(er) {
      *  - (string) message (default empty)
      *  - (integer) wrappers (default zero: inspect.traceLog() is not wrapped
      *    in one or more local logging functions/methods)
-     *  - (string) category (default: inspect trace)
+     *  - (string) type (default: inspect trace)
      *  - (string) severity (default: debug)
      *
      * (string) options is interpreted as message.
@@ -902,8 +908,8 @@ catch(er) {
     f.traceLog = function(er, options) {
       var o = _rslv(options);
       o.kind = 'trace';
-      if (!o.category) {
-        o.category = 'inspect trace';
+      if (!o.type) {
+        o.type = 'inspect trace';
       }
       if (!o.severity) {
         o.severity = 'debug';
@@ -1028,7 +1034,7 @@ catch(er) {
      * Defaults to display bodies of functions (options func_body).
      *
      * Additional options:
-     *  - (string) category (default: inspect)
+     *  - (string) type (default: inspect)
      *  - (string) severity (default: debug)
      *
      * (string) options is interpreted as message.
@@ -1046,8 +1052,8 @@ catch(er) {
     f.eventsLog = function(selector, options) {
       var o = _rslv(options);
       o.kind = 'inspect';
-      if (!o.category) {
-        o.category = 'inspect events';
+      if (!o.type) {
+        o.type = 'inspect events';
       }
       if (!o.severity) {
         o.severity = 'debug';
@@ -1075,8 +1081,8 @@ catch(er) {
      *  - (string) caption
      *  - (string) message
      *  - (string) fileLine
-     *  - (string) category: logging category (default: 'info')
-     *  - (string) type: alias of category
+     *  - (string) type: logging type
+     *  - (string) category: alias of type
      *  - (string|integer) severity: syslog RFC 5424 number or equivalent string
      *    (error is 3 'error')
      *  - (string) kind: inspect|trace|info, default: 'info'
@@ -1085,10 +1091,9 @@ catch(er) {
      * @function
      * @name inspect.logMessage
      * @param {string|object} message
-     *  - default: info
      *  - object: options list
-     * @param {string} [category]
-     *  - logging category
+     * @param {string} [type]
+     *  - logging type
      *  - default: info
      * @param {string|integer} [severity]
      *  - default: info
@@ -1130,14 +1135,14 @@ catch(er) {
       }
       if (to > 1) {
         if (error) {
-          if (!o.category) {
-            o.category = 'inspect trace';
+          if (!o.type) {
+            o.type = 'inspect trace';
           }
           o.messsage = _trc(error);
         }
         else {
-          if (!o.category) {
-            o.category = 'inspect';
+          if (!o.type) {
+            o.type = 'inspect';
           }
           o.messsage = _nspct(variable, o.protos, o.func_body, o.depth);
         }
