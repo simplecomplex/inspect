@@ -9,6 +9,8 @@ New features
 ------------
 - Backend and frontend: category is now an alias of type (instead of vice versa)
   and the use of category is deprecated.
+- New instance var code, usable for event or error code.
+- Now supports logging via injected PSR-3 logger; instance var (object) logger.
 
 Bug fixes
 ---------

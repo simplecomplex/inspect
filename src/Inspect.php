@@ -216,6 +216,13 @@ class Inspect {
   public $severity = 7;
 
   /**
+   * Event or error code.
+   *
+   * @var integer
+   */
+  public $code = 0;
+
+  /**
    * '$var_name' or "\$var_name", must be escaped, will be truncated to 255
    * (use 'none' to omit).
    *
@@ -255,6 +262,13 @@ class Inspect {
    * @var array
    */
   public $replacers = array('_NL_', '_CR_', '_TB_', '_NUL_', '&#60;', '&#62;', '&#34;', '&#39;');
+
+  /**
+   * PSR-3 logger.
+   *
+   * @var object|NULL
+   */
+  public $logger;
 
   /**
    * Formatting option: Char|string used as initial quote.
@@ -298,6 +312,8 @@ class Inspect {
 
   /**
    * Formatting option: (HT)ML enclosure tag, used to wrap log entry.
+   *
+   * Defaults to empty when using injected logger.
    *
    * @var string
    */
@@ -514,6 +530,18 @@ class Inspect {
         unset($opts[$key]);
       }
       unset($keys);
+
+      // PSR-3 logger.
+      if (!empty($opts['logger'])) {
+        // Prevent string value error.
+        if (!is_object($opts['logger'])) {
+          unset($opts['logger']);
+        }
+        else {
+          // An injected logger propably won't like (HT)ML wrapped message.
+          $this->enclose_tag = '';
+        }
+      }
 
       // Complex formatting flag.
       if (!empty($opts['one_lined'])) {
@@ -1375,6 +1403,9 @@ class Inspect {
       // Received Exception, by arg.
       if ($exception) {
         if (is_object($exception) && (($xcClass = get_class($exception)) === 'Exception' || is_subclass_of($exception, 'Exception'))) {
+          if (!$this->code) {
+            $this->code = $exception->getCode();
+          }
           $trace = $exception->getTrace();
           if (count($trace) > $this->limit) {
             array_splice($trace, $this->limit);
@@ -1420,7 +1451,7 @@ class Inspect {
 
       // If exception: resolve its origin.
       if ($xcClass) {
-        $sTrc = 'Exception (' . $xcClass . ') - code: ' . intval($exception->getCode()) . $delim;
+        $sTrc = 'Exception (' . $xcClass . ') - code: ' . $exception->getCode() . $delim;
         $file = trim($exception->getFile());
         $line = (($u = $exception->getLine()) ? trim($u) : '?');
         // Escape exception message; may contain unexpected characters that are
@@ -1754,6 +1785,7 @@ class Inspect {
    *   - (string) type: logging type (default inspect)
    *   - (string) category: alias of type
    *   - (integer|string) severity: default ~ 'debug'
+   *   - (object) logger: default none, use Inspect's standard logger
    *   - (integer) wrappers: the (inspect) function/method is wrapped in one or
    *     more local logging functions/methods (default zero)
    *   - (string|array) filter: filter out that|those key name(s)
@@ -1887,16 +1919,26 @@ class Inspect {
       $output = static::truncateBytes($output, $inspect->output_max - 5) . '[...]';
     }
     // Enclose in HTML tags?
-    $tagStart = $tagEnd = '';
     if (($u = $inspect->enclose_tag)) {
-      $tagStart = '<' . $u . ' class="module-inspect' . (!$truncated ? '-collapsible' : '') . '">';
-      $tagEnd = '</' . $u . '>';
+      $output = '<' . $u . ' class="module-inspect' . (!$truncated ? '-collapsible' : '') . '">'
+        . $output
+        . '</' . $u . '>';
     }
 
+    if ($inspect->logger) {
+      return static::logToInjected(
+        $inspect->logger,
+        $output,
+        static::plaintext(static::mb_substr($inspect->type, 0, 64)),
+        $inspect->severity,
+        $inspect->code
+      );
+    }
     return static::logToStandard(
-      $tagStart . $output . $tagEnd,
+      $output,
       static::plaintext(static::mb_substr($inspect->type, 0, 64)),
-      $inspect->severity
+      $inspect->severity,
+      $inspect->code
     );
   }
 
@@ -2133,8 +2175,10 @@ class Inspect {
           . ':' . $inspect->newline
         );
 
-        //@formatter:off
         if ($exception && is_object($exception)) {
+          if (!$inspect->code) {
+            $inspect->code = $exception->getCode();
+          }
           // Escape exception message; may contain unexpected characters that
           // are inappropriate for a logging implementation.
           $em = htmlspecialchars(
@@ -2148,7 +2192,6 @@ class Inspect {
         else {
           $em = static::fileLine(TRUE, $inspect->wrappers);
         }
-        //@formatter:on
 
         return static::logToStandard(
           $ms . $em,
@@ -2182,16 +2225,26 @@ class Inspect {
       $output = static::truncateBytes($output, $inspect->output_max - 5) . '[...]';
     }
     // Enclose in HTML tags?
-    $tagStart = $tagEnd = '';
     if (($u = $inspect->enclose_tag)) {
-      $tagStart = '<' . $u . ' class="module-inspect-trace">';
-      $tagEnd = '</' . $u . '>';
+      $output = '<' . $u . ' class="module-inspect-trace">'
+        . $output
+        . '</' . $u . '>';
     }
 
+    if ($inspect->logger) {
+      return static::logToInjected(
+        $inspect->logger,
+        $output,
+        static::plaintext(static::mb_substr($inspect->type, 0, 64)),
+        $inspect->severity,
+        $inspect->code
+      );
+    }
     return static::logToStandard(
-      $tagStart . $output . $tagEnd,
+      $output,
       static::plaintext(static::mb_substr($inspect->type, 0, 64)),
-      $inspect->severity
+      $inspect->severity,
+      $inspect->code
     );
   }
 
@@ -2764,18 +2817,19 @@ class Inspect {
    * May truncate message to prevent failure; maximum length may be as short as
    * 1 kilobyte (1024 raw chars.).
    *
-   * @see Inspect::logMessage()
    * @param string $message
    *   Default: empty string.
    * @param string $type
    *   Default: inspect.
    * @param integer|string $severity
    *   Default: 'debug'.
+   * @param integer|string $code
+   *   Default: zero.
    *
    * @return boolean
    *   FALSE: on error.
    */
-  protected static function logToStandard($message = '', $type = 'inspect', $severity = 'debug') {
+  protected static function logToStandard($message = '', $type = 'inspect', $severity = 'debug', $code = 0) {
     static $outputMax;
     // No instance output_max here, and in this very basic implementation of
     // the method we only consider the nature of PHP ini:error_log.
@@ -2788,12 +2842,14 @@ class Inspect {
 
     // Get rid of enclosing html tags, and filing truncators
     // (newline, null byte).
-    if ($message && $message{0} === '<') {
-      $message = strip_tags($message);
+    if ($message) {
+      if ($message{0} === '<') {
+        $message = strip_tags($message);
+      }
+      $message = str_replace(array("\n", "\0"), array('\\n', '_NUL_'), $message);
     }
     // Prefix severity and type.
-    $message = '[' . static::severity($severity, TRUE) . ':' . $type . '] '
-      . str_replace(array("\n", "\0"), array('\\n', '_NUL_'), $message);
+    $message = '[' . static::severity($severity, TRUE) . ':' . $type . '] ' . $message;
 
     // Truncate.
     if (strlen($message) > $outputMax) { // Deliberately not multibyte strlen().
@@ -2801,6 +2857,62 @@ class Inspect {
     }
 
     return error_log($message) ? TRUE : FALSE;
+  }
+
+  /**
+   * Log to an injected PSR-3 logger.
+   *
+   * Caller must guarantee to escape type and message.
+   *
+   * Logs to standard logger upon failure.
+   *
+   * @param object $logger
+   * @param string $message
+   *   Default: empty string.
+   * @param string $type
+   *   Default: inspect.
+   * @param integer|string $severity
+   *   Default: 'debug'.
+   * @param integer|string $code
+   *   Default: zero.
+   *
+   * @return boolean
+   *   FALSE: on error.
+   */
+  protected static function logToInjected($logger, $message = '', $type = 'inspect', $severity = 'debug', $code = 0) {
+    // Prefix severity and type.
+    $output = '[' . static::severity($severity, TRUE) . ':' . $type . '] ' . $message;
+    // Truncate.
+    if (strlen($output) > static::$outputMax) {
+      $output = static::truncateBytes($output, static::$outputMax - 5) . '[...]';
+    }
+
+    $context = array(
+      'type' => $type,
+    );
+    if ($code) {
+      $context['code'] = $code;
+    }
+    try {
+      $logger->log(static::severity($severity), $output, $context);
+
+      return TRUE;
+    }
+    catch (\Exception $xc) {
+      // Warning: this could easily go perpetual if a global mechanism for using
+      // injected logger instead of standard logger gets implemented.
+      static::log(
+        $logger,
+        array(
+          'severity' => 'critical',
+          'type' => $type,
+          'message' => 'Failed to log via injected logger'
+        )
+      );
+      static::logToStandard($message, $type, $severity, $code);
+    }
+
+    return FALSE;
   }
 
   /**
