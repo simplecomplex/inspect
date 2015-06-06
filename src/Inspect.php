@@ -1785,6 +1785,7 @@ class Inspect {
    *   - (string) type: logging type (default inspect)
    *   - (string) category: alias of type
    *   - (integer|string) severity: default ~ 'debug'
+   *   - (integer) code: default zero
    *   - (object) logger: default none, use Inspect's standard logger
    *   - (integer) wrappers: the (inspect) function/method is wrapped in one or
    *     more local logging functions/methods (default zero)
