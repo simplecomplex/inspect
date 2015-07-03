@@ -54,6 +54,11 @@ echo $html['head'];
 $dateTime = new DateTime();
 echo Inspect::get($GLOBALS, array('message' => 'globals', 'filter' => '_SERVER'));
 
+// Inspect to (php error) log.
+Inspect::log($GLOBALS, array('message' => 'globals'));
+// Inspect to file - [system temp dir]/logs/inspect....log.
+Inspect::file($GLOBALS, array('message' => 'globals'));
+
 // Trace an exception, to screen.
 try {
   $date = new DateTime('Obviously not a parsable date');
@@ -63,4 +68,3 @@ catch (Exception $xc) {
 }
 
 echo $html['foot'];
-
