@@ -264,7 +264,7 @@ class Inspect {
   public $replacers = array('_NL_', '_CR_', '_TB_', '_NUL_', '&#60;', '&#62;', '&#34;', '&#39;');
 
   /**
-   * PSR-3 logger.
+   * Injected PSR-3 logger, if any (the 'logger' option).
    *
    * @var object|NULL
    */
@@ -1786,7 +1786,7 @@ class Inspect {
    *   - (string) category: alias of type
    *   - (integer|string) severity: default ~ 'debug'
    *   - (integer) code: default zero
-   *   - (object) logger: default none, use Inspect's standard logger
+   *   - (object) logger: PSR-3, default none, use Inspect's standard logger
    *   - (integer) wrappers: the (inspect) function/method is wrapped in one or
    *     more local logging functions/methods (default zero)
    *   - (string|array) filter: filter out that|those key name(s)
