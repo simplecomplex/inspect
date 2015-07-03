@@ -2631,7 +2631,7 @@ class Inspect {
   /**
    * Secures existance of filing directory; optionally subdir to that.
    *
-   * Uses conf var 'file_path'; defaults to '../inspect'.
+   * Uses conf var 'file_path'; defaults to system temp dir.
    *
    * @param string $sub_dir
    *   Default: empty.
@@ -2646,10 +2646,15 @@ class Inspect {
     static $_dir;
     if (!($dir = $_dir)) {
       if ($dir === NULL) {
-        $dir = static::configGet('inspect', 'file_path', '../inspect');
+        if (!($dir = static::configGet('inspect', 'file_path'))) {
+          $dir = sys_get_temp_dir();
+        }
       }
       else {
         return FALSE;
+      }
+      if (DIRECTORY_SEPARATOR != '/') {
+        $dir = str_replace('\\', '/', $dir);
       }
       $le = strlen($dir);
       if ($dir{$le - 1} == '/') { // Remove trailing slash.
