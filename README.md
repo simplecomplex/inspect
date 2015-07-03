@@ -64,9 +64,9 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 - (integer) **limit**: tracer only; default 5, max 100 $options as integer is interpretated as limit
 - (object) **logger**: PSR-3 logger; defaults to use PHP error_log
 
-`inspect($var, $options = NULL);` ~ `Inspect::log($var, $options = NULL);`
+`inspect|Inspect::log($var, $options = NULL);`
 
-`inspect_trace($exception = NULL, $options = NULL);` ~ `Inspect::trace($exception = NULL, $options = NULL);`
+`inspect_trace|Inspect::trace($exception = NULL, $options = NULL);`
 
 ##### Javascript #####
 
@@ -81,12 +81,8 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 
 To console:
 
-`inspect(u, options);`
-
-`inspect.trace(er, options);`
+`inspect(u, options);` `inspect.trace(er, options);`
 
 To server log:
 
-`inspect.log(u, options);`
-
-`inspect.traceLog(u, options);`
+`inspect.log(u, options);` `inspect.traceLog(er, options);`
