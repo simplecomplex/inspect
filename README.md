@@ -1,4 +1,4 @@
-## Inspect creates variable dumps and detailed stack traces ##
+## (PHP+JS) Inspect: variable dumps and stack traces ##
 
 ### During development and debugging ###
 
