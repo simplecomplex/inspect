@@ -3,6 +3,7 @@ inspect 1.x, 2015-07-03
 - Default dir for filing (setting: file_path) is now system temp dir; in effect
   [system temp dir]/logs.
 - Example now also log and files an inspection.
+- Added markdown readme.
 
 inspect 1.x, 2015-06-16
 -----------------------
