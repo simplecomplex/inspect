@@ -30,7 +30,7 @@ Inspect hides the values of array/object buckets named 'pass' and 'password', an
 
 - get: get the inspection/trace as string, and `echo` it to screen or console
 - log: to PHP error log, or via a PSR-3 logger, or extend the Inspect class and define your own logging regime
-- file
+- file: to a custom file log (follows the log permission)
 - frontend log: log from Javascript to server; AJAX to PHP Inspect, log... see above
 
 Out-of-the-box, Inspect only allows logging and filing (though in CLI mode getting is allowed too). Except if truthy PHP ini display_errors, then all targets are allowed.

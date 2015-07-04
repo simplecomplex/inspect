@@ -14,42 +14,42 @@ class Inspect {
   /**
    * Maximum sub var recursion depth.
    *
-   * @type integer
+   * @var integer
    */
   const DEPTH_MAX = 20;
 
   /**
    * Default sub var recursion depth.
    *
-   * @type integer
+   * @var integer
    */
   const DEPTH_DEFAULT = 10;
 
   /**
    * Absolute maximum stack frame depth.
    *
-   * @type integer
+   * @var integer
    */
   const TRACE_LIMIT_MAX = 100;
 
   /**
    * Default stack frame depth.
    *
-   * @type integer
+   * @var integer
    */
   const TRACE_LIMIT_DEFAULT = 5;
 
   /**
    * Minimum string truncation.
    *
-   * @type integer
+   * @var integer
    */
   const TRUNCATE_MIN = 100000;
 
   /**
    * Default string truncation.
    *
-   * @type integer
+   * @var integer
    */
   const TRUNCATE_DEFAULT = 1000;
 
@@ -59,34 +59,34 @@ class Inspect {
    * Doesn't apply when logging to standard log (PHP error_log()); then 1Kb if
    * syslog and 4Kb if file log.
    *
-   * @type integer
+   * @var integer
    */
   const OUTPUT_MAX = 2097152;
 
   /**
    * Default max. length of an inspection/trace output.
    *
-   * @type integer
+   * @var integer
    */
   const OUTPUT_DEFAULT = 1048576;
 
   /**
-   * @type integer
+   * @var integer
    */
   const ERROR_ALGORITHM = 100;
 
   /**
-   * @type integer
+   * @var integer
    */
   const ERROR_USER = 101;
 
   /**
-   * @type integer
+   * @var integer
    */
   const ERROR_OUTPUTLENGTH = 102;
 
   /**
-   * @type integer
+   * @var integer
    */
   const ERROR_EXECTIME = 103;
 
