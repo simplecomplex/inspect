@@ -9,6 +9,6 @@
         }
     ],
     "require": {
-        "simplecomplex/inspect": "dev-develop"
+        "simplecomplex/inspect": "dev-master"
     }
 }
