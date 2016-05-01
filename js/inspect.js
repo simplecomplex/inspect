@@ -1138,13 +1138,13 @@ catch(er) {
           if (!o.type) {
             o.type = 'inspect trace';
           }
-          o.messsage = _trc(error);
+          o.message = _trc(error);
         }
         else {
           if (!o.type) {
             o.type = 'inspect';
           }
-          o.messsage = _nspct(variable, o.protos, o.func_body, o.depth);
+          o.message = _nspct(variable, o.protos, o.func_body, o.depth);
         }
         if (!o.severity) {
           o.severity = 'error';

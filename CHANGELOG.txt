@@ -1,3 +1,8 @@
+inspect 1.x, 2016-05-01
+-----------------------
+- Bad type in frontend .errorHandler(); literal 'messsage' (3 x 's') made for
+  empty output.
+
 inspect 1.x, 2015-07-12
 -----------------------
 - Release 1.0.
