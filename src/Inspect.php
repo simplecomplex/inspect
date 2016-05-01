@@ -1656,7 +1656,11 @@ class Inspect {
             'request' => 1
           );
         }
-        static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
+        if (!headers_sent()) {
+          // Session counting is not important enough to risk PHP warning due
+          // to response body sending already commenced.
+          static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
+        }
       }
       else {
         $counters = static::$sessionCounters;
@@ -1696,7 +1700,11 @@ class Inspect {
         static::sessionCounters();
 
         ++static::$sessionCounters['page_load'];
-        static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
+        if (!headers_sent()) {
+          // Session counting is not important enough to risk PHP warning due
+          // to response body sending already commenced.
+          static::cookieSet('inspect__sc', join(':', static::$sessionCounters));
+        }
       }
     }
   }
@@ -3238,7 +3246,7 @@ class Inspect {
    * @return string|NULL
    */
   protected static function cookieGet($name) {
-    return isset($_COOKIE[$name]) ? $_COOKIE[$name] : NULL;
+    return PHP_SAPI !== 'cli' && isset($_COOKIE[$name]) ? $_COOKIE[$name] : NULL;
   }
 
   /**
@@ -3250,10 +3258,12 @@ class Inspect {
    *   Default: FALSE.
    */
   protected static function cookieSet($name, $value, $expire = 0, $httponly = FALSE) {
-    setcookie(
-      $name, '' . $value, $expire,
-      '/', '', !empty($_SERVER['HTTPS']), $httponly
-    );
+    if (PHP_SAPI !== 'cli') {
+      setcookie(
+        $name, '' . $value, $expire,
+        '/', '', !empty($_SERVER['HTTPS']), $httponly
+      );
+    }
   }
 
   /**

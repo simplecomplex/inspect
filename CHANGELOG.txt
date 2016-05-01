@@ -2,6 +2,9 @@ inspect 1.x, 2016-05-01
 -----------------------
 - Bad type in frontend .errorHandler(); literal 'messsage' (3 x 's') made for
   empty output.
+- Don't set/get cookie in CLI mode.
+- Session counting is not important enough to risk PHP warning due to response
+  body sending already commenced.
 
 inspect 1.x, 2015-07-12
 -----------------------
