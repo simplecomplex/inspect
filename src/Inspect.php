@@ -93,6 +93,8 @@ class Inspect {
   /**
    * Class name of a PSR-3 logger.
    *
+   * Ignored if the class doesn't exist.
+   *
    * Easier on performance than setting ::$instancePsrLogger, because the logger
    * will only be included and instantiated on demand.
    *
@@ -103,10 +105,12 @@ class Inspect {
    *
    * @var string
    */
-  const CLASS_PSR_LOGGER = '';
+  const CLASS_PSR_LOGGER = '\\SimpleComplex\\JsonLog\\JsonLog';
 
   /**
    * A PSR-3 logger instance.
+   *
+   * Takes precedence over CLASS_PSR_LOGGER.
    *
    * @code
    * $logger = new \Package\Library\Logger();
@@ -601,9 +605,11 @@ class Inspect {
       if (static::$instancePsrLogger) {
         $this->logger = static::$instancePsrLogger;
       }
-      elseif (static::CLASS_PSR_LOGGER) {
+      else {
         $logger_class = static::CLASS_PSR_LOGGER;
-        $this->logger = new $logger_class();
+        if (class_exists($logger_class)) {
+          $this->logger = new $logger_class();
+        }
       }
     }
 
