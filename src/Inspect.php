@@ -91,6 +91,33 @@ class Inspect {
   const ERROR_EXECTIME = 103;
 
   /**
+   * Class name of a PSR-3 logger.
+   *
+   * Easier on performance than setting ::$instancePsrLogger, because the logger
+   * will only be included and instantiated on demand.
+   *
+   * @code
+   * // Overriding class must use fully qualified (namespaced) class name.
+   * const CLASS_PSR_LOGGER = \Package\Library\Logger::class;
+   * @endcode
+   *
+   * @var string
+   */
+  const CLASS_PSR_LOGGER = '';
+
+  /**
+   * A PSR-3 logger instance.
+   *
+   * @code
+   * $logger = new \Package\Library\Logger();
+   * \SimpleComplex\Inspect\Inspect::$instancePsrLogger = $logger;
+   * @endcode
+   *
+   * @var null|\Psr\Log\AbstractLogger
+   */
+  public static $instancePsrLogger;
+
+  /**
    * Operation kind: inspect|trace.
    *
    * Not overridable by $options argument (constructor check).
@@ -538,6 +565,7 @@ class Inspect {
           unset($opts['logger']);
         }
         else {
+          // @todo: sure of that?
           // An injected logger propably won't like (HT)ML wrapped message.
           $this->enclose_tag = '';
         }
@@ -568,6 +596,16 @@ class Inspect {
     }
     // Support 'category' as alias of 'type'.
     $this->category = $this->type;
+
+    if (!$this->logger) {
+      if (static::$instancePsrLogger) {
+        $this->logger = static::$instancePsrLogger;
+      }
+      elseif (static::CLASS_PSR_LOGGER) {
+        $logger_class = static::CLASS_PSR_LOGGER;
+        $this->logger = new $logger_class();
+      }
+    }
 
     // Override options when target:get in CLI mode; don't ever enclose output
     // HTML tag.
@@ -2902,7 +2940,10 @@ class Inspect {
     }
 
     $context = array(
+      // Drupal.
       'type' => $type,
+      // \SimpleComplex\JsonLog\JsonLog.
+      'subType' => $type,
     );
     if ($code) {
       $context['code'] = $code;
