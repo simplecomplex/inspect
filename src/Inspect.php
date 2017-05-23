@@ -6,6 +6,15 @@
 
 namespace SimpleComplex\Inspect;
 
+
+// @todo: use type=strict.
+// @todo: Throwable, not Exception.
+// @todo: log() is not an acceptable method name, use variable(?) instead
+// @todo: separate into PSR-3 logger (Inspector?) which logs (and uses a better PSR-3 logger if given such) - and then the actual Inspect ding.
+// @todo: go from static to instance regime.
+
+
+
 /**
  * Better variable dumps and error traces.
  */
@@ -1446,7 +1455,7 @@ class Inspect {
     try {
       // Received Exception, by arg.
       if ($exception) {
-        if (is_object($exception) && (($xcClass = get_class($exception)) === 'Exception' || is_subclass_of($exception, 'Exception'))) {
+        if (is_object($exception) && (($xcClass = get_class($exception)) === 'Throwable' || is_subclass_of($exception, 'Throwable'))) {
           if (!$this->code) {
             $this->code = $exception->getCode();
           }
