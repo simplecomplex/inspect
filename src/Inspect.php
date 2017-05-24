@@ -1,7 +1,9 @@
 <?php
-/**
- * @file
- * Contains \SimpleComplex\Inspect\Inspect.
+
+declare(strict_types=1);
+/*
+ * Forwards compatility really; everybody will to this once.
+ * But scalar parameter type declaration is no-go until then; coercion or TypeError(?).
  */
 
 namespace SimpleComplex\Inspect;
@@ -13,91 +15,30 @@ namespace SimpleComplex\Inspect;
 // @todo: separate into PSR-3 logger (Inspector?) which logs (and uses a better PSR-3 logger if given such) - and then the actual Inspect ding.
 // @todo: go from static to instance regime.
 
+/*
+ * Options no longer supported:
+ * - hide_scalars (never used)
+ * - hide_paths (unreliable, and expensive)
+ * - by_user (not applicable, logger may to it)
+ * - one_lined (never uses)
+ * - no_fileline (stupid)
+ */
 
+/**
+ * Better variable dumps and error traces.
+ *
+ * @package SimpleComplex\Inspect
+ */
+class Inspect {
+
+
+
+}
 
 /**
  * Better variable dumps and error traces.
  */
-class Inspect {
-
-  /**
-   * Maximum sub var recursion depth.
-   *
-   * @var integer
-   */
-  const DEPTH_MAX = 20;
-
-  /**
-   * Default sub var recursion depth.
-   *
-   * @var integer
-   */
-  const DEPTH_DEFAULT = 10;
-
-  /**
-   * Absolute maximum stack frame depth.
-   *
-   * @var integer
-   */
-  const TRACE_LIMIT_MAX = 100;
-
-  /**
-   * Default stack frame depth.
-   *
-   * @var integer
-   */
-  const TRACE_LIMIT_DEFAULT = 5;
-
-  /**
-   * Minimum string truncation.
-   *
-   * @var integer
-   */
-  const TRUNCATE_MIN = 100000;
-
-  /**
-   * Default string truncation.
-   *
-   * @var integer
-   */
-  const TRUNCATE_DEFAULT = 1000;
-
-  /**
-   * Absolute max. length of an inspection/trace output.
-   *
-   * Doesn't apply when logging to standard log (PHP error_log()); then 1Kb if
-   * syslog and 4Kb if file log.
-   *
-   * @var integer
-   */
-  const OUTPUT_MAX = 2097152;
-
-  /**
-   * Default max. length of an inspection/trace output.
-   *
-   * @var integer
-   */
-  const OUTPUT_DEFAULT = 1048576;
-
-  /**
-   * @var integer
-   */
-  const ERROR_ALGORITHM = 100;
-
-  /**
-   * @var integer
-   */
-  const ERROR_USER = 101;
-
-  /**
-   * @var integer
-   */
-  const ERROR_OUTPUTLENGTH = 102;
-
-  /**
-   * @var integer
-   */
-  const ERROR_EXECTIME = 103;
+class NotInspect {
 
   /**
    * Class name of a PSR-3 logger.
@@ -147,33 +88,6 @@ class Inspect {
    * @var string
    */
   protected $target = 'get';
-
-  /**
-   * Current object/array bucket key name.
-   *
-   * Not overridable by $options argument (constructor check).
-   *
-   * @var string|NULL
-   */
-  protected $key;
-
-  /**
-   * (tracer) Flag that frame limit got reduced due to too long output.
-   *
-   * Not overridable by $options argument (constructor check).
-   *
-   * @var integer|NULL
-   */
-  protected $limitReduced;
-
-  /**
-   * Current cumulative string length of the inspection output.
-   *
-   * Not overridable by $options argument (constructor check).
-   *
-   * @var integer
-   */
-  protected $outputLength = 0;
 
   /**
    * Simple option: Maximum object/array recursion depth.
@@ -379,21 +293,6 @@ class Inspect {
    * @var boolean|NULL
    */
   public $no_preface;
-
-  /**
-   * Formatting option: Don't display file and line of call to inspect method.
-   *
-   * @var boolean|NULL
-   */
-  public $no_fileline;
-
-  /**
-   * Complex formatting option: Create one-lined formatting instead of
-   * multi-lined.
-   *
-   * @var boolean|NULL
-   */
-  public $one_lined;
 
   /**
    * Overriding/supplemental options, by kind (trace).
