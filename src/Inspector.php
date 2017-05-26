@@ -2,28 +2,36 @@
 
 declare(strict_types=1);
 /*
- * Forwards compatility really; everybody will to this once.
- * But scalar parameter type declaration is no-go until then; coercion or TypeError(?).
+ * Scalar parameter type declaration is a no-go until everything is strict (coercion or TypeError?).
  */
 
 namespace SimpleComplex\Inspect;
+
+/*
+ * Options no longer supported:
+ * - message (use a logger for that instead)
+ * - hide_scalars (never used)
+ * - hide_paths (no longer optional, and only document root)
+ * - by_user (not applicable, logger may to it)
+ * - one_lined (never uses)
+ * - no_fileline (stupid)
+ * - name (daft)
+ *
+ * Arg options can no longer be an object.
+ *
+ * Arg options as string is now 'kind', not obsolete 'message'.
+ */
+
 
 /**
  * @package SimpleComplex\Inspect
  */
 class Inspector
 {
-
-
     /**
-     * @var integer
+     * @var string
      */
-    const ERROR_ALGORITHM = 100;
-
-    /**
-     * @var integer
-     */
-    const ERROR_USER = 101;
+    const LOG_TYPE = 'inspect';
 
     /**
      * @var integer
@@ -34,11 +42,6 @@ class Inspector
      * @var integer
      */
     const ERROR_EXECTIME = 103;
-
-    /**
-     * @var string
-     */
-    const LOG_TYPE = 'inspect';
 
     /**
      * Maximum sub var recursion depth.
@@ -77,11 +80,11 @@ class Inspector
     const TRACE_LIMIT_DEFAULT = 5;
 
     /**
-     * Minimum string truncation.
+     * Maximum (longest) string truncation.
      *
      * @var integer
      */
-    const TRUNCATE_MIN = 100000;
+    const TRUNCATE_MAX = 100000;
 
     /**
      * Default string truncation.
@@ -93,44 +96,80 @@ class Inspector
     /**
      * Absolute max. length of an inspection/trace output.
      *
-     * Doesn't apply when logging to standard log (PHP error_log()); then 1Kb if
-     * syslog and 4Kb if file log.
-     *
      * @var integer
      */
     const OUTPUT_MAX = 2097152;
 
     /**
-     * Default max. length of an inspection/trace output.
+     * Default maximum length of an inspection/trace output.
      *
      * @var integer
      */
     const OUTPUT_DEFAULT = 1048576;
 
     /**
-     * Current cumulative string length of the inspection output.
-     *
-     * @var integer
+     * String variable str_replace() needles.
      */
-    public $outputLength = 0;
+    const NEEDLES = [
+        "\0", "\n", "\r", "\t", '<', '>', '"', "'",
+    ];
+
+    /**
+     * String variable str_replace() replacers.
+     */
+    const REPLACERS = [
+        '_NUL_', '_NL_', '_CR_', '_TB_', '&#60;', '&#62;', '&#34;', '&#39;',
+    ];
+
+    /**
+     * Formatting.
+     */
+    const FORMAT = [
+        'newline' => "\n",
+        'delimiter' => "\n",
+        'indent' => '.  ',
+        'quote' => '`',
+        'encloseTag' => 'pre',
+    ];
+
+    /**
+     * Formatting when tracing; gets merged over FORMAT.
+     */
+    const FORMAT_TRACE = [
+        'delimiter' => "\n  ",
+        'spacer' => '- - - - - - - - - - - - - - - - - - - - - - - - -',
+    ];
+
+    /**
+     * @var array
+     */
+    protected $options = array(
+        'kind' => '',
+        'logger' => null,
+        'code' => 0,
+        'depth' => 0,
+        'limit' => 0,
+        'truncate' => 0,
+        'skipKeys' => [],
+        'needles' => [],
+        'replacers' => [],
+        'outputMax' => 0,
+        'wrappers' => 0,
+    );
+
 
     /**
      * @var string
      *  Values: variable|trace.
      */
-    protected $kind;
+    protected $kind = 'variable';
 
     /**
-     * Options:
-     * - depth
+     * Current cumulative string length of the inspection output.
      *
-     * @param $mixed $var
-     *
-     * @return string
+     * @var integer
      */
-    public function variable($var) {
-        return '';
-    }
+    protected $outputLength = 0;
 
     /**
      * Options:
@@ -151,16 +190,18 @@ class Inspector
     }
 
     /**
-     * @var array
+     * Maximum object/array recursion depth.
+     *
+     * @var integer
      */
-    protected $options;
+    protected $depth;
 
     /**
      * (variable) Current object/array bucket key name.
      *
      * @var string
      */
-    protected $variableKey;
+    protected $key;
 
     /**
      * (trace) Flag that frame limit got reduced due to too long output.
@@ -170,14 +211,169 @@ class Inspector
     protected $traceLimitReduced;
 
     /**
-     * Maximum object/array recursion depth.
-     *
-     * @var integer
+     * Inspector constructor.
+     * @param mixed $subject
+     * @param array|integer|string $options
+     *   Integer when inspecting variable: maximum depth.
+     *   Integer when tracing: stack frame limit.
+     *   String: kind (variable|trace); otherwise ignored.
+     *   Not array|integer|string: ignored.
      */
-    protected $depth;
+    public function __construct($subject, $options = []) {
+        $kind = '';
+        $depth_or_limit = 0;
+        $use_arg_options = $trace = $back_trace = false;
+        if ($options) {
+            $type = gettype($options);
+            switch ($type) {
+                case 'array':
+                    if (!empty($options['kind'])) {
+                        switch ('' . $options['kind']) {
+                            case 'variable':
+                                $kind = 'variable';
+                                break;
+                            case 'trace':
+                                $trace = true;
+                                $kind = 'trace';
+                                break;
+                        }
+                    }
+                    unset($options['kind']);
+                    $use_arg_options = !!$options;
+                    break;
+                case 'integer':
+                    // Depends on kind.
+                    $depth_or_limit = $options;
+                    break;
+                case 'string':
+                    // Kind.
+                    switch ($options) {
+                        case 'variable':
+                            $kind = 'variable';
+                            break;
+                        case 'trace':
+                            $trace = true;
+                            $kind = 'trace';
+                            break;
+                        default:
+                            // Ignore.
+                    }
+                    break;
+                default:
+                    // Ignore.
+            }
+        }
 
+        // Establish kind - variable|trace - before preparing options.----------
+        if (!$kind) {
+            // No kind + exception|error: do trace.
+            if ($subject && is_object($subject) && is_a($subject, \Throwable::class)) {
+                $trace = true;
+                $kind = 'trace';
+            } else {
+                $kind = 'variable';
+            }
+        } elseif ($trace) {
+            // Trace + not exception|error: do back trace.
+            if (!$subject || !is_object($subject) || !is_a($subject, \Throwable::class)) {
+                $back_trace = true;
+            }
+        }
 
-    public function($logger = null) {
+        // Prepare options.-----------------------------------------------------
+        $opts =& $this->options;
+        $opts['kind'] = $kind;
+        // logger.
+        if ($use_arg_options && !empty($options['logger'])) {
+            // No type checking;
+            // we trust that folks passing logger know what they do.
+            $opts['logger'] = $options['logger'];
+        }
+        // code.
+        if ($use_arg_options && !empty($options['code'])) {
+            if (($tmp = (int) $options['code']) > 0) {
+                $opts['code'] = $tmp;
+            }
+        }
+        // depth.
+        if (!$trace && $depth_or_limit && $depth_or_limit <= static::DEPTH_MAX) {
+            $opts['depth'] = $depth_or_limit;
+        }
+        else {
+            $opts['depth'] = !$trace ? static::DEPTH_DEFAULT : static::TRACE_DEPTH_DEFAULT;
+            if ($use_arg_options && !empty($options['depth'])) {
+                if (($tmp = (int) $options['depth']) > 0 && $tmp <= static::DEPTH_MAX) {
+                    $opts['depth'] = $tmp;
+                }
+            }
+        }
+        // limit; only used when tracing.
+        if (!$trace) {
+            unset($opts['limit']);
+        } elseif ($depth_or_limit && $depth_or_limit <= static::TRACE_LIMIT_MAX) {
+            $opts['limit'] = $depth_or_limit;
+        } else {
+            $opts['limit'] = static::TRACE_LIMIT_DEFAULT;
+            if ($use_arg_options && empty($options['limit'])) {
+                if (($tmp = (int) $options['limit']) > 0 && $tmp <= static::TRACE_LIMIT_MAX) {
+                    $opts['limit'] = $tmp;
+                }
+            }
+        }
+        // truncate.
+        $opts['truncate'] = static::TRUNCATE_DEFAULT;
+        if ($use_arg_options && !empty($options['truncate'])) {
+            if (($tmp = (int) $options['truncate']) >= 0 && $tmp <= static::TRUNCATE_MAX) {
+                $opts['truncate'] = $tmp;
+            }
+        }
+        // skipKeys.
+        if ($use_arg_options && !empty($options['skipKeys'])) {
+            if (is_array($options['skipKeys'])) {
+                $opts['skipKeys'] = $options['skipKeys'];
+            } else {
+                $opts['skipKeys'] = [
+                    // Stringify.
+                    '' . $options['skipKeys']
+                ];
+            }
+        }
+        // replacers.
+        $opts['replacers'] = static::REPLACERS;
+        $any_opt_replacers = false;
+        if ($use_arg_options && !empty($options['replacers']) && is_array($options['replacers'])) {
+            $any_opt_replacers = true;
+            $opts['replacers'] = $options['replacers'];
+        }
+        // needles; only arg options override if arg options replacers.
+        $opts['needles'] = static::NEEDLES;
+        if ($any_opt_replacers && !empty($options['needles']) && is_array($options['needles'])) {
+            $opts['needles'] = $options['needles'];
+        }
+        // outputMax.
+        $opts['outputMax'] = static::OUTPUT_DEFAULT;
+        if ($use_arg_options && !empty($options['outputMax'])) {
+            if (($tmp = (int) $options['outputMax']) > 0 && $tmp <= static::OUTPUT_MAX) {
+                $opts['outputMax'] = $tmp;
+            }
+        }
+        // wrappers.
+        if ($use_arg_options && !empty($options['wrappers'])) {
+            if (($tmp = (int) $options['wrappers']) > 0) {
+                $opts['wrappers'] = $tmp;
+            }
+        }
+        
+
+        if ($trace) {
+            $this->trc(!$back_trace ? $subject : null);
+        }
+    }
+
+    /**
+     * @param \Throwable|null $throwableOrNull
+     */
+    protected function trc($throwableOrNull) {
 
     }
 }
