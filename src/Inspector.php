@@ -7,6 +7,10 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
+use Psr\SimpleCache\CacheInterface;
+use SimpleComplex\Filter\Unicode;
+use SimpleComplex\Filter\Sanitize;
+
 /*
  * Options no longer supported:
  * - message (use a logger for that instead)
@@ -172,24 +176,6 @@ class Inspector
     protected $outputLength = 0;
 
     /**
-     * Options:
-     * - depth
-     *
-     *
-     * @param \Throwable|null $errorOrBackTrace
-     *
-     * @return string
-     */
-    public function trace($errorOrBackTrace = null) {
-        if ($errorOrBackTrace) {
-            if (!is_object($errorOrBackTrace) && is_a($errorOrBackTrace, \Throwable::class)) {
-
-            }
-        }
-        return '';
-    }
-
-    /**
      * Maximum object/array recursion depth.
      *
      * @var integer
@@ -211,7 +197,33 @@ class Inspector
     protected $traceLimitReduced;
 
     /**
-     * Inspector constructor.
+     * @var CacheInterface|null
+     */
+    protected $config;
+
+    /**
+     * @var Unicode
+     */
+    protected $unicode;
+
+    /**
+     * @var Sanitize
+     */
+    protected $sanitize;
+
+    /**
+     * Do not call this directly, use Inspect instead.
+     *
+     * Does not check dependencies; Inspect constructor does that.
+     *
+     * @see JsonLog::__construct()
+     * @see JsonLog::log()
+     *
+     * @param array $dependencies {
+     *      @var CacheInterface|null $config
+     *      @var Unicode $unicode
+     *      @var Sanitize $sanitize
+     * }
      * @param mixed $subject
      * @param array|integer|string $options
      *   Integer when inspecting variable: maximum depth.
@@ -219,7 +231,11 @@ class Inspector
      *   String: kind (variable|trace); otherwise ignored.
      *   Not array|integer|string: ignored.
      */
-    public function __construct($subject, $options = []) {
+    public function __construct(array $dependencies, $subject, $options = []) {
+        $this->config = $dependencies['config'];
+        $this->unicode = $dependencies['unicode'];
+        $this->sanitize = $dependencies['sanitize'];
+
         $kind = '';
         $depth_or_limit = 0;
         $use_arg_options = $trace = $back_trace = false;
@@ -267,7 +283,7 @@ class Inspector
         // Establish kind - variable|trace - before preparing options.----------
         if (!$kind) {
             // No kind + exception|error: do trace.
-            if ($subject && is_object($subject) && is_a($subject, \Throwable::class)) {
+            if ($subject && is_object($subject) && $subject instanceof \Throwable) {
                 $trace = true;
                 $kind = 'trace';
             } else {
@@ -275,7 +291,7 @@ class Inspector
             }
         } elseif ($trace) {
             // Trace + not exception|error: do back trace.
-            if (!$subject || !is_object($subject) || !is_a($subject, \Throwable::class)) {
+            if (!$subject || !is_object($subject) || !$subject instanceof \Throwable) {
                 $back_trace = true;
             }
         }
