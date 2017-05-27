@@ -15,11 +15,13 @@
         "php": ">=7.0",
         "psr/log": "^1.0",
         "psr/simple-cache": "^1",
-        "simplecomplex/filter": "dev-develop"
+        "simplecomplex/filter": "dev-develop",
+        "simplecomplex/validate": "dev-develop"
     },
     "autoload": {
         "psr-4": {
-            "SimpleComplex\\Inspect\\": "src/"
+            "SimpleComplex\\Inspect\\": "src/",
+            "SimpleComplex\\Inspect\\Exception\\": "src/Exception/"
         }
     }
 }

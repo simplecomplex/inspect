@@ -1848,8 +1848,10 @@ class NotInspect {
     // Concat.
     $output = (!$inspect->no_preface ?
         (!$inspect->message ?
-          ('[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters))
-            . ':' . (++static::$logNo) . ' - depth:' . $inspect->depth . ']') :
+          (
+              '[Inspect - ' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters))
+            . ':' . (++static::$logNo) . ' - depth:' . $inspect->depth . ']'
+          ) :
           ('[' . (static::$sessionCounters['session'] == 'na' ? 'i' : join(':', static::$sessionCounters)) . ':' . (++static::$logNo) . '] '
             . $inspect->message . ':' . $inspect->newline . '[Inspect - depth:' . $inspect->depth . ']')
         ) :
@@ -3155,10 +3157,8 @@ class NotInspect {
    *  - lib_simplecomplex_inspect_trace_limit
    *  - lib_simplecomplex_inspect_paths
    *  - lib_simplecomplex_inspect_exectime_percent
-   *  - lib_simplecomplex_inspect_session_counters
    *  - lib_simplecomplex_inspect_fronttoback_sevmax
    *  - lib_simplecomplex_inspect_output_max
-   *  - lib_simplecomplex_inspect_file_path
    *
    * @param string $domain
    * @param string $name

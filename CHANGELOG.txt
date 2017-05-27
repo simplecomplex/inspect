@@ -1,3 +1,10 @@
+inspect 2.x, 2017-05-27
+-----------------------
+- Complete remake, all extraneous features remove; like built-in logger.
+- Obsoleted options: message, hide_scalars, hide_paths, by_user, one_lined,
+  no_preface, no_fileline, name.
+- Tracer still pending.
+
 inspect 1.x, 2016-05-01
 -----------------------
 - Bad type in frontend .errorHandler(); literal 'messsage' (3 x 's') made for
