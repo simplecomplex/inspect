@@ -93,28 +93,28 @@ class Inspector
     const TRACE_LIMIT_DEFAULT = 5;
 
     /**
-     * Maximum (longest) string truncation.
+     * Maximum (longest) string truncation; multibyte (Unicode) length.
      *
      * @var int
      */
     const TRUNCATE_MAX = 100000;
 
     /**
-     * Default string truncation.
+     * Default string truncation; multibyte (Unicode) length.
      *
      * @var int
      */
     const TRUNCATE_DEFAULT = 1000;
 
     /**
-     * Absolute max. length of an inspection/trace output.
+     * Absolute maximum byte (ASCII) length of an inspection/trace output.
      *
      * @var int
      */
     const OUTPUT_MAX = 2097152;
 
     /**
-     * Default maximum length of an inspection/trace output.
+     * Default maximum byte (ASCII) length of an inspection/trace output.
      *
      * @var int
      */
@@ -322,7 +322,9 @@ class Inspector
                     break;
                 case 'integer':
                     // Depends on kind.
-                    $depth_or_limit = $options;
+                    if ($options > 0) {
+                        $depth_or_limit = $options;
+                    }
                     break;
                 case 'string':
                     // Kind.
@@ -422,7 +424,7 @@ class Inspector
             }
 
             if (
-                empty($options['limit'])
+                $trace && !empty($options['limit'])
                 && ($tmp = (int) $options['limit']) > 0 && $tmp <= static::TRACE_LIMIT_MAX
             ) {
                 $opts['limit'] = $tmp;
@@ -478,30 +480,30 @@ class Inspector
             }
         }
 
+        if (!static::$nInspections) {
+            /**
+             * Init this; used a lot.
+             *
+             * @see Inspector::$documentRoots
+             * @see Inspector::$documentRootLength
+             */
+            $this->documentRoots();
+        }
         ++static::$nInspections;
 
         try {
             if (!$trace) {
                 $output = $this->nspct($subject);
-                $this->preface = '[Inspect variable - ' . static::$nInspections . ' - depth:' . $opts['depth']
-                    . '|truncate:' . $opts['truncate'] . ']';
             }
             else {
                 $output = $this->trc(!$back_trace ? $subject : null);
-                $this->preface = '[Inspect trace - ' . static::$nInspections . ' - limit:' . $opts['limit']
-                    . '|depth:' . $opts['depth'] . '|truncate:' . $opts['truncate'] . ']';
             }
+
             if ($opts['code']) {
                 $this->code = $opts['code'];
             }
-            if ($this->code) {
-                $this->preface .= static::FORMAT['newline'] . 'Code: ' . $this->code;
-            }
             $this->fileLine = $this->fileLine();
-            $this->preface .= static::FORMAT['newline'] . '@' . $this->fileLine;
-            if ($this->warnings) {
-                $this->preface .= static::FORMAT['newline'] . join(static::FORMAT['newline'], $this->warnings);
-            }
+            $this->preface = $this->preface();
 
             $len_preface = strlen($this->preface);
             $len_output = strlen($output);
@@ -518,7 +520,7 @@ class Inspector
         } catch (\Throwable $xc) {
             $file = $xc->getFile();
             try {
-                $tmp = str_replace($this->documentRoots(), '[document_root]', $file);
+                $tmp = str_replace(static::$documentRoots, '[document_root]', $file);
                 if ($tmp) {
                     $file = $tmp;
                 }
@@ -539,7 +541,7 @@ class Inspector
      */
     public function __toString() : string
     {
-        return (!$this->preface ? '' : (static::FORMAT['newline'] . $this->preface))
+        return (!$this->preface ? '' : ($this->preface . static::FORMAT['newline']))
             . $this->output;
     }
 
@@ -680,6 +682,10 @@ class Inspector
             if ($is_array) {
                 $output = '(array:';
                 $n_elements = count($subject);
+                // Numberically indexed array?
+                if ($n_elements && ctype_digit(join('', array_keys($subject)))) {
+                    $is_num_array = true;
+                }
             } else {
                 $output = '(' . get_class($subject) . ':';
                 if ($subject instanceof \Countable && $subject instanceof \Traversable) {
@@ -690,15 +696,19 @@ class Inspector
                     $n_elements = count(get_object_vars($subject));
                 }
             }
+            $output .= $n_elements . ') ';
+            if (!$n_elements) {
+                $output .= $is_array ? '[]' : '{}';
+
+                $this->length += strlen($output);
+                return $output;
+            }
             // If at max depth: simply get length of the container.
             if ($depth == $depth_max) {
-                if (!$n_elements) {
-                    $output .= $n_elements . ')';
-                } elseif ($is_array) {
-                    $output .= $n_elements . ') [...]';
+                if ($is_num_array) {
+                    $output .= '[...]';
                 } else {
-                    $output .= $n_elements . ') {...}';
-
+                    $output .= '{...}';
                 }
 
                 $this->length += strlen($output);
@@ -706,16 +716,14 @@ class Inspector
             }
             // Dive into container buckets.
             else {
-                // Numberically indexed array?
-                if ($is_array && ctype_digit(join('', array_keys($subject)))) {
-                    $is_num_array = true;
-                    $output .= $n_elements . ') [';
+                if ($is_num_array) {
+                    $output .= '[';
                 }
                 else {
-                    $output .= $n_elements . ') {';
+                    $output .= '{';
                 }
-
                 // @todo: do we actually need more delimiters; old Inspect had other formats for 'later' and 'last'.
+                // @todo: maybe trace requires it.
                 $delim_first = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth + 1);
                 $delim_middle = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth + 1);
                 $delim_end = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth);
@@ -802,17 +810,32 @@ class Inspector
                         $output .= ':0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                     } else {
                         $trunced_to = 0;
+                        // Replace document root?
+                        $docroot_length = static::$documentRootLength;
+                        if (
+                            $len_bytes >= $docroot_length
+                            && (
+                                strpos($subject, '/') !== false
+                                || (DIRECTORY_SEPARATOR == '\\' && strpos($subject, '\\') !== false)
+                            )
+                        ) {
+                            $docroot_replace = true;
+                        } else {
+                            $docroot_replace = false;
+                        }
+                        // Long string; shorten before replacing.
                         if ($len_unicode > $truncate) {
-                            // Long string; shorten before replacing.
+                            // Replace document root before truncation?
+                            if ($docroot_replace && $truncate < $docroot_length) {
+                                $docroot_replace = false;
+                                $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
+                            }
                             $subject = $this->unicode->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
-                        // Remove document root(s).
-                        if (
-                            strpos($subject, '/') !== false
-                            || (DIRECTORY_SEPARATOR == '\\' && strpos($subject, '\\') !== false)
-                        ) {
-                            $subject = str_replace($this->documentRoots(), '[document_root]', $subject);
+                        // Remove document root after truncation.
+                        if ($docroot_replace) {
+                            $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
                         }
                         // Replace listed neeedles with harmless symbols.
                         $subject = str_replace($this->options['needles'], $this->options['replacers'], $subject);
@@ -825,7 +848,7 @@ class Inspector
                             'UTF-8',
                             false
                         );
-                        // Re-truncate, in case it's gotten longer.
+                        // Re-truncate, in case subject's gotten longer.
                         if ($this->unicode->strlen($subject) > $truncate) {
                             $subject = $this->unicode->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
@@ -871,6 +894,11 @@ class Inspector
     static $documentRoots = [];
 
     /**
+     * @var int
+     */
+    static $documentRootLength = 0;
+
+    /**
      * Expects current working dir to be document root.
      *
      * Returns two paths if document root seems symlinked.
@@ -882,8 +910,14 @@ class Inspector
         $paths = static::$documentRoots;
         if (!$paths) {
             $paths[] = $real_path = getcwd();
+            static::$documentRootLength = strlen($real_path);
             $symlinked_path = dirname($_SERVER['SCRIPT_FILENAME']);
-            if ($symlinked_path != $real_path) {
+            // In cli mode a symlinked path is empty, because SCRIPT_FILENAME
+            // is the filename only; no path.
+            if (
+                $symlinked_path && $symlinked_path != '.'
+                && $symlinked_path != $real_path
+            ) {
                 // The symlink must be a subset of the real path, so for
                 // replacers it works swell with symlink after real path.
                 $paths[] = $symlinked_path;
@@ -931,10 +965,32 @@ class Inspector
             $i_frame > -1
             && (!$this->options['wrappers'] || !empty($trace[$i_frame += $this->options['wrappers']]['file']))
         ) {
-            return str_replace($this->documentRoots(), '[document_root]', $trace[$i_frame]['file'])
+            return str_replace(static::$documentRoots, '[document_root]', $trace[$i_frame]['file'])
                 . ':' . (isset($trace[$i_frame]['line']) ? $trace[$i_frame]['line'] : '?');
         }
         return '';
+    }
+
+    /**
+     * @return string
+     */
+    protected function preface() : string {
+        if ($this->kind == 'variable') {
+            $preface = '[Inspect variable - #' . static::$nInspections . ' - depth:' . $this->options['depth']
+                . '|truncate:' . $this->options['truncate'] . ']';
+        }
+        else {
+            $preface = '[Inspect trace - #' . static::$nInspections . ' - limit:' . $this->options['limit']
+                . '|depth:' . $this->options['depth'] . '|truncate:' . $this->options['truncate'] . ']';
+        }
+        if ($this->code) {
+            $preface .= static::FORMAT['newline'] . 'Code: ' . $this->code;
+        }
+        $preface .= static::FORMAT['newline'] . '@' . $this->fileLine;
+        if ($this->warnings) {
+            $preface .= static::FORMAT['newline'] . join(static::FORMAT['newline'], $this->warnings);
+        }
+        return $preface;
     }
 
     /**
@@ -961,10 +1017,9 @@ class Inspector
      * @param mixed $default
      *      Default: null.
      *
-     * @return mixed
-     *      String, unless no such var and arg default isn't string.
+     * @return mixed|null
      */
-    public function configGet($domain, $name, $default = null) : mixed
+    public function configGet($domain, $name, $default = null)
     {
         if ($this->config) {
             return $this->config->get(
