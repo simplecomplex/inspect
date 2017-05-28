@@ -226,7 +226,7 @@ class Inspect
      *
      * @return void
      */
-    public function setConfig(CacheInterface $config) : void
+    public function setConfig(CacheInterface $config)
     {
         $this->config = $config;
     }

@@ -180,7 +180,7 @@ class Inspector
         'delimiter' => "\n",
         'indent' => '.  ',
         'quote' => '`',
-        'encloseTag' => 'pre',
+        'enclose_tag' => 'pre',
     ];
 
     /**
@@ -494,9 +494,14 @@ class Inspector
         try {
             if (!$trace) {
                 $output = $this->nspct($subject);
-            }
-            else {
+            } else {
                 $output = $this->trc(!$back_trace ? $subject : null);
+            }
+            // Don't enclose in tag in cli mode.
+            if (static::FORMAT['enclose_tag'] && PHP_SAPI != 'cli') {
+                $output = '<' . static::FORMAT['enclose_tag']
+                    . ' class="simplecomplex-inspect inspect-' . $kind . '">'
+                    . $output . '</' . static::FORMAT['enclose_tag'] . '>';
             }
 
             if ($opts['code']) {
