@@ -1,55 +1,60 @@
-inspect 2.x, 2017-05-27
------------------------
+SimpleComplex/Inspect 2.x, 2017-05-31
+-------------------------------------
+- Use parameter type declaration when possible, despite ambiguous effect for
+  method callers (coercion or TypeError).
+
+SimpleComplex/Inspect 2.x, 2017-05-27
+-------------------------------------
 - Complete remake, all extraneous features remove; like built-in logger.
 - Obsoleted options: message, hide_scalars, hide_paths, by_user, one_lined,
   no_preface, no_fileline, name.
 - Tracer still pending.
 
-inspect 1.x, 2016-05-01
------------------------
+SimpleComplex/Inspect 1.x, 2016-05-01
+-------------------------------------
 - Bad type in frontend .errorHandler(); literal 'messsage' (3 x 's') made for
   empty output.
 - Don't set/get cookie in CLI mode.
 - Session counting is not important enough to risk PHP warning due to response
   body sending already commenced.
 
-inspect 1.x, 2015-07-12
------------------------
+SimpleComplex/Inspect 1.x, 2015-07-12
+-------------------------------------
 - Release 1.0.
 
-inspect 1.x, 2015-07-03
------------------------
+SimpleComplex/Inspect 1.x, 2015-07-03
+-------------------------------------
 - Default dir for filing (setting: file_path) is now system temp dir; in effect
   [system temp dir]/logs.
 - Example now also log and files an inspection.
 - Added markdown readme.
 
-inspect 1.x, 2015-06-16
------------------------
+SimpleComplex/Inspect 1.x, 2015-06-16
+-------------------------------------
 - Backend and frontend: category is now an alias of type (instead of vice versa)
   and the use of category is deprecated.
 - New instance var code, usable for event or error code.
 - Now supports logging via injected PSR-3 logger; instance var (object) logger.
 
-inspect 1.x, 2015-04-18
------------------------
+SimpleComplex/Inspect 1.x, 2015-04-18
+-------------------------------------
 - Frontend: stricter typeOf() array check; some jQuery extensions (old
   dataTables) were erroneously assessed as array.
 
-inspect 1.x, 2015-04-05
------------------------
+SimpleComplex/Inspect 1.x, 2015-04-05
+-------------------------------------
 - Documentation; max comment line length 80.
 
-inspect 1.x, 2015-02-20
------------------------
+SimpleComplex/Inspect 1.x, 2015-02-20
+-------------------------------------
 - Fixed frontend file:line resolver; failed to identify inspect.js self.
 
-inspect 1.x, 2015-02-15
------------------------
+SimpleComplex/Inspect 1.x, 2015-02-15
+-------------------------------------
 - Abstracted cookie retrieval to allow overriding cookie handling by extenders.
 
-inspect 1.x, 2015-02-14
------------------------
+SimpleComplex/Inspect 1.x, 2015-02-14
+-------------------------------------
 - Removed method cliMode(), use PHP_SAPI === 'cli' instead.
 - UTF-8 validity checker and byte truncater rewritten from scratch.
 - Removal/replacement of Drupal legacy code concluded. Every single line
@@ -58,12 +63,12 @@ inspect 1.x, 2015-02-14
   even if we don't listen to any request init event.
 - configGet/Set() must be called with non-empty arg $domain if inspect var.
 
-inspect 1.x, 2015-02-13
------------------------
+SimpleComplex/Inspect 1.x, 2015-02-13
+-------------------------------------
 - Configuration vars are now domain specific.
 
-inspect 1.x, 2015-02-12
------------------------
+SimpleComplex/Inspect 1.x, 2015-02-12
+-------------------------------------
 - Extraction of generic framework-independent code completed (the separation was
   initiated earlier, with Drupal module Inspect 7.x-6.0).
 - Fixed namespace; uppercase'd ...\Inspect.

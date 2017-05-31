@@ -1,15 +1,18 @@
 <?php
-
-declare(strict_types=1);
-/*
- * Scalar parameter type declaration is a no-go until everything is strict (coercion or TypeError?).
+/**
+ * SimpleComplex PHP Inspect
+ * @link      https://github.com/simplecomplex/inspect
+ * @copyright Copyright (c) 2011-2017 Jacob Friis Mathiasen
+ * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
+declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
 use Psr\SimpleCache\CacheInterface;
-use SimpleComplex\Filter\Unicode;
-use SimpleComplex\Filter\Sanitize;
+use SimpleComplex\Utils\GetInstanceTrait;
+use SimpleComplex\Utils\Unicode;
+use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
 
 /**
@@ -20,27 +23,17 @@ use SimpleComplex\Validate\Validate;
 class Inspect
 {
     /**
-     * @see GetInstanceTrait
+     * @see \SimpleComplex\Utils\GetInstanceTrait
      *
-     * List of previously instantiated objects, by name.
+     * Reference to last instantiated instance of this class.
      * @protected
      * @static
-     * @var array $instances
-     *
-     * Reference to last instantiated instance.
-     * @protected
-     * @static
-     * @var static $lastInstance
+     * @var static $instanceByClass
      *
      * Get previously instantiated object or create new.
      * @public
      * @static
-     * @see GetInstanceTrait::getInstance()
-     *
-     * Kill class reference(s) to instance(s).
-     * @public
-     * @static
-     * @see GetInstanceTrait::flushInstance()
+     * @see \SimpleComplex\Utils\GetInstanceTrait::getInstance()
      */
     use GetInstanceTrait;
 
@@ -59,21 +52,21 @@ class Inspect
     const CLASS_INSPECTOR = Inspector::class;
 
     /**
-     * Class name of \SimpleComplex\Filter\Unicode or extending class.
+     * Class name of \SimpleComplex\Utils\Unicode or extending class.
      *
      * @var string
      */
     const CLASS_UNICODE = Unicode::class;
 
     /**
-     * Class name of \SimpleComplex\Filter\Sanitize or extending class.
+     * Class name of \SimpleComplex\Utils\Sanitize or extending class.
      *
      * @var string
      */
     const CLASS_SANITIZE = Sanitize::class;
 
     /**
-     * Class name of \SimpleComplex\Filter\Sanitize or extending class.
+     * Class name of \SimpleComplex\Utils\Sanitize or extending class.
      *
      * @var string
      */
@@ -125,7 +118,7 @@ class Inspect
      * @param CacheInterface|null $config
      *      PSR-16 based configuration instance, if any.
      */
-    public function __construct($config = null)
+    public function __construct(/*?CacheInterface*/ $config = null)
     {
         $this->config = $config;
 
@@ -149,7 +142,7 @@ class Inspect
      * @return Inspector
      *      Stringable.
      */
-    public function inspect($subject, array $options = [])
+    public function inspect($subject, array $options = []) : Inspector
     {
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -174,7 +167,7 @@ class Inspect
      * @return Inspector
      *      Stringable.
      */
-    public function variable($subject, array $options = [])
+    public function variable($subject, array $options = []) : Inspector
     {
         $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
@@ -200,7 +193,7 @@ class Inspect
      * @return Inspector
      *      Stringable.
      */
-    public function trace($throwableOrNull, array $options = [])
+    public function trace(/*?\Throwable*/ $throwableOrNull, array $options = []) : Inspector
     {
         $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
@@ -226,7 +219,7 @@ class Inspect
      *
      * @return void
      */
-    public function setConfig(CacheInterface $config)
+    public function setConfig(CacheInterface $config) /*: void*/
     {
         $this->config = $config;
     }

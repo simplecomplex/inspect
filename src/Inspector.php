@@ -1,15 +1,17 @@
 <?php
-
-declare(strict_types=1);
-/*
- * Scalar parameter type declaration is a no-go until everything is strict (coercion or TypeError?).
+/**
+ * SimpleComplex PHP Inspect
+ * @link      https://github.com/simplecomplex/inspect
+ * @copyright Copyright (c) 2011-2017 Jacob Friis Mathiasen
+ * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
+declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
 use Psr\SimpleCache\CacheInterface;
-use SimpleComplex\Filter\Unicode;
-use SimpleComplex\Filter\Sanitize;
+use SimpleComplex\Utils\Unicode;
+use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
 use SimpleComplex\Inspect\Exception\LogicException;
 
@@ -889,7 +891,7 @@ class Inspector
      *
      * @return string
      */
-    protected function trc($throwableOrNull) : string {
+    protected function trc(/*?\Throwable*/ $throwableOrNull) : string {
         return '';
     }
 
@@ -952,7 +954,7 @@ class Inspector
      * @return string
      *      Empty if no success.
      */
-    protected function fileLine() {
+    protected function fileLine() : string {
         $trace = debug_backtrace();
         // Find first frame whose file isn't named like our library files.
         $le = count($trace);
@@ -1024,7 +1026,7 @@ class Inspector
      *
      * @return mixed|null
      */
-    public function configGet($domain, $name, $default = null)
+    public function configGet($domain, $name, $default = null) /*: ?mixed*/
     {
         if ($this->config) {
             return $this->config->get(
