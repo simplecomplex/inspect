@@ -137,12 +137,12 @@ class Inspect
      * 'trace':true option.
      *
      * @param mixed $subject
-     * @param array $options
+     * @param array|int|string $options
      *
      * @return Inspector
      *      Stringable.
      */
-    public function inspect($subject, array $options = []) : Inspector
+    public function inspect($subject, $options = []) : Inspector
     {
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -162,12 +162,12 @@ class Inspect
      * Force variable inspection, even if subject is a throwable.
      *
      * @param mixed $subject
-     * @param array $options
+     * @param array|int|string $options
      *
      * @return Inspector
      *      Stringable.
      */
-    public function variable($subject, array $options = []) : Inspector
+    public function variable($subject, $options = []) : Inspector
     {
         $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
@@ -188,12 +188,12 @@ class Inspect
      * Force back-tracing, if arg $throwableOrNull isn't a Throwable.
      *
      * @param \Throwable|null $throwableOrNull
-     * @param array $options
+     * @param array|int|string $options
      *
      * @return Inspector
      *      Stringable.
      */
-    public function trace(/*?\Throwable*/ $throwableOrNull, array $options = []) : Inspector
+    public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : Inspector
     {
         $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
