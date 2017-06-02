@@ -737,7 +737,7 @@ class Inspector
 
                 $any_skip_keys = !!$this->options['skip_keys'];
                 $i = -1;
-                foreach ($subject as $key => &$element) {
+                foreach ($subject as $key => $element) {
                     ++$i;
                     if ($i) {
                         $output .= $delim_middle;
@@ -768,7 +768,6 @@ class Inspector
                         $output .= $key . ': ' . $this->nspct($element, $depth + 1);
                     }
                 }
-                unset($element);
 
                 if ($is_num_array) {
                     $output .= $delim_end . ']';
@@ -806,7 +805,7 @@ class Inspector
                 // n2 only occurs if truncation.
                 $len_bytes = strlen($subject);
                 if (!$len_bytes) {
-                    $output = '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
+                    $output .= '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                 } elseif (!$this->validate->unicode($subject)) {
                     $output .= '?|' . $len_bytes . '|0) *INVALID_UTF8*';
                 } else {
