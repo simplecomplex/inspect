@@ -10,7 +10,6 @@ declare(strict_types=1);
 namespace SimpleComplex\Inspect;
 
 use Psr\SimpleCache\CacheInterface;
-use SimpleComplex\Utils\Traits\GetInstanceOfFamilyTrait;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
@@ -25,14 +24,28 @@ use SimpleComplex\Validate\Validate;
 class Inspect
 {
     /**
-     * @see \SimpleComplex\Utils\Traits\GetInstanceOfFamilyTrait
+     * Reference to first object instantiated via the getInstance() method,
+     * no matter which parent/child class the method was/is called on.
      *
-     * First object instantiated via this method, disregarding class called on.
-     * @public
-     * @static
-     * @see \SimpleComplex\Utils\Traits\GetInstanceOfFamilyTrait::getInstance()
+     * @var Inspect
      */
-    use GetInstanceOfFamilyTrait;
+    protected static $instance;
+
+    /**
+     * First object instantiated via this method, disregarding class called on.
+     *
+     * @param mixed ...$constructorParams
+     *
+     * @return Inspect
+     *      static, really, but IDE might not resolve that.
+     */
+    public static function getInstance(...$constructorParams)
+    {
+        if (!static::$instance) {
+            static::$instance = new static(...$constructorParams);
+        }
+        return static::$instance;
+    }
 
     /**
      * Class name of \SimpleComplex\JsonLog\JsonLogEvent or extending class.
@@ -115,6 +128,11 @@ class Inspect
      *
      * Back-tracing (without Throwable) can also be accomplished by passing
      * 'trace':true option.
+     *
+     * @code
+     * # CLI
+     * SimpleComplex\Inspect\Inspect::getInstance()->inspect($GLOBALS);
+     * @endcode
      *
      * @param mixed $subject
      * @param array|int|string $options

@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-06-05
+-------------------------------------
+- Stopped including getInstance() trait; IDE cannot resolve classes beyond
+  1 level of reference.
+
 SimpleComplex/Inspect 2.x, 2017-05-31
 -------------------------------------
 - Use parameter type declaration when possible, despite ambiguous effect for
