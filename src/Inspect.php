@@ -111,8 +111,6 @@ class Inspect
     /**
      * Proxy class for Inspector.
      *
-     * Checks and resolves all dependencies, whereas Inspector use them unchecked.
-     *
      * @code
      * use \SimpleComplex\JsonLog\JsonLog;
      * use \SimpleComplex\Inspect\Inspect;
