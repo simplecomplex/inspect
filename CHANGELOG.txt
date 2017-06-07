@@ -1,3 +1,12 @@
+SimpleComplex/Inspect 2.x, 2017-06-07
+-------------------------------------
+- Inspect allow extending constructur to provide dependencies by other means.
+- Pass Inspect instance to Inspector constructor.
+- Secure dependencies on demand, not on instantiation.
+- Use SimpleComplex\Utils\EnvVarConfig as fallback config object.
+- Use Inspect config object directly in the Inspector class.
+- Use ConfigDomainDelimiterInterface to retrieve domain delimiter from config.
+
 SimpleComplex/Inspect 2.x, 2017-06-05
 -------------------------------------
 - Stopped including getInstance() trait; IDE cannot resolve classes beyond

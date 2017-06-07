@@ -9,10 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use Psr\SimpleCache\CacheInterface;
-use SimpleComplex\Utils\Unicode;
-use SimpleComplex\Utils\Sanitize;
-use SimpleComplex\Validate\Validate;
 use SimpleComplex\Inspect\Exception\LogicException;
 
 /*
@@ -20,10 +16,11 @@ use SimpleComplex\Inspect\Exception\LogicException;
  * - message (use a logger for that instead)
  * - hide_scalars (never used)
  * - hide_paths (no longer optional, and only document root)
- * - by_user (not applicable, logger may to it)
+ * - by_user (not applicable, logger may do it)
  * - one_lined (never uses)
  * - no_fileline (stupid)
  * - name (daft)
+ * - logger
  *
  * Arg options can no longer be an object.
  *
@@ -208,7 +205,6 @@ class Inspector
      */
     protected $options = array(
         'kind' => '',
-        'logger' => null,
         'code' => 0,
         'depth' => 0,
         'limit' => 0,
@@ -250,44 +246,22 @@ class Inspector
     protected $code = 0;
 
 
-    // Constructor arg equivalents.---------------------------------------------
+    // Constructor.-------------------------------------------------------------
 
     /**
-     * @var CacheInterface|null
+     * @var Inspect
      */
-    protected $config;
-
-    /**
-     * @var Unicode
-     */
-    protected $unicode;
-
-    /**
-     * @var Sanitize
-     */
-    protected $sanitize;
-
-    /**
-     * @var Validate
-     */
-    protected $validate;
+    protected $proxy;
 
     /**
      * Do not call this directly, use Inspect instead.
-     *
-     * Does not check dependencies; Inspect constructor does that.
      *
      * @see Inspect::__construct()
      * @see Inspect::getInstance()
      *
      * @internal
      *
-     * @param array $dependencies {
-     *      @var CacheInterface|null $config  Optional, null will do.
-     *      @var Unicode $unicode  Required.
-     *      @var Sanitize $sanitize  Required.
-     *      @var Validate $validate  Required.
-     * }
+     * @param Inspect $proxy
      * @param mixed $subject
      * @param array|int|string $options
      *   Integer when inspecting variable: maximum depth.
@@ -295,11 +269,9 @@ class Inspector
      *   String: kind (variable|trace); otherwise ignored.
      *   Not array|integer|string: ignored.
      */
-    public function __construct(array $dependencies, $subject, $options = []) {
-        $this->config = $dependencies['config'];
-        $this->unicode = $dependencies['unicode'];
-        $this->sanitize = $dependencies['sanitize'];
-        $this->validate = $dependencies['validate'];
+    public function __construct(Inspect $proxy, $subject, $options = [])
+    {
+        $this->proxy = $proxy;
 
         $kind = '';
         $depth_or_limit = 0;
@@ -382,11 +354,11 @@ class Inspector
         } elseif ($depth_or_limit && $depth_or_limit <= static::TRACE_LIMIT_MAX) {
             $opts['limit'] = $depth_or_limit;
         } else {
-            $opts['limit'] = ($tmp = $this->configGet(static::CONFIG_DOMAIN, 'trace_limit')) ?
+            $opts['limit'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'trace_limit')) ?
                 (int) $tmp : static::TRACE_LIMIT_DEFAULT;
         }
         // truncate.
-        $opts['truncate'] = (int) ($tmp = $this->configGet(static::CONFIG_DOMAIN, 'truncate')) ?
+        $opts['truncate'] = (int) ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'truncate')) ?
             (int) $tmp : static::TRUNCATE_DEFAULT;
         // skip_keys.
         // Keep default: empty array.
@@ -395,22 +367,16 @@ class Inspector
         // needles; only arg options override if arg options replacers.
         $opts['needles'] = static::NEEDLES;
         // output_max.
-        $opts['output_max'] = ($tmp = $this->configGet(static::CONFIG_DOMAIN, 'output_max')) ?
+        $opts['output_max'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'output_max')) ?
             (int) $tmp : static::OUTPUT_DEFAULT;
         // exectime_percent.
-        $opts['exectime_percent'] = ($tmp = $this->configGet(static::CONFIG_DOMAIN, 'exectime_percent')) ?
+        $opts['exectime_percent'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'exectime_percent')) ?
             (int) $tmp : static::EXEC_TIMEOUT_DEFAULT;
         // wrappers.
         // Keep default: zero.
 
         // Overriding options by argument.--------------------------------------
         if ($use_arg_options) {
-            if (!empty($options['logger'])) {
-                // No type checking;
-                // we trust that folks passing logger know what they do.
-                $opts['logger'] = $options['logger'];
-            }
-
             if (
                 !empty($options['code'])
                 && ($tmp = (int) $options['code']) > 0
@@ -515,7 +481,7 @@ class Inspector
             $len_preface = strlen($this->preface);
             $len_output = strlen($output);
             if ($len_output + $len_preface + static::OUTPUT_MARGIN > $opts['output_max']) {
-                $output = $this->unicode->truncateToByteLength(
+                $output = $this->proxy->unicode->truncateToByteLength(
                     $output,
                     $opts['output_max'] - $len_preface + static::OUTPUT_MARGIN
                 );
@@ -760,7 +726,7 @@ class Inspector
                             $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                         }
                         else {
-                            $output .= $key . ': (string:' . $this->unicode->strlen($element) . ':'
+                            $output .= $key . ': (string:' . $this->proxy->unicode->strlen($element) . ':'
                                 . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
                         }
                     }
@@ -795,7 +761,7 @@ class Inspector
                     $output = '(' . (is_nan($subject) ? 'NaN' : 'infinite') . ')';
                 } else {
                     $output = '(' . ($type == 'double' ? 'float' : $type) . ') '
-                        . (!$subject ? '0' : $this->sanitize->numberToString($subject));
+                        . (!$subject ? '0' : $this->proxy->sanitize->numberToString($subject));
                 }
                 break;
 
@@ -806,10 +772,10 @@ class Inspector
                 $len_bytes = strlen($subject);
                 if (!$len_bytes) {
                     $output .= '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
-                } elseif (!$this->validate->unicode($subject)) {
+                } elseif (!$this->proxy->validate->unicode($subject)) {
                     $output .= '?|' . $len_bytes . '|0) *INVALID_UTF8*';
                 } else {
-                    $len_unicode = $this->unicode->strlen($subject);
+                    $len_unicode = $this->proxy->unicode->strlen($subject);
                     $output .= $len_unicode . ':' . $len_bytes;
                     $truncate = $this->options['truncate'];
                     if (!$truncate) {
@@ -836,7 +802,7 @@ class Inspector
                                 $docroot_replace = false;
                                 $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
                             }
-                            $subject = $this->unicode->substr($subject, 0, $truncate);
+                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
                         // Remove document root after truncation.
@@ -855,8 +821,8 @@ class Inspector
                             false
                         );
                         // Re-truncate, in case subject's gotten longer.
-                        if ($this->unicode->strlen($subject) > $truncate) {
-                            $subject = $this->unicode->substr($subject, 0, $truncate);
+                        if ($this->proxy->unicode->strlen($subject) > $truncate) {
+                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
 
@@ -997,63 +963,5 @@ class Inspector
             $preface .= static::FORMAT['newline'] . join(static::FORMAT['newline'], $this->warnings);
         }
         return $preface;
-    }
-
-    /**
-     * Get config var.
-     *
-     * If Inspect was provided with a config object, that will be used.
-     * Otherwise this implementation uses environment vars.
-     *
-     *  Vars, and their effective defaults:
-     *  - (int) trace_limit:        5 (TRACE_LIMIT_DEFAULT)
-     *  - (int) truncate:           1000 (TRUNCATE_DEFAULT)
-     *  - (int) output_max:         1Mb (OUTPUT_DEFAULT)
-     *  - (int) exectime_percent:   90 (EXEC_TIMEOUT_DEFAULT)
-     *
-     * Config object var names will be prefixed by
-     * CONFIG_DOMAIN . CONFIG_DELIMITER
-     * Environment var names will be prefixed by CONFIG_DOMAIN; example
-     * lib_simplecomplex_jsonlog_siteid.
-     * Beware that environment variables are always strings.
-     *
-     * @param string $domain
-     *      Default: static::CONFIG_DOMAIN.
-     * @param string $name
-     * @param mixed $default
-     *      Default: null.
-     *
-     * @return mixed|null
-     */
-    public function configGet($domain, $name, $default = null) /*: ?mixed*/
-    {
-        if ($this->config) {
-            return $this->config->get(
-                ($domain ? $domain : static::CONFIG_DOMAIN) . static::CONFIG_DELIMITER . $name,
-                $default
-            );
-        }
-        return ($val = getenv(($domain ? $domain : static::CONFIG_DOMAIN) . '_' . $name)) !== false ? $val : $default;
-    }
-
-    /**
-     * Unless Inspect was provided with a config object, this implementation
-     * does nothing, since you can't save an environment var.
-     *
-     * @param string $domain
-     * @param string $name
-     * @param mixed $value
-     *
-     * @return bool
-     */
-    public function configSet($domain, $name, $value) : bool
-    {
-        if ($this->config) {
-            return $this->config->set(
-                ($domain ? $domain : static::CONFIG_DOMAIN) . static::CONFIG_DELIMITER . $name,
-                $value
-            );
-        }
-        return putenv(($domain ? $domain : static::CONFIG_DOMAIN) . '_' . $name . '=' . $value);
     }
 }

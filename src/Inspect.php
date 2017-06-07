@@ -10,6 +10,8 @@ declare(strict_types=1);
 namespace SimpleComplex\Inspect;
 
 use Psr\SimpleCache\CacheInterface;
+use SimpleComplex\Utils\EnvVarConfig;
+use SimpleComplex\Utils\ConfigDomainDelimiterInterface;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
@@ -69,24 +71,42 @@ class Inspect
     const CLASS_VALIDATE = Validate::class;
 
     /**
+     * Conf var default namespace.
+     *
+     * @var string
+     */
+    const CONFIG_DOMAIN = 'lib_simplecomplex_inspect';
+
+    /**
+     *  Config vars, and their effective defaults:
+     *  - (int) trace_limit:        5 (TRACE_LIMIT_DEFAULT)
+     *  - (int) truncate:           1000 (TRUNCATE_DEFAULT)
+     *  - (int) output_max:         1Mb (OUTPUT_DEFAULT)
+     *  - (int) exectime_percent:   90 (EXEC_TIMEOUT_DEFAULT)
+     *
      * @var CacheInterface|null
      */
-    protected $config;
+    public $config;
 
     /**
      * @var Unicode
      */
-    protected $unicode;
+    public $unicode;
 
     /**
      * @var Sanitize
      */
-    protected $sanitize;
+    public $sanitize;
 
     /**
      * @var Validate
      */
-    protected $validate;
+    public $validate;
+
+    /**
+     * @var string
+     */
+    public $configDomain;
 
     /**
      * Proxy class for Inspector.
@@ -111,16 +131,46 @@ class Inspect
      * }
      * @endcode
      *
+     * @see JsonLog::setConfig()
+     * @see \SimpleComplex\Utils\EnvVarConfig
+     *
      * @param CacheInterface|null $config
-     *      PSR-16 based configuration instance, if any.
+     *      PSR-16 based configuration instance.
+     *      Uses/instantiates SimpleComplex\Utils\EnvVarConfig _on demand_,
+     *      as fallback.
      */
     public function __construct(/*?CacheInterface*/ $config = null)
     {
-        $this->config = $config;
+        // Dependencies.--------------------------------------------------------
+        // Extending class' constructor might provide instances by other means.
+        if (!$this->config && isset($config)) {
+            $this->setConfig($config);
+        }
 
-        $this->unicode = Unicode::getInstance();
-        $this->sanitize = Sanitize::getInstance();
-        $this->validate = Validate::getInstance();
+        // Business.------------------------------------------------------------
+        // None.
+    }
+
+    /**
+     * Overcome mutual dependency, provide a config object after instantiation.
+     *
+     * This class does not need a config object at all, if defaults are adequate.
+     *
+     * @param CacheInterface|ConfigDomainDelimiterInterface $config
+     *      Must implement CacheInterface. Here, the other interface is @IDE.
+     *
+     * @return void
+     */
+    public function setConfig(CacheInterface $config) /*: void*/
+    {
+        $this->config = $config;
+        if (is_a($config, ConfigDomainDelimiterInterface::class)) {
+            // @IDE: A class implementing ConfigDomainDelimiterInterface
+            // _does_ have a keyDomainDelimiter() method.
+            $this->configDomain = static::CONFIG_DOMAIN . $config->keyDomainDelimiter();
+        } else {
+            $this->configDomain = static::CONFIG_DOMAIN . '__';
+        }
     }
 
     /**
@@ -142,15 +192,27 @@ class Inspect
      */
     public function inspect($subject, $options = []) : Inspector
     {
+        // Init.----------------------------------------------------------------
+        // Load dependencies on demand.
+        if (!$this->config) {
+            $this->setConfig(EnvVarConfig::getInstance());
+        }
+        if (!$this->unicode) {
+            $this->unicode = Unicode::getInstance();
+        }
+        if (!$this->sanitize) {
+            $this->sanitize = Sanitize::getInstance();
+        }
+        if (!$this->validate) {
+            $this->validate = Validate::getInstance();
+        }
+
+        // Business.------------------------------------------------------------
+
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
-            [
-                'config' => $this->config,
-                'unicode' => $this->unicode,
-                'sanitize' => $this->sanitize,
-                'validate' => $this->validate,
-            ],
+            $this,
             $subject,
             $options
         );
@@ -167,16 +229,28 @@ class Inspect
      */
     public function variable($subject, $options = []) : Inspector
     {
+        // Init.----------------------------------------------------------------
+        // Load dependencies on demand.
+        if (!$this->config) {
+            $this->setConfig(EnvVarConfig::getInstance());
+        }
+        if (!$this->unicode) {
+            $this->unicode = Unicode::getInstance();
+        }
+        if (!$this->sanitize) {
+            $this->sanitize = Sanitize::getInstance();
+        }
+        if (!$this->validate) {
+            $this->validate = Validate::getInstance();
+        }
+
+        // Business.------------------------------------------------------------
+
         $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
-            [
-                'config' => $this->config,
-                'unicode' => $this->unicode,
-                'sanitize' => $this->sanitize,
-                'validate' => $this->validate,
-            ],
+            $this,
             $subject,
             $options
         );
@@ -193,32 +267,30 @@ class Inspect
      */
     public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : Inspector
     {
+        // Init.----------------------------------------------------------------
+        // Load dependencies on demand.
+        if (!$this->config) {
+            $this->setConfig(EnvVarConfig::getInstance());
+        }
+        if (!$this->unicode) {
+            $this->unicode = Unicode::getInstance();
+        }
+        if (!$this->sanitize) {
+            $this->sanitize = Sanitize::getInstance();
+        }
+        if (!$this->validate) {
+            $this->validate = Validate::getInstance();
+        }
+
+        // Business.------------------------------------------------------------
+
         $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
-            [
-                'config' => $this->config,
-                'unicode' => $this->unicode,
-                'sanitize' => $this->sanitize,
-                'validate' => $this->validate,
-            ],
+            $this,
             $throwableOrNull,
             $options
         );
-    }
-
-    /**
-     * Overcome mutual dependency, provide a config object after instantiation.
-     *
-     * This class does not need a config object at all, if defaults are adequate.
-     *
-     * @param CacheInterface $config
-     *
-     * @return void
-     */
-    public function setConfig(CacheInterface $config) /*: void*/
-    {
-        $this->config = $config;
     }
 }
