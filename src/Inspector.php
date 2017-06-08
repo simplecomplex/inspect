@@ -720,7 +720,7 @@ class Inspector
                     elseif ($any_skip_keys && in_array($key, $this->options['skip_keys'], true)) {
                         $output .= $key . ': F';
                     }
-                    elseif (!$is_num_array && in_array($key, static::HIDE_VALUE_OF_KEYS) && is_string($element)) {
+                    elseif (!$is_num_array && in_array($key, static::HIDE_VALUE_OF_KEYS, true) && is_string($element)) {
                         $len_bytes = strlen($element);
                         if (!$len_bytes) {
                             $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
@@ -814,12 +814,16 @@ class Inspector
                         // Escape lower ASCIIs.
                         $subject = addcslashes($subject, "\0..\37");
                         // Escape HTML entities.
-                        $subject = htmlspecialchars(
+
+
+                        // @todo: do not escape HTML entities.
+
+                        /*$subject = htmlspecialchars(
                             $subject,
                             ENT_QUOTES | ENT_SUBSTITUTE,
                             'UTF-8',
                             false
-                        );
+                        );*/
                         // Re-truncate, in case subject's gotten longer.
                         if ($this->proxy->unicode->strlen($subject) > $truncate) {
                             $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
