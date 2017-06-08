@@ -154,8 +154,7 @@ class Inspect
      *
      * This class does not need a config object at all, if defaults are adequate.
      *
-     * @param CacheInterface|ConfigDomainDelimiterInterface $config
-     *      Must implement CacheInterface. Here, the other interface is @IDE.
+     * @param CacheInterface $config
      *
      * @return void
      */
@@ -163,8 +162,9 @@ class Inspect
     {
         $this->config = $config;
         if (is_a($config, ConfigDomainDelimiterInterface::class)) {
-            // @IDE: A class implementing ConfigDomainDelimiterInterface
-            // _does_ have a keyDomainDelimiter() method.
+            /**
+             * @see ConfigDomainDelimiterInterface::keyDomainDelimiter()
+             */
             $this->configDomain = static::CONFIG_DOMAIN . $config->keyDomainDelimiter();
         } else {
             $this->configDomain = static::CONFIG_DOMAIN . '__';
