@@ -959,10 +959,10 @@ class Inspector
             $preface = '[Inspect trace - #' . static::$nInspections . ' - limit:' . $this->options['limit']
                 . '|depth:' . $this->options['depth'] . '|truncate:' . $this->options['truncate'] . ']';
         }
+        $preface .= '@' . $this->fileLine;
         if ($this->code) {
             $preface .= static::FORMAT['newline'] . 'Code: ' . $this->code;
         }
-        $preface .= static::FORMAT['newline'] . '@' . $this->fileLine;
         if ($this->warnings) {
             $preface .= static::FORMAT['newline'] . join(static::FORMAT['newline'], $this->warnings);
         }
