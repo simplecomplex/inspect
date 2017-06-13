@@ -1,6 +1,8 @@
 SimpleComplex/Inspect 2.x, 2017-06-13
 -------------------------------------
 - Use config package's EnvVarConfig as configuration fallback.
+- In-package exception types obsolete.
+- Tracer fully implemented.
 
 SimpleComplex/Inspect 2.x, 2017-06-07
 -------------------------------------

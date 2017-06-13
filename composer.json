@@ -20,8 +20,7 @@
     },
     "autoload": {
         "psr-4": {
-            "SimpleComplex\\Inspect\\": "src/",
-            "SimpleComplex\\Inspect\\Exception\\": "src/Exception/"
+            "SimpleComplex\\Inspect\\": "src/"
         }
     }
 }

@@ -9,9 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Inspect\Exception\LogicException;
-use SimpleComplex\Inspect\Exception\InvalidArgumentException;
-
 /*
  * Options no longer supported:
  * - message (use a logger for that instead)
@@ -180,17 +177,8 @@ class Inspector
         'delimiter' => "\n",
         'indent' => '.  ',
         'quote' => '`',
+        'trace_spacer' => '- - - - - - - - - - - - - - - - - - - - - - - - -',
         'enclose_tag' => 'pre',
-    ];
-
-    /**
-     * Formatting when tracing; gets merged over FORMAT.
-     *
-     * @var string[]
-     */
-    const FORMAT_TRACE = [
-        'delimiter' => "\n  ",
-        'spacer' => '- - - - - - - - - - - - - - - - - - - - - - - - -',
     ];
 
     /**
@@ -335,10 +323,10 @@ class Inspector
                 $back_trace = true;
             }
         }
+        $this->kind = $kind;
 
         // Prepare options.-----------------------------------------------------
         $opts =& $this->options;
-        $opts['kind'] = $kind;
         // logger.
         // Keep default: null.
         // code.
@@ -621,7 +609,7 @@ class Inspector
     protected static $nInspections = 0;
 
     /**
-     * @throws LogicException
+     * @throws \LogicException
      *      Failing recursion depth control.
      *
      * @param mixed $subject
@@ -639,7 +627,7 @@ class Inspector
         $depth_max = $this->options['depth'];
 
         if ($depth > $depth_max) {
-            throw new LogicException('Algo errror, depth exceeded.');
+            throw new \LogicException('Algo errror, depth exceeded.');
         }
         // Check length every time.
         if ($this->exceedsLength()) {
@@ -699,22 +687,16 @@ class Inspector
                 else {
                     $output .= '{';
                 }
-                // @todo: do we actually need more delimiters; old Inspect had other formats for 'later' and 'last'.
-                // @todo: maybe trace requires it.
-                $delim_first = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth + 1);
-                $delim_middle = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth + 1);
+
+                $delim_first = $delim_middle =
+                    static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth + 1);
                 $delim_end = static::FORMAT['delimiter'] . str_repeat(static::FORMAT['indent'], $depth);
 
                 $any_skip_keys = !!$this->options['skip_keys'];
                 $i = -1;
                 foreach ($subject as $key => $element) {
                     ++$i;
-                    if ($i) {
-                        $output .= $delim_middle;
-                    }
-                    else {
-                        $output .= $delim_first;
-                    }
+                    $output .= $i ? $delim_middle : $delim_first;
                     if (
                         $is_array && !$is_num_array && $key === 'GLOBALS'
                         && is_array($element) && array_key_exists('GLOBALS', $element)
@@ -813,7 +795,7 @@ class Inspector
                         if ($docroot_replace) {
                             $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
                         }
-                        // Replace listed neeedles with harmless symbols.
+                        // Replace listed needles with harmless symbols.
                         $subject = str_replace($this->options['needles'], $this->options['replacers'], $subject);
                         // Escape lower ASCIIs.
                         $subject = addcslashes($subject, "\0..\37");
@@ -863,224 +845,120 @@ class Inspector
      * @param \Throwable|null $throwableOrNull
      *
      * @return string
+     *
+     * @throws \TypeError
+     *      Arg throwableOrNull not \Throwable or null.
      */
     protected function trc(/*?\Throwable*/ $throwableOrNull) : string
     {
-        // For IDE; prevent uninitialised notifications.
-        $n_frame = $thrwbl_class = $sTrc = $sTrcEnd = NULL;
-
-        try {
-            // Received Exception, by arg.
-            if ($throwableOrNull) {
-                if (is_a($throwableOrNull, \Throwable::class)) {
-                    $thrwbl_class = get_class($throwableOrNull);
-                    if (!$this->code) {
-                        $this->code = $throwableOrNull->getCode();
-                    }
-                    $trace = $throwableOrNull->getTrace();
-                    if (count($trace) > $this->options['limit']) {
-                        array_splice($trace, $this->options['limit']);
-                    }
+        // Received Throwable, by arg.
+        if ($throwableOrNull) {
+            if (is_a($throwableOrNull, \Throwable::class)) {
+                $thrwbl_class = get_class($throwableOrNull);
+                if (!$this->code) {
+                    $this->code = $throwableOrNull->getCode();
                 }
-                else {
-                    throw new \Exception(
-                        'Arg throwableOrNull type['
-                        . (!is_object($throwableOrNull) ? gettype($throwableOrNull) : get_class($throwableOrNull))
-                        . '] is not Throwable or null.'
-                    );
-                }
-            }
-            // Create trace, when none given by arg.
-            else {
-                $trace = debug_backtrace();
-                // Remove top levels on synthetic trace, first of all this method.
-                array_shift($trace);
-                // Find first frame whose file isn't named like our library files.
-                $le = count($trace);
-                $n_frame = -1;
-                for ($i = 0; $i < $le; ++$i) {
-                    if (
-                        !empty($trace[$i]['file'])
-                        && !in_array(basename($trace[$i]['file']), static::LIB_FILENAMES)
-                    ) {
-                        $n_frame = $i;
-                        break;
-                    }
-                }
-                if ($n_frame > -1) {
-                    $trace = array_slice($trace, $n_frame);
-                }
-                // Enforce the trace limit.
+                $trace = $throwableOrNull->getTrace();
                 if (count($trace) > $this->options['limit']) {
-                    // Plus one because we need the bucket holding the initial event.
-                    array_splice($trace, $this->options['limit'] + 1);
+                    array_splice($trace, $this->options['limit']);
                 }
-            }
-
-            // Format as string.
-            $delim = $this->delimiters[1];
-            $sFunc = '';
-
-            // If exception: resolve its origin.
-            if ($thrwbl_class) {
-                $sTrc = 'Throwable (' . $thrwbl_class . ') - code: ' . $throwableOrNull->getCode() . $delim;
-                $file = trim($throwableOrNull->getFile());
-                $line = (($u = $throwableOrNull->getLine()) ? trim($u) : '?');
-                // Escape exception message; may contain unexpected characters that are
-                // inappropriate for a logging implementation.
-                $xcMessage = addcslashes(str_replace($this->needles, $this->replacers, $throwableOrNull->getMessage()), "\0..\37");
-                $message = 'message: ' . $xcMessage . $delim;
-
-                // If more severe than debug: pass exception message to overall message,
-                // if that is empty.
-                if ($this->severity < static::$severityToInteger['debug'] && !$this->message) {
-                    if ($this->target != 'file') {
-                        $this->message = static::mb_substr(
-                            htmlspecialchars(
-                                $xcMessage,
-                                ENT_QUOTES, // PHP 5.4: ENT_QUOTES | ENT_SUBSTITUTE
-                                'UTF-8',
-                                FALSE // No double encoding
-                            ),
-                            0,
-                            255
-                        );
-                    }
-                    else {
-                        $this->message = static::mb_substr($xcMessage, 0, 255);
-                    }
-                }
-                unset($xcMessage);
             }
             else {
-                $sTrc = 'Backtrace' . $delim;
-                $frame = array_shift($trace);
-                if (isset($frame['class'])) {
-                    $sFunc = 'static method: ' . $frame['class'] . '::' . (isset($frame['function']) ? ($frame['function'] . '()') : '') . $delim;
-                }
-                elseif (isset($frame['function'])) {
-                    $sFunc = 'function: ' . $frame['function'] . '()' . $delim;
-                }
-                $file = isset($frame['file']) ? trim($frame['file']) : 'unknown';
-                $line = isset($frame['line']) ? trim($frame['line']) : '?';
-                $message = '';
-            }
-
-            if ($file != 'unknown' && ($le = static::mb_strlen($file))) {
-                $file = $this->hide_paths ? basename($file) : str_replace(
-                    '\\',
-                    '/',
-                    static::mb_strlen($noRoot = preg_replace(static::$paths, '', $file)) < $le ? ('document_root/' . $noRoot) : $file
+                throw new \TypeError(
+                    'Arg throwableOrNull type['
+                    . (!is_object($throwableOrNull) ? gettype($throwableOrNull) : get_class($throwableOrNull))
+                    . '] is not Throwable or null.'
                 );
             }
-            $sTrc .= 'file: ' . $file . $delim
-                . 'line: ' . $line . $delim
-                . $sFunc
-                . $message;
-
-            $sTrcEnd = 'END ' . $this->trace_spacer;
-
-            // Iterate stack frames.
-            // Deliberately not multibyte strlen().
-            $sTrcLength = strlen($sTrc) + strlen($sTrcEnd);
-            $n_frame = -1;
-            foreach ($trace as &$frame) {
-                $sFrm = (++$n_frame) . ' ' . $this->trace_spacer . $delim;
-
-                // File and line.
-                if (isset($frame['file']) && ($le = static::mb_strlen($u = trim($frame['file'])))) {
-                    $file = $this->hide_paths ? basename($u) : str_replace(
-                        '\\',
-                        '/',
-                        static::mb_strlen($noRoot = preg_replace(static::$paths, '', $u)) < $le ? ('document_root/' . $noRoot) : $u
-                    );
-                }
-                else {
-                    $file = 'unknown';
-                }
-                $sFrm .= 'file: ' . $file . $delim
-                    . 'line: ' . (isset($frame['line']) ? trim($frame['line']) : '?') . $delim;
-
-                // Class, object, function, type.
-                // Deliberately not multibyte strlen().
-                $sFunc = isset($frame['function']) && strlen($u = $frame['function']) ? $u : '';
-                // Deliberately not multibyte strlen().
-                $sCls = isset($frame['class']) && strlen($u = $frame['class']) ? $u : '';
-                $sType = isset($frame['type']) ? trim($frame['type']) : '';
-                $sObj = '';
-                if (isset($frame['object'])) {
-                    if (($o = $frame['object'])) {
-                        // We dont know if class bucket is present when object is, but using
-                        // class is cheaper.
-                        $sObj = $sCls ? $sCls : get_class($o);
-                        if ($sFunc) {
-                            $sFunc = 'method: (' . $sObj . ')' . ($sType ? $sType : '->') . $sFunc;
-                        }
-                        // Is this possible at all? Simply object, no method call?
-                        else {
-                            $sObj = 'object (' . $sObj . ')';
-                        }
-                    }
-                }
-                elseif ($sFunc) {
-                    $sFunc = !$sCls ? ('function: ' . $sFunc) : ('static method: ' . $sCls . ($sType ? $sType : '::') . $sFunc);
-                    // $frame['object'] doesnt exist.
-                }
-                // else {
-                //   $frame['object'] doesnt exist
-                //   $frame['function'] may exist, containing non-empty string
-                // }
-                $sFrm .= ($sFunc ? $sFunc : $sObj) . $delim;
-                // Args.
-                if (isset($frame['args'])) {
-                    $le = count($args = $frame['args']);
-                    $sArgs = '';
-                    for ($i = 0; $i < $le; $i++) {
-                        $sArgs .= $delim . $this->pre_indent . $this->nspct($args[$i]);
-                    }
-                    $sFrm .= 'args (' . $le . ')'
-                        . (!$le ? '' : (': ' . $sArgs) )
-                        . $delim;
-                }
-                // Skip current frame if total output now exceeds max.
-                // Deliberately not multibyte strlen().
-                if (($sTrcLength += strlen($sFrm)) > $this->output_max) {
-                    $this->limitReduced = $n_frame;
+        }
+        // Create trace, when none given by arg.
+        else {
+            $thrwbl_class = NULL;
+            $trace = debug_backtrace();
+            // Remove top levels on synthetic trace, first of all this method.
+            array_shift($trace);
+            // Find first frame whose file isn't named like our library files.
+            $le = count($trace);
+            $i_frame = -1;
+            for ($i = 0; $i < $le; ++$i) {
+                if (
+                    !empty($trace[$i]['file'])
+                    && !in_array(basename($trace[$i]['file']), static::LIB_FILENAMES)
+                ) {
+                    $i_frame = $i;
                     break;
                 }
-                else {
-                    $sTrc .= $sFrm;
+            }
+            if ($i_frame > -1) {
+                $trace = array_slice($trace, $i_frame);
+            }
+            // Enforce the trace limit.
+            if (count($trace) > $this->options['limit']) {
+                // Plus one because we need the bucket holding the initial event.
+                array_splice($trace, $this->options['limit'] + 1);
+            }
+        }
+
+        $delim = static::FORMAT['delimiter'];
+
+        // If exception: resolve its origin and render code and message.
+        if ($thrwbl_class) {
+            $output = 'Throwable (' . $thrwbl_class . ') - code: ' . $throwableOrNull->getCode()
+                . $delim . '@' . str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getFile())
+                . ':' . $throwableOrNull->getLine()
+                . $delim . 'message: '
+                . addcslashes(
+                    str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getMessage()),
+                    "\0..\37"
+                );
+        } else {
+            $output = 'Backtrace';
+        }
+
+        // Iterate stack frames.
+        $i_frame = -1;
+        foreach ($trace as $frame) {
+            $output .= $delim . (++$i_frame) . ' ' . static::FORMAT['trace_spacer'];
+            if (isset($frame['file'])) {
+                $output .= $delim . '@' . str_replace(static::$documentRoots, '[document_root]', $frame['file'])
+                    . ':' . (isset($frame['line']) ? $frame['line'] : '?');
+            } else {
+                $output .= $delim . '@unknown';
+            }
+
+            $function = !empty($frame['function']) ? $frame['function'] : '';
+            $class = !empty($frame['class']) ? $frame['class'] : '';
+            $type = !empty($frame['type']) ? $frame['type'] : '';
+
+            if (isset($frame['object'])) {
+                if (!$class) {
+                    $class = get_class($frame['object']);
+                }
+                if ($function) {
+                    $output .= $delim . 'method: (' . $class . ')' . ($type ? $type : '->') . $function;
+                } else {
+                    // Probably not possible.
+                    $output .= $delim . 'object (' . $class . ')';
+                }
+            } elseif ($function) {
+                if (!$class) {
+                    $output .= $delim . 'function: ' . $function;
+                } else {
+                    $output .= $delim . 'static method: ' . $class . ($type ? $type : '::') . $function;
                 }
             }
-            return $sTrc . $sTrcEnd;
-        }
-        catch (\Exception $xc) {
-            // Inspect::nspct() may abort too.
-            if (($errorCode = $xc->getCode()) == Inspect::ERROR_OUTPUTLENGTH) {
-                $this->limitReduced = $n_frame;
-                return $sTrc . $sTrcEnd;
-            }
 
-            // Other error.
-            // If severity is less grave than warning, make it a warning.
-            if ($this->severity > static::$severityToInteger['warning']) {
-                $this->severity = static::$severityToInteger['warning'];
+            // Args.
+            if (isset($frame['args'])) {
+                $le = count($frame['args']);
+                $output .= $delim . 'args (' . $le . ')' . (!$le ? '' : ':');
+                for ($i = 0; $i < $le; ++$i) {
+                    $output .= $delim . $this->nspct($frame['args'][$i]);
+                }
             }
-            $output = str_replace($this->needles, $this->replacers, $xc->getMessage())
-                . (!$errorCode ? '' : (' (error ' . $errorCode . ')'));
-
-            if ($this->target != 'file') {
-                return htmlspecialchars(
-                    $output,
-                    ENT_QUOTES, // PHP 5.4: ENT_QUOTES | ENT_SUBSTITUTE
-                    'UTF-8',
-                    FALSE // No double encoding
-                );
-            }
-            return $output;
         }
 
-        return '';
+        return $output;
     }
 
     /**
