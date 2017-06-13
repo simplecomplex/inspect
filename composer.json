@@ -2,7 +2,7 @@
     "name": "simplecomplex/inspect",
     "type": "library",
     "description": "Inspect is a PHP and Javascript library for inspecting variables and stack traces.",
-    "keywords": ["developer", "inspect", "dump", "trace"],
+    "keywords": ["developer", "inspect", "dump", "trace", "PHP"],
     "homepage": "https://github.com/simplecomplex/inspect",
     "license": "MIT",
     "authors": [
@@ -14,8 +14,8 @@
     "require": {
         "php": ">=7.0",
         "psr/log": "^1.0",
-        "psr/simple-cache": "^1",
         "simplecomplex/utils": "dev-develop",
+        "simplecomplex/config": "dev-develop",
         "simplecomplex/validate": "dev-develop"
     },
     "autoload": {

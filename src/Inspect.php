@@ -9,9 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use Psr\SimpleCache\CacheInterface;
-use SimpleComplex\Utils\EnvVarConfig;
-use SimpleComplex\Utils\ConfigDomainDelimiterInterface;
+use SimpleComplex\Config\ConfigInterface;
+use SimpleComplex\Config\EnvVarConfig;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
@@ -79,12 +78,12 @@ class Inspect
 
     /**
      *  Config vars, and their effective defaults:
-     *  - (int) trace_limit:        5 (TRACE_LIMIT_DEFAULT)
-     *  - (int) truncate:           1000 (TRUNCATE_DEFAULT)
-     *  - (int) output_max:         1Mb (OUTPUT_DEFAULT)
-     *  - (int) exectime_percent:   90 (EXEC_TIMEOUT_DEFAULT)
+     *  - (int) trace_limit:        5 (Inspector::TRACE_LIMIT_DEFAULT)
+     *  - (int) truncate:           1000 (Inspector::TRUNCATE_DEFAULT)
+     *  - (int) output_max:         ~1Mb (Inspector::OUTPUT_DEFAULT)
+     *  - (int) exectime_percent:   90 (Inspector::EXEC_TIMEOUT_DEFAULT)
      *
-     * @var CacheInterface|null
+     * @var ConfigInterface|null
      */
     public $config;
 
@@ -130,14 +129,14 @@ class Inspect
      * @endcode
      *
      * @see JsonLog::setConfig()
-     * @see \SimpleComplex\Utils\EnvVarConfig
+     * @see \SimpleComplex\Config\EnvVarConfig
      *
-     * @param CacheInterface|null $config
-     *      PSR-16 based configuration instance.
-     *      Uses/instantiates SimpleComplex\Utils\EnvVarConfig _on demand_,
+     * @param ConfigInterface|null $config
+     *      PSR-16-like configuration instance.
+     *      Uses/instantiates SimpleComplex\Config\EnvVarConfig _on demand_,
      *      as fallback.
      */
-    public function __construct(/*?CacheInterface*/ $config = null)
+    public function __construct(/*?ConfigInterface*/ $config = null)
     {
         // Dependencies.--------------------------------------------------------
         // Extending class' constructor might provide instances by other means.
@@ -154,21 +153,14 @@ class Inspect
      *
      * This class does not need a config object at all, if defaults are adequate.
      *
-     * @param CacheInterface $config
+     * @param ConfigInterface $config
      *
      * @return void
      */
-    public function setConfig(CacheInterface $config) /*: void*/
+    public function setConfig(ConfigInterface $config) /*: void*/
     {
         $this->config = $config;
-        if (is_a($config, ConfigDomainDelimiterInterface::class)) {
-            /**
-             * @see ConfigDomainDelimiterInterface::keyDomainDelimiter()
-             */
-            $this->configDomain = static::CONFIG_DOMAIN . $config->keyDomainDelimiter();
-        } else {
-            $this->configDomain = static::CONFIG_DOMAIN . '__';
-        }
+        $this->configDomain = static::CONFIG_DOMAIN . $config->keyDomainDelimiter();
     }
 
     /**
