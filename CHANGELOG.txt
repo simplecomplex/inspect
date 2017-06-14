@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-06-14
+-------------------------------------
+- New option escape_html; default off.
+
 SimpleComplex/Inspect 2.x, 2017-06-13
 -------------------------------------
 - Use config package's EnvVarConfig as configuration fallback.

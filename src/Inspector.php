@@ -104,6 +104,13 @@ class Inspector
     const TRUNCATE_DEFAULT = 1000;
 
     /**
+     * Whether to escape HTML in strings.
+     *
+     * @var bool
+     */
+    const ESCAPE_HTML = false;
+
+    /**
      * Absolute maximum byte (ASCII) length of an inspection/trace output.
      *
      * @var int
@@ -190,20 +197,35 @@ class Inspector
     ];
 
     /**
+     * Options, and their defaults:
+     * - (int) depth: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
+     * - (int) limit: max trace frame; TRACE_LIMIT_DEFAULT
+     * - (int) code: error code, overrides exception code; none
+     * - (int) truncate: truncate strings; TRUNCATE_DEFAULT
+     * - (arr) skip_keys: skip those object/array keys; none
+     * - (arr) needles: replace in strings; NEEDLES
+     * - (arr) replacers: replace in strings; REPLACERS
+     * - (bool) escape_html: replace in strings; ESCAPE_HTML
+     * - (int) output_max: replace in strings; OUTPUT_DEFAULT
+     * - (int) exectime_percent: replace in strings; EXEC_TIMEOUT_DEFAULT
+     * - (int) wrappers: number of wrapping functions/methods, to be hidden; zero
+     * - (str) kind: (auto) trace when subject is \Throwable, otherwise variable
+     *
      * @var array
      */
     protected $options = array(
-        'kind' => '',
-        'code' => 0,
         'depth' => 0,
         'limit' => 0,
+        'code' => 0,
         'truncate' => 0,
         'skip_keys' => [],
         'needles' => [],
         'replacers' => [],
+        'escape_html' => false,
         'output_max' => 0,
         'exectime_percent' => 0,
         'wrappers' => 0,
+        'kind' => '',
     );
 
     /**
@@ -349,6 +371,8 @@ class Inspector
         // truncate.
         $opts['truncate'] = (int) ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'truncate')) ?
             (int) $tmp : static::TRUNCATE_DEFAULT;
+        // escape_html.
+        $opts['escape_html'] = $this->proxy->config->get($this->proxy->configDomain . 'escape_html', static::ESCAPE_HTML);
         // skip_keys.
         // Keep default: empty array.
         // replacers.
@@ -392,6 +416,10 @@ class Inspector
                 && ($tmp = (int) $options['truncate']) >= 0 && $tmp <= static::TRUNCATE_MAX
             ) {
                 $opts['truncate'] = $tmp;
+            }
+
+            if (isset($options['escape_html'])) {
+                $opts['escape_html'] = !!$options['escape_html'];
             }
 
             if (!empty($options['skip_keys'])) {
@@ -609,13 +637,13 @@ class Inspector
     protected static $nInspections = 0;
 
     /**
-     * @throws \LogicException
-     *      Failing recursion depth control.
-     *
      * @param mixed $subject
      * @param int $depth
      *
      * @return string
+     *
+     * @throws \LogicException
+     *      Failing recursion depth control.
      */
     protected function nspct($subject, $depth = 0) : string
     {
@@ -800,16 +828,14 @@ class Inspector
                         // Escape lower ASCIIs.
                         $subject = addcslashes($subject, "\0..\37");
                         // Escape HTML entities.
-
-
-                        // @todo: do not escape HTML entities.
-
-                        /*$subject = htmlspecialchars(
-                            $subject,
-                            ENT_QUOTES | ENT_SUBSTITUTE,
-                            'UTF-8',
-                            false
-                        );*/
+                        if ($this->options['escape_html']) {
+                            $subject = htmlspecialchars(
+                                $subject,
+                                ENT_QUOTES | ENT_SUBSTITUTE,
+                                'UTF-8',
+                                false
+                            );
+                        }
                         // Re-truncate, in case subject's gotten longer.
                         if ($this->proxy->unicode->strlen($subject) > $truncate) {
                             $subject = $this->proxy->unicode->substr($subject, 0, $truncate);

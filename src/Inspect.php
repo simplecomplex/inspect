@@ -171,8 +171,10 @@ class Inspect
      *
      * @code
      * # CLI
-     * SimpleComplex\Inspect\Inspect::getInstance()->inspect($GLOBALS);
+     * \SimpleComplex\Inspect\Inspect::getInstance()->inspect($GLOBALS);
      * @endcode
+     *
+     * @see Inspector::$options
      *
      * @param mixed $subject
      * @param array|int|string $options
@@ -211,6 +213,8 @@ class Inspect
     /**
      * Force variable inspection, even if subject is a throwable.
      *
+     * @see Inspector::$options
+     *
      * @param mixed $subject
      * @param array|int|string $options
      *
@@ -247,7 +251,9 @@ class Inspect
     }
 
     /**
-     * Force back-tracing, if arg $throwableOrNull isn't a Throwable.
+     * Force back-tracing, if arg $throwableOrNull is null (back-trace).
+     *
+     * @see Inspector::$options
      *
      * @param \Throwable|null $throwableOrNull
      * @param array|int|string $options
