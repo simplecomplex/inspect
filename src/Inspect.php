@@ -16,9 +16,12 @@ use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
 
 /**
- * Mostly proxy class for Inspector.
+ * Variable analyzer and exception tracer.
  *
+ * Mostly proxy class for Inspector.
  * Intended as singleton - ::getInstance() - but constructor not protected.
+ *
+ * @see Inspector
  *
  * @package SimpleComplex\Inspect
  */

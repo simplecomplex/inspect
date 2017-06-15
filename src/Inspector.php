@@ -9,24 +9,9 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-/*
- * Options no longer supported:
- * - message (use a logger for that instead)
- * - hide_scalars (never used)
- * - hide_paths (no longer optional, and only document root)
- * - by_user (not applicable, logger may do it)
- * - one_lined (never uses)
- * - no_fileline (stupid)
- * - name (daft)
- * - logger
- *
- * Arg options can no longer be an object.
- *
- * Arg options as string is now 'kind', not obsolete 'message'.
- */
-
-
 /**
+ * Variable analyzer and exception tracer.
+ *
  * @internal
  *
  * @package SimpleComplex\Inspect
