@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-06-16
+-------------------------------------
+- Use sectioned config.
+
 SimpleComplex/Inspect 2.x, 2017-06-14
 -------------------------------------
 - New option escape_html; default off.

@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Config\ConfigInterface;
-use SimpleComplex\Config\EnvVarConfig;
+use SimpleComplex\Config\SectionedConfigInterface;
+use SimpleComplex\Config\EnvSectionedConfig;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
@@ -56,7 +56,7 @@ class Inspect
      *
      * @code
      * // Overriding class must use fully qualified (namespaced) class name.
-     * const CLASS_JSON_LOG_EVENT = \Package\Library\CustomJsonLogEvent::class;
+     * const CLASS_INSPECTOR = \Package\Library\CustomInspector::class;
      * @endcode
      *
      * @see \SimpleComplex\JsonLog\JsonLogEvent
@@ -66,18 +66,11 @@ class Inspect
     const CLASS_INSPECTOR = Inspector::class;
 
     /**
-     * Class name of \SimpleComplex\Utils\Sanitize or extending class.
-     *
-     * @var string
-     */
-    const CLASS_VALIDATE = Validate::class;
-
-    /**
      * Conf var default namespace.
      *
      * @var string
      */
-    const CONFIG_DOMAIN = 'lib_simplecomplex_inspect';
+    const CONFIG_SECTION = 'lib_simplecomplex_inspect';
 
     /**
      *  Config vars, and their effective defaults:
@@ -86,7 +79,7 @@ class Inspect
      *  - (int) output_max:         ~1Mb (Inspector::OUTPUT_DEFAULT)
      *  - (int) exectime_percent:   90 (Inspector::EXEC_TIMEOUT_DEFAULT)
      *
-     * @var ConfigInterface|null
+     * @var SectionedConfigInterface|null
      */
     public $config;
 
@@ -104,11 +97,6 @@ class Inspect
      * @var Validate
      */
     public $validate;
-
-    /**
-     * @var string
-     */
-    public $configDomain;
 
     /**
      * Proxy class for Inspector.
@@ -132,14 +120,13 @@ class Inspect
      * @endcode
      *
      * @see JsonLog::setConfig()
-     * @see \SimpleComplex\Config\EnvVarConfig
+     * @see \SimpleComplex\Config\EnvSectionedConfig
      *
-     * @param ConfigInterface|null $config
-     *      PSR-16-like configuration instance.
-     *      Uses/instantiates SimpleComplex\Config\EnvVarConfig _on demand_,
-     *      as fallback.
+     * @param SectionedConfigInterface|null $config
+     *      Uses/instantiates SimpleComplex\Config\EnvSectionedConfig
+     *      _on demand_, as fallback.
      */
-    public function __construct(/*?ConfigInterface*/ $config = null)
+    public function __construct(/*?SectionedConfigInterface*/ $config = null)
     {
         // Dependencies.--------------------------------------------------------
         // Extending class' constructor might provide instances by other means.
@@ -156,14 +143,33 @@ class Inspect
      *
      * This class does not need a config object at all, if defaults are adequate.
      *
-     * @param ConfigInterface $config
+     * @param SectionedConfigInterface $config
      *
      * @return void
      */
-    public function setConfig(ConfigInterface $config) /*: void*/
+    public function setConfig(SectionedConfigInterface $config) /*: void*/
     {
         $this->config = $config;
-        $this->configDomain = static::CONFIG_DOMAIN . $config->keyDomainDelimiter();
+    }
+
+    /**
+     * Load dependencies on demand.
+     */
+    protected function loadDependencies() /*: void*/
+    {
+        if (!$this->validate) {
+            $this->validate = Validate::getInstance();
+
+            if (!$this->config) {
+                $this->setConfig(EnvSectionedConfig::getInstance());
+            }
+            if (!$this->unicode) {
+                $this->unicode = Unicode::getInstance();
+            }
+            if (!$this->sanitize) {
+                $this->sanitize = Sanitize::getInstance();
+            }
+        }
     }
 
     /**
@@ -188,19 +194,7 @@ class Inspect
     public function inspect($subject, $options = []) : Inspector
     {
         // Init.----------------------------------------------------------------
-        // Load dependencies on demand.
-        if (!$this->config) {
-            $this->setConfig(EnvVarConfig::getInstance());
-        }
-        if (!$this->unicode) {
-            $this->unicode = Unicode::getInstance();
-        }
-        if (!$this->sanitize) {
-            $this->sanitize = Sanitize::getInstance();
-        }
-        if (!$this->validate) {
-            $this->validate = Validate::getInstance();
-        }
+        $this->loadDependencies();
 
         // Business.------------------------------------------------------------
 
@@ -227,19 +221,7 @@ class Inspect
     public function variable($subject, $options = []) : Inspector
     {
         // Init.----------------------------------------------------------------
-        // Load dependencies on demand.
-        if (!$this->config) {
-            $this->setConfig(EnvVarConfig::getInstance());
-        }
-        if (!$this->unicode) {
-            $this->unicode = Unicode::getInstance();
-        }
-        if (!$this->sanitize) {
-            $this->sanitize = Sanitize::getInstance();
-        }
-        if (!$this->validate) {
-            $this->validate = Validate::getInstance();
-        }
+        $this->loadDependencies();
 
         // Business.------------------------------------------------------------
 
@@ -267,19 +249,7 @@ class Inspect
     public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : Inspector
     {
         // Init.----------------------------------------------------------------
-        // Load dependencies on demand.
-        if (!$this->config) {
-            $this->setConfig(EnvVarConfig::getInstance());
-        }
-        if (!$this->unicode) {
-            $this->unicode = Unicode::getInstance();
-        }
-        if (!$this->sanitize) {
-            $this->sanitize = Sanitize::getInstance();
-        }
-        if (!$this->validate) {
-            $this->validate = Validate::getInstance();
-        }
+        $this->loadDependencies();
 
         // Business.------------------------------------------------------------
 

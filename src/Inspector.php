@@ -23,15 +23,7 @@ class Inspector
      *
      * @var string
      */
-    const CONFIG_DOMAIN = 'lib_simplecomplex_inspect';
-
-    /**
-     * Delimiter between config domain and config var name, when not using
-     * environment vars.
-     *
-     * @var string
-     */
-    const CONFIG_DELIMITER = ':';
+    const CONFIG_SECTION = 'lib_simplecomplex_inspect';
 
     /**
      * @var int
@@ -350,14 +342,16 @@ class Inspector
         } elseif ($depth_or_limit && $depth_or_limit <= static::TRACE_LIMIT_MAX) {
             $opts['limit'] = $depth_or_limit;
         } else {
-            $opts['limit'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'trace_limit')) ?
+            // Doesn't use ??-operator ~ casting class var to int is redundant.
+            $opts['limit'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'trace_limit')) ?
                 (int) $tmp : static::TRACE_LIMIT_DEFAULT;
         }
         // truncate.
-        $opts['truncate'] = (int) ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'truncate')) ?
+        // Doesn't use ??-operator ~ casting class var to int is redundant.
+        $opts['truncate'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'truncate')) ?
             (int) $tmp : static::TRUNCATE_DEFAULT;
         // escape_html.
-        $opts['escape_html'] = $this->proxy->config->get($this->proxy->configDomain . 'escape_html', static::ESCAPE_HTML);
+        $opts['escape_html'] = $this->proxy->config->get(static::CONFIG_SECTION, 'escape_html', static::ESCAPE_HTML);
         // skip_keys.
         // Keep default: empty array.
         // replacers.
@@ -365,10 +359,12 @@ class Inspector
         // needles; only arg options override if arg options replacers.
         $opts['needles'] = static::NEEDLES;
         // output_max.
-        $opts['output_max'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'output_max')) ?
+        // Doesn't use ??-operator ~ casting class var to int is redundant.
+        $opts['output_max'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'output_max')) ?
             (int) $tmp : static::OUTPUT_DEFAULT;
         // exectime_percent.
-        $opts['exectime_percent'] = ($tmp = $this->proxy->config->get($this->proxy->configDomain . 'exectime_percent')) ?
+        // Doesn't use ??-operator ~ casting class var to int is redundant.
+        $opts['exectime_percent'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'exectime_percent')) ?
             (int) $tmp : static::EXEC_TIMEOUT_DEFAULT;
         // wrappers.
         // Keep default: zero.
@@ -432,7 +428,7 @@ class Inspector
                 !empty($options['output_max'])
                 && ($tmp = (int) $options['output_max']) > 0 && $tmp <= static::OUTPUT_MAX
             ) {
-                    $opts['output_max'] = $tmp;
+                $opts['output_max'] = $tmp;
             }
 
             if (
@@ -650,9 +646,6 @@ class Inspector
         if (!((++$this->nspctCall) % 1000) && $this->exceedsTime()) {
             return '';
         }
-
-        // Paranoid.
-        $output = '';
 
         // Object or array.
         $is_array = $is_num_array = false;
