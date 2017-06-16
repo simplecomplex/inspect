@@ -154,6 +154,8 @@ class Inspect
 
     /**
      * Load dependencies on demand.
+     *
+     * @return void
      */
     protected function loadDependencies() /*: void*/
     {
