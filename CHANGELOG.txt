@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-06-18
+-------------------------------------
+- Report empty array as numerically indexed array.
+- Reflect the array-like behaviour of ArrayAccess objects.
+
 SimpleComplex/Inspect 2.x, 2017-06-16
 -------------------------------------
 - Use sectioned config.

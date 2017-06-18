@@ -648,13 +648,13 @@ class Inspector
         }
 
         // Object or array.
-        $is_array = $is_num_array = false;
+        $is_array = $is_num_array = $is_num_array_access = false;
         if (is_object($subject) || ($is_array = is_array($subject))) {
             if ($is_array) {
                 $output = '(array:';
                 $n_elements = count($subject);
                 // Numberically indexed array?
-                if ($n_elements && ctype_digit(join('', array_keys($subject)))) {
+                if (!$n_elements || ctype_digit(join('', array_keys($subject)))) {
                     $is_num_array = true;
                 }
             } else {
@@ -663,20 +663,30 @@ class Inspector
                     // Require Traversable too, because otherwise the count
                     // may not reflect a foreach.
                     $n_elements = count($subject);
+                    if ($subject instanceof \ArrayAccess) {
+                        if (!$n_elements) {
+                            $is_num_array_access = true;
+                        } elseif (
+                            ($subject instanceof \ArrayObject || $subject instanceof \ArrayIterator)
+                            && ctype_digit(join('', array_keys($subject->getArrayCopy())))
+                        ) {
+                            $is_num_array_access = true;
+                        }
+                    }
                 } else {
                     $n_elements = count(get_object_vars($subject));
                 }
             }
             $output .= $n_elements . ') ';
             if (!$n_elements) {
-                $output .= $is_array ? '[]' : '{}';
+                $output .= $is_num_array || $is_num_array_access ? '[]' : '{}';
 
                 $this->length += strlen($output);
                 return $output;
             }
             // If at max depth: simply get length of the container.
             if ($depth == $depth_max) {
-                if ($is_num_array) {
+                if ($is_num_array || $is_num_array_access) {
                     $output .= '[...]';
                 } else {
                     $output .= '{...}';
@@ -687,7 +697,7 @@ class Inspector
             }
             // Dive into container buckets.
             else {
-                if ($is_num_array) {
+                if ($is_num_array || $is_num_array_access) {
                     $output .= '[';
                 }
                 else {
@@ -712,7 +722,9 @@ class Inspector
                     elseif ($any_skip_keys && in_array($key, $this->options['skip_keys'], true)) {
                         $output .= $key . ': F';
                     }
-                    elseif (!$is_num_array && in_array($key, static::HIDE_VALUE_OF_KEYS, true) && is_string($element)) {
+                    elseif (
+                        !$is_num_array && !$is_num_array_access && in_array($key, static::HIDE_VALUE_OF_KEYS, true)
+                    ) {
                         $len_bytes = strlen($element);
                         if (!$len_bytes) {
                             $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
@@ -727,7 +739,7 @@ class Inspector
                     }
                 }
 
-                if ($is_num_array) {
+                if ($is_num_array || $is_num_array_access) {
                     $output .= $delim_end . ']';
                 }
                 else {
@@ -857,7 +869,7 @@ class Inspector
     {
         // Received Throwable, by arg.
         if ($throwableOrNull) {
-            if (is_a($throwableOrNull, \Throwable::class)) {
+            if ($throwableOrNull instanceof \Throwable) {
                 $thrwbl_class = get_class($throwableOrNull);
                 if (!$this->code) {
                     $this->code = $throwableOrNull->getCode();
