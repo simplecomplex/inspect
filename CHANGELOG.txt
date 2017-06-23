@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-06-23
+-------------------------------------
+- Inspector toString with option to skip preface.
+
 SimpleComplex/Inspect 2.x, 2017-06-18
 -------------------------------------
 - Report empty array as numerically indexed array.

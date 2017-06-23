@@ -508,12 +508,23 @@ class Inspector
     }
 
     /**
+     * @param bool $noPreface
+     *      Skip the [inspect ...@file:N] part.
+     *
+     * @return string
+     */
+    public function toString($noPreface = false) : string
+    {
+        return ($noPreface || !$this->preface ? '' : ($this->preface . static::FORMAT['newline']))
+            . $this->output;
+    }
+
+    /**
      * @return string
      */
     public function __toString() : string
     {
-        return (!$this->preface ? '' : ($this->preface . static::FORMAT['newline']))
-            . $this->output;
+        return $this->__toString();
     }
 
     /**
