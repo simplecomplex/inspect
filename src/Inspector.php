@@ -178,7 +178,7 @@ class Inspector
      * - (int) depth: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
      * - (int) limit: max trace frame; TRACE_LIMIT_DEFAULT
      * - (int) code: error code, overrides exception code; none
-     * - (int) truncate: truncate strings; TRUNCATE_DEFAULT
+     * - (int) truncate: string truncation; TRUNCATE_DEFAULT
      * - (arr) skip_keys: skip those object/array keys; none
      * - (arr) needles: replace in strings; NEEDLES
      * - (arr) replacers: replace in strings; REPLACERS

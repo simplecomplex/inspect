@@ -1,45 +1,33 @@
 ## (PHP+JS) Inspect: variable dumps and stack traces ##
 
-### During development and debugging ###
+### What ###
 
-Log a variable inspection whenever you wonder about a variable's type, structure or content.  
-And trace exceptions when things just don't work like they are supposed to.
-
-### In production ###
-
-Catch an exception and log a tidy and concise backtrace, including a comprehensible and contextually relevant message.  
-Lots of errors are foreseeable, and catching and logging 'em deliberately and within context (possibly re-throwing afterwards) makes for a far more debuggable and maintainable system.
-*Spells saved time and happy users*.
+Produces tidy and informative variable dumps and exception/back traces.  
+Tailormade and ready for logging - the inspect/variable/trace() methods return a stringable object.
 
 ### Safe ###
 
 The inspector and tracer guarantee not to fail.
 A simple PHP:var_dump() is prone to raise a PHP error if you dump a large or complex array like $GLOBALS, due to references (recursion).  
-Inspect limits it's recursion into sub arrays/objects. It also keeps track of how large an output it produces (versus database errors). And it finally makes sure that max execution time doesn't get exceeded.
+Inspect limits it's recursion into sub arrays/objects. It also keeps track of how large an output it produces. And it finally makes sure that max execution time doesn't get exceeded.
 
 ### Secure ###
 
-Inspect hides the values of array/object buckets named 'pass' and 'password', and it also makes an effort of hiding file paths (always when getting, configurable for logging).
-
-#### Doesn't expose secrets to ordinary users ####
-
-##### Inspect defines four output targets, and corresponding permissions: #####
-- **get**: get the inspection/trace as string, and `echo` it to screen or console
-- **log**: to PHP error log, or via a PSR-3 logger, or extend the Inspect class and define your own logging regime
-- file: to a custom file log (filing is a subset of logging permission-wise)
-- **frontend log**: log from Javascript to server; AJAX to PHP Inspect (log)
-
-Out-of-the-box, Inspect only allows logging and filing (though in CLI mode getting is allowed too).  
-Except if truthy PHP ini display_errors: then all targets are allowed.
+Inspect hides the values of array/object buckets named 'pw', 'pass' and 'password'.  
+And values of other sensitives can be hidden using 'skip_keys' option.
 
 ### PHP and Javascript ###
 
 Inspect consists of a PHP library for serverside inspection and tracing, and a Javascript library for clientside ditto.  
-And clientside/Javascript inspect can even log to backend (PHP), if permitted.
+
+### Maturity ###
+
+The library has existed in various forms since 2010.
+The core has been refined continuously whereas the wrapping has evolved from a rather oldschool OOP pattern over a solid but non-orthodox Drupal style, to well-behaved PSR/Composer patterns. 
 
 ### Used in - *extended by* - Drupal ###
 
-The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) is SimpleComplex Inspect.
+The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) is (an old version of) SimpleComplex Inspect.
 The Drupal module (D7 as well as D8) extends Inspect to accomodate to the context - that is: uses Drupal's APIs and features when it makes sense.  
 Thus the Drupal module is an example of specializing contextually, by overriding attributes, methods and defaults.
 
@@ -51,22 +39,41 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 ----------
 
 
-### Principal methods, functions and options ###
+### Principal methods and options ###
 
 ##### PHP #####
 
-(array|object) $options
+(array) $options
 
-- (string) **message**: content headline and $options as string also interprets to message
-- (integer) **depth**: array|object recursion max (default 10, max 20) and $options as integer is interpretated as depth
-- (string) **type**: logging type (default 'inspect'/'inspect trace')
-- (integer|string) **severity**: default ~ 'debug'
-- (integer) **limit**: tracer only; default 5, max 100 $options as integer is interpretated as limit
-- (object) **logger**: PSR-3 logger; defaults to use PHP error_log
+- (int) **depth**: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
+- (int) **limit**: max trace frame; TRACE_LIMIT_DEFAULT
+- (int) **code**: error code, overrides exception code; none
+- (int) **truncate**: string truncation; TRUNCATE_DEFAULT
+- (arr) **skip_keys**: skip those object/array keys; none
+- (arr) **needles**: replace in strings; NEEDLES
+- (arr) **replacers**: replace in strings; REPLACERS
+- (bool) **escape_html**: replace in strings; ESCAPE_HTML
+- (int) **output_max**: replace in strings; OUTPUT_DEFAULT
+- (int) **exectime_percent**: replace in strings; EXEC_TIMEOUT_DEFAULT
+- (int) **wrappers**: number of wrapping functions/methods, to be hidden; zero
+- (str) **kind**: (auto) trace when subject is \Throwable, otherwise variable
 
-`inspect|Inspect::log($var, $options = NULL);`
+```PHP
+$inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 
-`inspect_trace|Inspect::trace($exception = NULL, $options = NULL);`
+// (auto) Analyze variable; trace exception.
+$inspect->inspect($subject);
+
+// Analyze variable, even if exception.
+$inspect->variable($variable);
+
+// Back-trace null; trace exception.
+$inspect->trace($throwableOrNull);
+
+// Pass directly to logger.
+$logger->debug('' . $inspect->inspect($subject));
+$logger->error('' . $inspect->inspect($throwable));
+```
 
 ##### Javascript #####
 
@@ -80,9 +87,13 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 - (string) **severity**: default 'debug'/'error'
 
 To console:  
-`inspect(u, options);`  
-`inspect.trace(er, options);`
+```javascript
+window.inspect(u, options);
+window.inspect.trace(er, options);
+```
 
+<!--
 To server log:  
 `inspect.log(u, options);`  
 `inspect.traceLog(er, options);`
+-->
