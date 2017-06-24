@@ -524,7 +524,7 @@ class Inspector
      */
     public function __toString() : string
     {
-        return $this->__toString();
+        return $this->toString();
     }
 
     /**
