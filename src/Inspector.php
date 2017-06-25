@@ -26,11 +26,6 @@ class Inspector
     const CONFIG_SECTION = 'lib_simplecomplex_inspect';
 
     /**
-     * @var int
-     */
-    const ERROR_EXECTIME = 103;
-
-    /**
      * Maximum sub var recursion depth.
      *
      * @var int
@@ -89,6 +84,9 @@ class Inspector
 
     /**
      * Absolute maximum byte (ASCII) length of an inspection/trace output.
+     *
+     * A higher value than ~2mb will collide with MySQL default maximum
+     * query length (max_allowed_packet).
      *
      * @var int
      */

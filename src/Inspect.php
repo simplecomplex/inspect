@@ -77,8 +77,11 @@ class Inspect
      *  Config vars, and their effective defaults:
      *  - (int) trace_limit:        5 (Inspector::TRACE_LIMIT_DEFAULT)
      *  - (int) truncate:           1000 (Inspector::TRUNCATE_DEFAULT)
+     *  - (bool) escape_html:       false (Inspector::ESCAPE_HTML)
      *  - (int) output_max:         ~1Mb (Inspector::OUTPUT_DEFAULT)
      *  - (int) exectime_percent:   90 (Inspector::EXEC_TIMEOUT_DEFAULT)
+     *
+     * See also ../config-ini/inspect.ini
      *
      * @var SectionedConfigInterface|null
      */
