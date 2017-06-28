@@ -19,7 +19,9 @@ use SimpleComplex\Validate\Validate;
  * Variable analyzer and exception tracer.
  *
  * Mostly proxy class for Inspector.
- * Intended as singleton - ::getInstance() - but constructor not protected.
+ *
+ * @dependency-injection-container inspector
+ *      Suggested ID of the JsonLog instance.
  *
  * @see Inspector
  *
