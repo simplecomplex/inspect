@@ -42,6 +42,7 @@ class Inspect
      *
      * @deprecated Use a dependency injection container instead.
      * @see \SimpleComplex\Utils\Dependency
+     * @see \Slim\Container
      *
      * @param mixed ...$constructorParams
      *
