@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-06-28
+-------------------------------------
+- Use dependency injection container when possible.
+- Optimize SectionConfigInterface use via config.remember() and config.forget().
+
 SimpleComplex/Inspect 2.x, 2017-06-24
 -------------------------------------
 - Fixed awful __toString() error.

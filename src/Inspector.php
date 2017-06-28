@@ -324,6 +324,10 @@ class Inspector
 
         // Prepare options.-----------------------------------------------------
         $opts =& $this->options;
+
+        // Prime sectioned config; load the whole section into memory.
+        $this->proxy->config->remember(static::CONFIG_SECTION);
+
         // logger.
         // Keep default: null.
         // code.
@@ -366,6 +370,9 @@ class Inspector
             (int) $tmp : static::EXEC_TIMEOUT_DEFAULT;
         // wrappers.
         // Keep default: zero.
+
+        // Relieve config memory.
+        $this->proxy->config->forget(static::CONFIG_SECTION);
 
         // Overriding options by argument.--------------------------------------
         if ($use_arg_options) {
