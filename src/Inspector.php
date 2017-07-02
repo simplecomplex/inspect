@@ -126,7 +126,7 @@ class Inspector
      * @var string[]
      */
     const NEEDLES = [
-        "\0", "\n", "\r", "\t", '<', '>', '"', "'",
+        "\0", "\n", "\r", "\t", '"', "'",
     ];
 
     /**
@@ -135,7 +135,25 @@ class Inspector
      * @var string[]
      */
     const REPLACERS = [
-        '_NUL_', '_NL_', '_CR_', '_TB_', '&#60;', '&#62;', '&#34;', '&#39;',
+        '_NUL_', '_NL_', '_CR_', '_TB_', '”', '’',
+    ];
+
+    /**
+     * String variable str_replace() needles when option 'escape_html'.
+     *
+     * @var string[]
+     */
+    const NEEDLES_ESCAPE_HTML = [
+        "\0", "\n", "\r", "\t", '<', '>', '"', "'",
+    ];
+
+    /**
+     * String variable str_replace() replacers when option 'escape_html'.
+     *
+     * @var string[]
+     */
+    const REPLACERS_ESCAPE_HTML = [
+        '_NUL_', '_NL_', '_CR_', '_TB_', '&lt;', '&gt;', '&quot;', '&apos;',
     ];
 
     /**
@@ -178,9 +196,9 @@ class Inspector
      * - (int) code: error code, overrides exception code; none
      * - (int) truncate: string truncation; TRUNCATE_DEFAULT
      * - (arr) skip_keys: skip those object/array keys; none
-     * - (arr) needles: replace in strings; NEEDLES
-     * - (arr) replacers: replace in strings; REPLACERS
      * - (bool) escape_html: replace in strings; ESCAPE_HTML
+     * - (arr) needles: replace in strings; NEEDLES/NEEDLES_ESCAPE_HTML
+     * - (arr) replacers: replace in strings; REPLACERS/REPLACERS_ESCAPE_HTML
      * - (int) output_max: replace in strings; OUTPUT_DEFAULT
      * - (int) exectime_percent: replace in strings; EXEC_TIMEOUT_DEFAULT
      * - (int) wrappers: number of wrapping functions/methods, to be hidden; zero
@@ -352,14 +370,21 @@ class Inspector
         // Doesn't use ??-operator ~ casting class var to int is redundant.
         $opts['truncate'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'truncate')) ?
             (int) $tmp : static::TRUNCATE_DEFAULT;
-        // escape_html.
-        $opts['escape_html'] = $this->proxy->config->get(static::CONFIG_SECTION, 'escape_html', static::ESCAPE_HTML);
         // skip_keys.
         // Keep default: empty array.
-        // replacers.
-        $opts['replacers'] = static::REPLACERS;
-        // needles; only arg options override if arg options replacers.
-        $opts['needles'] = static::NEEDLES;
+        // escape_html.
+        if(
+            !($opts['escape_html'] =
+                $this->proxy->config->get(static::CONFIG_SECTION, 'escape_html', static::ESCAPE_HTML))
+        ) {
+            // needles; only arg options override if arg options replacers.
+            $opts['needles'] = static::NEEDLES;
+            // replacers.
+            $opts['replacers'] = static::REPLACERS;
+        } else {
+            $opts['needles'] = static::NEEDLES_ESCAPE_HTML;
+            $opts['replacers'] = static::REPLACERS_ESCAPE_HTML;
+        }
         // output_max.
         // Doesn't use ??-operator ~ casting class var to int is redundant.
         $opts['output_max'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'output_max')) ?

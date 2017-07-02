@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-07-02
+-------------------------------------
+- Default string needles/replacers shan't replace <> unless option escape_html.
+- Default string replacers shan't HTML escape quotes unless option escape_html.
+
 SimpleComplex/Inspect 2.x, 2017-06-28
 -------------------------------------
 - Use dependency injection container when possible.
