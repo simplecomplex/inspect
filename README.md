@@ -1,11 +1,11 @@
 ## (PHP+JS) Inspect: variable dumps and stack traces ##
 
-##### Requirements #####
+#### Requirements ####
 
-- PHP>=7.0
-- [SimpleComplex\Config](https://github.com/simplecomplex/php-config)
-- [SimpleComplex\Validate](https://github.com/simplecomplex/php-validate)
-- [SimpleComplex\Utils](https://github.com/simplecomplex/php-utils)
+- PHP >=7.0
+- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
+- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
+- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
 
 ### What ###
 

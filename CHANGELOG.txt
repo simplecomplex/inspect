@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-07-12
+-------------------------------------
+- Release 2.0.
+
 SimpleComplex/Inspect 2.x, 2017-07-02
 -------------------------------------
 - Default string needles/replacers shan't replace <> unless option escape_html.

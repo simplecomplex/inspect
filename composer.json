@@ -13,9 +13,9 @@
     ],
     "require": {
         "php": ">=7.0",
-        "simplecomplex/utils": "dev-develop",
-        "simplecomplex/config": "dev-develop",
-        "simplecomplex/validate": "dev-develop"
+        "simplecomplex/utils": "^1.0",
+        "simplecomplex/config": "^1.0",
+        "simplecomplex/validate": "^0.9"
     },
     "autoload": {
         "psr-4": {
