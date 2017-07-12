@@ -1,12 +1,5 @@
 ## (PHP+JS) Inspect: variable dumps and stack traces ##
 
-#### Requirements ####
-
-- PHP >=7.0
-- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
-- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
-- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
-
 ### What ###
 
 Produces tidy and informative variable dumps and exception/back traces.  
@@ -104,3 +97,10 @@ To server log:
 `inspect.log(u, options);`  
 `inspect.traceLog(er, options);`
 -->
+
+### Requirements ###
+
+- PHP >=7.0
+- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
+- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
+- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
