@@ -13,7 +13,6 @@
     ],
     "require": {
         "php": ">=7.0",
-        "psr/log": "^1.0",
         "simplecomplex/utils": "dev-develop",
         "simplecomplex/config": "dev-develop",
         "simplecomplex/validate": "dev-develop"
