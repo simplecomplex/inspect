@@ -14,8 +14,10 @@
 (function() {
   'use strict';
 
-  var opts = ['depth', 'protos', 'func_body', 'message', 'wrappers'],
+  var opts = ['depth', 'protos', 'func_body', 'message'],
     nOpts = opts.length,
+    trcLmt = 5,
+    flLnFncs = ['flLn', 'inspect', 'trace'],
     quot = '`',
     dmnRgx = new RegExp(
       window.location.href.replace(/^(https?:\/\/[^\/]+)\/.*$/, '$1').replace(/([\/\.\-])/g, '\\' + '$1')
@@ -126,35 +128,48 @@
      *
      * @ignore
      * @private
-     * @param {number} [wrappers]
-     *    Integer.
+     * @param {Error} [error]
+     * @param {string} [trace]
      * @return {string}
      */
-    flLn = function(wrappers) {
-      var ar, le, i, v, p, wrps = wrappers || 0;
-      //  Find call (first trace line outside this file).
-      try {
-        throw new Error(); // <- Not a mistake.
+    flLn = function(error, trace) {
+      var ar, le, i, v, p, f;
+      if (trace) {
+        ar = trace;
       }
-      catch (er) {
-        ar = trc(er);
+      else if (error) {
+        ar = trc(error);
+      }
+      else {
+        try {
+          throw new Error(); // <- Not a mistake.
+        }
+        catch (er) {
+          ar = trc(er);
+        }
       }
       if (typeof ar === 'string' && ar.indexOf('\n') > -1 && (le = (ar = ar.split('\n')).length)) {
         for (i = 0; i < le; i++) {
-          if (i && (p = (v = ar[i]).lastIndexOf('@')) > -1 && v.indexOf('/inspect.js') === -1) {
-            if (wrps) {
-              if ((i += wrps) >= le) {
-                return '@too_many_wrappers';
+          v = ar[i];
+          // Skip function declared in this file;
+          // though doesn't work if compressed.
+          if (v.indexOf('/inspect.js') === -1) {
+            // Find function name, and continue to first function
+            // that isn't named like our functions.
+            if ((p = v.indexOf('@')) > -1) {
+              f = v.substr(0, p).replace(/\ /g, '');
+              p = f.lastIndexOf('.');
+              if (p > -1) {
+                f = f.substr(p + 1);
               }
-              if ((p = (v = ar[i]).lastIndexOf('@')) > -1) {
-                return '@wrappers_no_at';
+              if (flLnFncs.indexOf(f) === -1) {
+                return v;
               }
             }
-            return v.substr(p);
           }
         }
       }
-      return '@n/a';
+      return 'unknown@n/a';
     },
     /**
      * Resolve options argument.
@@ -401,16 +416,24 @@
      * @ignore
      * @private
      * @param {Error} er
+     * @param {boolean} [backtrace]
+     * @param {number} [limit]
      * @return {string}
      */
-    trc = function(er) {
-      var u, le, i, es = '' + er, s = es;
+    trc = function(er, backtrace, limit) {
+      var u, le, i, es = '' + er, s = !backtrace ? es : 'Backtrace', lmt = limit || trcLmt;
       // gecko, chromium.
       if ((u = er.stack)) {
         if ((le = (u = (u.replace(/\r/, '').split(/\n/))).length)) {
-          i = u[0] === es ? 1 : 0; // chromium first line is error toString()
-          for (i; i < le; i++) {
-            s += '\n  ' + u[i].replace(/^[\ ]+at\ /, '@').replace(dmnRgx, '');
+          // chromium first line is error toString().
+          i = u[0] === es ? 1 : 0;
+          if (backtrace) {
+            ++i;
+          }
+          lmt += i;
+          for (i; i < lmt; i++) {
+            // Turn chromium ' at function ' into 'function@'.
+            s += "\n" + u[i].replace(/^[\ ]+at\ ([^\ ]+)\ /, '$1@').replace(dmnRgx, '');
           }
         }
       }
@@ -427,7 +450,6 @@
      *  - (boolean) protos (default not: do only report number of prototypal
      *    properties of objects)
      *  - (boolean) func_body (default not: do not print function body)
-     *  - (boolean|integer) wrappers (default zero: this function is not wrapped
      *    in one or more local logging functions/methods)
      *
      * (integer) option:
@@ -469,7 +491,7 @@
     inspect = function(u, options) {
       var o = optsRslv(options), ms = o.message || '';
       cnsl(
-        (!ms ? '' : (ms + ':\n')) + '[Inspect ' + flLn(o.wrappers) + ']\n' + nspct(u, o.protos, o.func_body, o.depth)
+        (!ms ? '' : (ms + ':\n')) + '[Inspect ' + flLn() + ']\n' + nspct(u, o.protos, o.func_body, o.depth)
       );
     };
 
@@ -502,7 +524,6 @@
    *
    * (object) options (any number of):
    *  - (string) message (default empty)
-   *  - (boolean|integer) wrappers (default zero: this function is not wrapped
    *    in one or more local logging functions/methods)
    *
    * (string) options is interpreted as message.
@@ -516,21 +537,46 @@
 }
    * @function
    * @name inspect.trace
-   * @param {Error} er
-   * @param {object|string} [options]
-   *    Oobject: options.
+   * @param {Error|undefined} [error]
+   *    Falsy: do backtrace.
+   * @param {object|number|string} [options]
+   *    Object: options.
+   *    Integer: limit; default 5.
    *    String: message.
    * @return {void}
    *    Logs to browser console, if exists.
    */
-  inspect.trace = function(er, options) {
-    var o = options || {}, s = o, wrps;
-    if (typeof o === 'object') {
-      s = o.message || '';
-      wrps = o.wrappers;
+  inspect.trace = function(error, options) {
+    var er = error, bcktrc, limit = trcLmt, msg = '', trace;
+    if (options) {
+      switch (typeof options) {
+        case 'object':
+          msg = options.message || '';
+          limit = options.limit || trcLmt;
+          break;
+        case 'number':
+          limit = options;
+          break;
+        case 'string':
+          msg = options;
+          break;
+      }
+      if (limit < 1) {
+        limit = trcLmt;
+      }
     }
+    if (!er) {
+      bcktrc = true;
+      try {
+        throw new Error(); // <- Not a mistake.
+      }
+      catch (rrr) {
+        er = rrr;
+      }
+    }
+    trace = trc(er, bcktrc, limit);
     cnsl(
-      (!s ? '' : (s + ':\n')) + '[Inspect trace ' + flLn(wrps) + ']\n' + trc(er)
+      (!msg ? '' : (msg + ':\n')) + '[Inspect trace ' + flLn(null, trace) + ']\n' + trace
     );
   };
   /**
