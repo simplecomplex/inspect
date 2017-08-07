@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
+use SimpleComplex\Utils\Utils;
+
 /**
  * Variable analyzer and exception tracer.
  *
@@ -922,9 +924,7 @@ class Inspector
             }
             else {
                 throw new \TypeError(
-                    'Arg throwableOrNull type['
-                    . (!is_object($throwableOrNull) ? gettype($throwableOrNull) : get_class($throwableOrNull))
-                    . '] is not Throwable or null.'
+                    'Arg throwableOrNull type[' . Utils::getType($throwableOrNull) . '] is not Throwable or null.'
                 );
             }
         }
