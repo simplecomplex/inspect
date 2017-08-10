@@ -692,7 +692,17 @@ class Inspector
 
         // Object or array.
         $is_array = $is_num_array = $is_num_array_access = false;
-        if (is_object($subject) || ($is_array = is_array($subject))) {
+        if (($is_object = is_object($subject)) || ($is_array = is_array($subject))) {
+            // Throwable.
+            if ($is_object && $subject instanceof \Throwable) {
+                return '(' . get_class($subject) . ':' . $subject->getCode(). ')@'
+                    . str_replace(static::$documentRoots, '[document_root]', $subject->getFile()) . ':'
+                    . $subject->getLine() . ': ' . addcslashes(
+                        str_replace(static::$documentRoots, '[document_root]', $subject->getMessage()),
+                        "\0..\37"
+                    );
+            }
+            // Containers.
             if ($is_array) {
                 $output = '(array:';
                 $n_elements = count($subject);
@@ -700,7 +710,9 @@ class Inspector
                 if (!$n_elements || ctype_digit(join('', array_keys($subject)))) {
                     $is_num_array = true;
                 }
-            } else {
+            }
+            // Treat object as a container.
+            else {
                 $output = '(' . get_class($subject) . ':';
                 if ($subject instanceof \Countable && $subject instanceof \Traversable) {
                     // Require Traversable too, because otherwise the count
@@ -960,14 +972,25 @@ class Inspector
 
         // If exception: resolve its origin and render code and message.
         if ($thrwbl_class) {
-            $output = 'Throwable (' . $thrwbl_class . ') - code: ' . $throwableOrNull->getCode()
+            $output = $thrwbl_class . '(' . $throwableOrNull->getCode() . ')'
                 . $delim . '@' . str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getFile())
                 . ':' . $throwableOrNull->getLine()
-                . $delim . 'message: '
+                . $delim
                 . addcslashes(
                     str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getMessage()),
                     "\0..\37"
                 );
+            if (($previous = $throwableOrNull->getPrevious())) {
+                $output .= $delim . 'Previous: '
+                    . get_class($previous) . '(' . $previous->getCode() . ')@'
+                    . str_replace(static::$documentRoots, '[document_root]', $previous->getFile()) . ':'
+                    . $previous->getLine() . $delim
+                    . addcslashes(
+                        str_replace(static::$documentRoots, '[document_root]', $previous->getMessage()),
+                        "\0..\37"
+                    );
+            }
+            unset($previous);
         } else {
             $output = 'Backtrace';
         }

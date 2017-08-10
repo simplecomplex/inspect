@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-08-10
+-------------------------------------
+- trace() log previous exception too, but don't trace it.
+- variable() treat Throwable as an exception, not a container object.
+
 SimpleComplex/Inspect 2.x, 2017-08-07
 -------------------------------------
 - Frontend inspect no longer requires jQuery.
