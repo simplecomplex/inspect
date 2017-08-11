@@ -974,7 +974,7 @@ class Inspector
         // If exception: resolve its origin and render code and message.
         if ($thrwbl_class) {
             $output = $thrwbl_class . '(' . $throwableOrNull->getCode() . ')'
-                . $delim . '@' . str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getFile())
+                . '@' . str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getFile())
                 . ':' . $throwableOrNull->getLine()
                 . $delim
                 . addcslashes(
@@ -1142,6 +1142,8 @@ class Inspector
         }
         $preface .= '@' . $this->fileLine;
         if ($this->code) {
+            // Redundant if exception trace, but we don't know here if it's
+            // exception or backtrace.
             $preface .= static::FORMAT['newline'] . 'Code: ' . $this->code;
         }
         if ($this->warnings) {
