@@ -20,7 +20,7 @@ use SimpleComplex\Validate\Validate;
  *
  * Mostly proxy class for Inspector.
  *
- * @dependency-injection-container inspector
+ * @dependency-injection-container inspect
  *      Suggested ID of the JsonLog instance.
  *
  * @see Inspector
