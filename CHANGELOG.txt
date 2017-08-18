@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-08-18
+-------------------------------------
+- Values of HIDE_VALUE_OF_KEYS may not be string.
+
 SimpleComplex/Inspect 2.x, 2017-08-11
 -------------------------------------
 - Default format 'enclose_tag' is now empty (none).

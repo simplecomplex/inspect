@@ -779,16 +779,19 @@ class Inspector
                         $output .= $key . ': F';
                     }
                     elseif (
-                        !$is_num_array && !$is_num_array_access
-                        && in_array($key, static::HIDE_VALUE_OF_KEYS, true) && is_string($element) // @todo: or other printable type... perhaps use Utils->getType()
+                        !$is_num_array && !$is_num_array_access && in_array($key, static::HIDE_VALUE_OF_KEYS, true)
                     ) {
-                        $len_bytes = strlen($element);
-                        if (!$len_bytes) {
-                            $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
-                        }
-                        else {
-                            $output .= $key . ': (string:' . $this->proxy->unicode->strlen($element) . ':'
-                                . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
+                        if (is_string($element)) {
+                            $len_bytes = strlen($element);
+                            if (!$len_bytes) {
+                                $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
+                            }
+                            else {
+                                $output .= $key . ': (string:' . $this->proxy->unicode->strlen($element) . ':'
+                                    . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
+                            }
+                        } else {
+                            $output .= $key . ': (' . Utils::getType($element) . ') *';
                         }
                     }
                     else {
