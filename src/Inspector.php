@@ -779,7 +779,8 @@ class Inspector
                         $output .= $key . ': F';
                     }
                     elseif (
-                        !$is_num_array && !$is_num_array_access && in_array($key, static::HIDE_VALUE_OF_KEYS, true)
+                        !$is_num_array && !$is_num_array_access
+                        && in_array($key, static::HIDE_VALUE_OF_KEYS, true) && is_string($element) // @todo: or other printable type... perhaps use Utils->getType()
                     ) {
                         $len_bytes = strlen($element);
                         if (!$len_bytes) {
