@@ -261,6 +261,16 @@ class Inspector
     protected $proxy;
 
     /**
+     * @var Utils
+     */
+    protected $utils;
+
+    /**
+     * @var int|null
+     */
+    protected $documentRootsMinLength;
+
+    /**
      * Do not call this directly, use Inspect instead.
      *
      * @see Inspect::__construct()
@@ -279,6 +289,9 @@ class Inspector
     public function __construct(Inspect $proxy, $subject, $options = [])
     {
         $this->proxy = $proxy;
+
+        $this->utils = Utils::getInstance();
+        $this->documentRootsMinLength = $this->utils->documentRootsMinLength();
 
         $kind = '';
         $depth_or_limit = 0;
@@ -479,15 +492,6 @@ class Inspector
             }
         }
 
-        if (!static::$nInspections) {
-            /**
-             * Init this; used a lot.
-             *
-             * @see Inspector::$documentRoots
-             * @see Inspector::$documentRootLength
-             */
-            $this->documentRoots();
-        }
         ++static::$nInspections;
 
         try {
@@ -524,7 +528,7 @@ class Inspector
         } catch (\Throwable $xc) {
             $file = $xc->getFile();
             try {
-                $tmp = str_replace(static::$documentRoots, '[document_root]', $file);
+                $tmp = $this->utils->pathReplaceDocumentRoot($file);
                 if ($tmp) {
                     $file = $tmp;
                 }
@@ -697,9 +701,9 @@ class Inspector
             // Throwable.
             if ($is_object && $subject instanceof \Throwable) {
                 return '(' . get_class($subject) . ':' . $subject->getCode(). ')@'
-                    . str_replace(static::$documentRoots, '[document_root]', $subject->getFile()) . ':'
+                    . $this->utils->pathReplaceDocumentRoot($subject->getFile()) . ':'
                     . $subject->getLine() . ': ' . addcslashes(
-                        str_replace(static::$documentRoots, '[document_root]', $subject->getMessage()),
+                        $this->utils->pathReplaceDocumentRoot($subject->getMessage()),
                         "\0..\37"
                     );
             }
@@ -847,9 +851,8 @@ class Inspector
                     } else {
                         $trunced_to = 0;
                         // Replace document root?
-                        $docroot_length = static::$documentRootLength;
                         if (
-                            $len_bytes >= $docroot_length
+                            $len_bytes >= $this->documentRootsMinLength
                             && (
                                 strpos($subject, '/') !== false
                                 || (DIRECTORY_SEPARATOR == '\\' && strpos($subject, '\\') !== false)
@@ -862,16 +865,16 @@ class Inspector
                         // Long string; shorten before replacing.
                         if ($len_unicode > $truncate) {
                             // Replace document root before truncation?
-                            if ($docroot_replace && $truncate < $docroot_length) {
+                            if ($docroot_replace && $truncate < $this->documentRootsMinLength) {
                                 $docroot_replace = false;
-                                $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
+                                $subject = $this->utils->pathReplaceDocumentRoot($subject);
                             }
                             $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
                         // Remove document root after truncation.
                         if ($docroot_replace) {
-                            $subject = str_replace(static::$documentRoots, '[document_root]', $subject);
+                            $subject = $this->utils->pathReplaceDocumentRoot($subject);
                         }
                         // Replace listed needles with harmless symbols.
                         $subject = str_replace($this->options['needles'], $this->options['replacers'], $subject);
@@ -978,20 +981,20 @@ class Inspector
         // If exception: resolve its origin and render code and message.
         if ($thrwbl_class) {
             $output = $thrwbl_class . '(' . $throwableOrNull->getCode() . ')'
-                . '@' . str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getFile())
+                . '@' . $this->utils->pathReplaceDocumentRoot($throwableOrNull->getFile())
                 . ':' . $throwableOrNull->getLine()
                 . $delim
                 . addcslashes(
-                    str_replace(static::$documentRoots, '[document_root]', $throwableOrNull->getMessage()),
+                    $this->utils->pathReplaceDocumentRoot($throwableOrNull->getMessage()),
                     "\0..\37"
                 );
             if (($previous = $throwableOrNull->getPrevious())) {
                 $output .= $delim . 'Previous: '
                     . get_class($previous) . '(' . $previous->getCode() . ')@'
-                    . str_replace(static::$documentRoots, '[document_root]', $previous->getFile()) . ':'
+                    . $this->utils->pathReplaceDocumentRoot($previous->getFile()) . ':'
                     . $previous->getLine() . $delim
                     . addcslashes(
-                        str_replace(static::$documentRoots, '[document_root]', $previous->getMessage()),
+                        $this->utils->pathReplaceDocumentRoot($previous->getMessage()),
                         "\0..\37"
                     );
             }
@@ -1005,7 +1008,7 @@ class Inspector
         foreach ($trace as $frame) {
             $output .= $delim . (++$i_frame) . ' ' . static::FORMAT['trace_spacer'];
             if (isset($frame['file'])) {
-                $output .= $delim . '@' . str_replace(static::$documentRoots, '[document_root]', $frame['file'])
+                $output .= $delim . '@' . $this->utils->pathReplaceDocumentRoot($frame['file'])
                     . ':' . (isset($frame['line']) ? $frame['line'] : '?');
             } else {
                 $output .= $delim . '@unknown';
@@ -1047,58 +1050,6 @@ class Inspector
     }
 
     /**
-     * @var array
-     */
-    static $documentRoots = [];
-
-    /**
-     * @var int
-     */
-    static $documentRootLength = 0;
-
-    /**
-     * Expects current working dir to be document root.
-     *
-     * Returns two paths if document root seems symlinked.
-     * Returns up to four paths if OS is Windows(-like).
-     *
-     * @return string[]
-     */
-    public function documentRoots() : array
-    {
-        $paths = static::$documentRoots;
-        if (!$paths) {
-            $paths[] = $real_path = getcwd();
-            static::$documentRootLength = strlen($real_path);
-            $symlinked_path = dirname($_SERVER['SCRIPT_FILENAME']);
-            // In cli mode a symlinked path is empty, because SCRIPT_FILENAME
-            // is the filename only; no path.
-            if (
-                $symlinked_path && $symlinked_path != '.'
-                && $symlinked_path != $real_path
-            ) {
-                // The symlink must be a subset of the real path, so for
-                // replacers it works swell with symlink after real path.
-                $paths[] = $symlinked_path;
-            }
-            if (DIRECTORY_SEPARATOR == '\\') {
-                $forward_slash_path = str_replace('\\', '/', $real_path);
-                if ($forward_slash_path != $real_path) {
-                    $paths[] = $forward_slash_path;
-                }
-                if ($symlinked_path != $real_path) {
-                    $forward_slash_path = str_replace('\\', '/', $symlinked_path);
-                    if ($forward_slash_path != $symlinked_path) {
-                        $paths[] = $forward_slash_path;
-                    }
-                }
-            }
-            static::$documentRoots = $paths;
-        }
-        return $paths;
-    }
-
-    /**
      * Get file and line of outmost call to an inspect function or public method.
      *
      * Replaces document root with [document_root].
@@ -1125,7 +1076,7 @@ class Inspector
             $i_frame > -1
             && (!$this->options['wrappers'] || !empty($trace[$i_frame += $this->options['wrappers']]['file']))
         ) {
-            return str_replace(static::$documentRoots, '[document_root]', $trace[$i_frame]['file'])
+            return $this->utils->pathReplaceDocumentRoot($trace[$i_frame]['file'])
                 . ':' . (isset($trace[$i_frame]['line']) ? $trace[$i_frame]['line'] : '?');
         }
         return '';

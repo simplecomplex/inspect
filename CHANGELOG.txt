@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-08-19
+-------------------------------------
+- Use document root features of Utils instead of own (redundant and unsafe)
+  features.
+
 SimpleComplex/Inspect 2.x, 2017-08-18
 -------------------------------------
 - Values of HIDE_VALUE_OF_KEYS may not be string.
