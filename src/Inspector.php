@@ -180,7 +180,7 @@ class Inspector
         'indent' => '.  ',
         'quote' => '`',
         'trace_spacer' => '- - - - - - - - - - - - - - - - - - - -',
-        'trace_end' => '--------------------------------------',
+        'trace_end' => '------------------------------------ #',
         // Otherwise use 'pre'.
         'enclose_tag' => '',
     ];
