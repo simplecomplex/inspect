@@ -938,7 +938,8 @@ class Inspector
                     $this->code = $throwableOrNull->getCode();
                 }
                 $trace = $throwableOrNull->getTrace();
-                if (count($trace) > $this->options['limit']) {
+                $n_full_stack = count($trace);
+                if ($n_full_stack > $this->options['limit']) {
                     array_splice($trace, $this->options['limit']);
                 }
             }
@@ -970,7 +971,8 @@ class Inspector
                 $trace = array_slice($trace, $i_frame);
             }
             // Enforce the trace limit.
-            if (count($trace) > $this->options['limit']) {
+            $n_full_stack = count($trace);
+            if ($n_full_stack > $this->options['limit']) {
                 // Plus one because we need the bucket holding the initial event.
                 array_splice($trace, $this->options['limit'] + 1);
             }
@@ -1045,6 +1047,9 @@ class Inspector
                 }
             }
         }
+        $output .= $delim
+            . '+' . ($n_full_stack <= $this->options['limit'] ? 0 : $n_full_stack - $this->options['limit'])
+            . ' ' . static::FORMAT['trace_spacer'];
 
         return $output;
     }

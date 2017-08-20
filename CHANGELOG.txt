@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-08-20
+-------------------------------------
+- trace() mark end of analyzed stack by printing number of frames
+  exceeding limit.
+
 SimpleComplex/Inspect 2.x, 2017-08-19
 -------------------------------------
 - Use document root features of Utils instead of own (redundant and unsafe)
