@@ -179,7 +179,8 @@ class Inspector
         'delimiter' => "\n",
         'indent' => '.  ',
         'quote' => '`',
-        'trace_spacer' => '- - - - - - - - - - - - - - - - - - - - - - - - -',
+        'trace_spacer' => '- - - - - - - - - - - - - - - - - - - -',
+        'trace_end' => '--------------------------------------',
         // Otherwise use 'pre'.
         'enclose_tag' => '',
     ];
@@ -1049,7 +1050,7 @@ class Inspector
         }
         $output .= $delim
             . '+' . ($n_full_stack <= $this->options['limit'] ? 0 : $n_full_stack - $this->options['limit'])
-            . ' ' . static::FORMAT['trace_spacer'];
+            . ' ' . static::FORMAT['trace_end'];
 
         return $output;
     }
