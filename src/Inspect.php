@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Config\SectionedConfigInterface;
+use SimpleComplex\Config\Interfaces\SectionedConfigInterface;
 use SimpleComplex\Config\EnvSectionedConfig;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
