@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2017-08-22
+-------------------------------------
+- Config and locale-text no longer risk that dupe key scalar values become array
+  Removed warnings from documentation.
+
 SimpleComplex/Inspect 2.x, 2017-08-20
 -------------------------------------
 - trace() mark end of analyzed stack by printing number of frames
