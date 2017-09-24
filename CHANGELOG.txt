@@ -1,3 +1,7 @@
+SimpleComplex/Inspect 2.x, 2017-09-24
+-------------------------------------
+- Release 2.1.
+
 SimpleComplex/Inspect 2.x, 2017-08-22
 -------------------------------------
 - Config and locale-text no longer risk that dupe key scalar values become array

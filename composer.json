@@ -13,8 +13,8 @@
     ],
     "require": {
         "php": ">=7.0",
-        "simplecomplex/utils": "^1.0 || dev-develop",
-        "simplecomplex/config": "^1.0 || dev-develop",
+        "simplecomplex/utils": "^1.1 || dev-develop",
+        "simplecomplex/config": "^1.1 || dev-develop",
         "simplecomplex/validate": "^1.0 || dev-develop"
     },
     "autoload": {
