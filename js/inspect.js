@@ -42,7 +42,7 @@
      * @ignore
      * @private
      * @param {*} u
-     * @return {string}
+     * @returns {string}
      */
     typeOf = function(u) {
       var t = typeof u;
@@ -130,10 +130,11 @@
      * @private
      * @param {Error} [error]
      * @param {string} [trace]
-     * @return {string}
+     * @param {number} [wrappers]
+     * @returns {string}
      */
-    flLn = function(error, trace) {
-      var ar, le, i, v, p, f;
+    flLn = function(error, trace, wrappers) {
+      var ar, le, i, v, p, f, wrps = 0 || wrappers;
       if (trace) {
         ar = trace;
       }
@@ -149,22 +150,16 @@
         }
       }
       if (typeof ar === 'string' && ar.indexOf('\n') > -1 && (le = (ar = ar.split('\n')).length)) {
-        for (i = 0; i < le; i++) {
+        for (i = wrps; i < le; i++) {
           v = ar[i];
-          // Skip function declared in this file;
-          // though doesn't work if compressed.
-          if (v.indexOf('/inspect.js') === -1) {
-            // Find function name, and continue to first function
-            // that isn't named like our functions.
-            if ((p = v.indexOf('@')) > -1) {
-              f = v.substr(0, p).replace(/\ /g, '');
-              p = f.lastIndexOf('.');
-              if (p > -1) {
-                f = f.substr(p + 1);
-              }
-              if (flLnFncs.indexOf(f) === -1) {
-                return v;
-              }
+          if ((p = v.indexOf('@')) > -1) {
+            f = v.substr(0, p).replace(/\ /g, '');
+            p = f.lastIndexOf('.');
+            if (p > -1) {
+              f = f.substr(p + 1);
+            }
+            if (flLnFncs.indexOf(f) === -1) {
+              return v;
             }
           }
         }
@@ -177,7 +172,7 @@
      * @ignore
      * @private
      * @param {object|number|string|boolean} u
-     * @return {object}
+     * @returns {object}
      */
     optsRslv = function(u) {
       var o = {}, i, t;
@@ -228,7 +223,7 @@
      * @ignore
      * @private
      * @param {*} [ms]
-     * @return {void}
+     * @returns {void}
      */
     cnsl = function(ms) {
       // Detecting console is not possible.
@@ -254,7 +249,7 @@
      *    Integer, default: 10.
      * @param {number} [depth]
      *    Integer, default: zero.
-     * @return {string}
+     * @returns {string}
      */
     nspct = function(u, protos, funcBody, max, depth) {
       var m = max !== undefined ? max : 10, d = depth || 0, fb = funcBody || false,
@@ -411,6 +406,21 @@
       return 'RECURSION LIMIT\n';
     },
     /**
+     * @param {*} u
+     * @param {object|number|boolean|string} [options]
+     *    Object: options.
+     *    Integer: depth.
+     *    Boolean: protos.
+     *    String: message
+     * @returns {string}
+     */
+    vrbl = function(u, options) {
+      var o = optsRslv(options), ms = o.message || '';
+      return  (!ms ? '' : (ms + ':\n')) +
+        '[Inspect ' + flLn(undefined, undefined, 2) + ']\n' +
+        nspct(u, o.protos, o.func_body, o.depth)
+    },
+    /**
      * Trace and stringify error.
      *
      * @ignore
@@ -418,7 +428,7 @@
      * @param {Error} er
      * @param {boolean} [backtrace]
      * @param {number} [limit]
-     * @return {string}
+     * @returns {string}
      */
     trc = function(er, backtrace, limit) {
       var u, le, i, es = '' + er, s = !backtrace ? es : 'Backtrace', lmt = limit || trcLmt;
@@ -438,6 +448,49 @@
         }
       }
       return s;
+    },
+    /**
+     * Get trace as string.
+     * @ignore
+     * @private
+     * @param {Error|undefined} [error]
+     *    Falsy: do backtrace.
+     * @param {object|number|string} [options]
+     *    Object: options.
+     *    Integer: limit; default 5.
+     *    String: message.
+     * @returns {string}
+     */
+    trcGt = function(error, options) {
+      var er = error, bcktrc, limit = trcLmt, msg = '', trace;
+      if (options) {
+        switch (typeof options) {
+          case 'object':
+            msg = options.message || '';
+            limit = options.limit || trcLmt;
+            break;
+          case 'number':
+            limit = options;
+            break;
+          case 'string':
+            msg = options;
+            break;
+        }
+        if (limit < 1) {
+          limit = trcLmt;
+        }
+      }
+      if (!er) {
+        bcktrc = true;
+        try {
+          throw new Error(); // <- Not a mistake.
+        }
+        catch (rrr) {
+          er = rrr;
+        }
+      }
+      trace = trc(er, bcktrc, limit);
+      return (!msg ? '' : (msg + ':\n')) + '[Inspect trace ' + flLn(null, trace, 2) + ']\n' + trace;
     },
     /**
      * inspect() variable and send output to console log.
@@ -485,13 +538,12 @@
      *    Integer: depth.
      *    Boolean: protos.
      *    String: message
-     * @return {void}
+     * @returns {void}
      *    Logs to browser console, if exists
      */
     inspect = function(u, options) {
-      var o = optsRslv(options), ms = o.message || '';
       cnsl(
-        (!ms ? '' : (ms + ':\n')) + '[Inspect ' + flLn() + ']\n' + nspct(u, o.protos, o.func_body, o.depth)
+        vrbl(u, options)
       );
     };
 
@@ -516,9 +568,42 @@
    * @function
    * @name inspect.typeOf
    * @param {*} u
-   * @return {string}
+   * @returns {string}
    */
   inspect.typeOf = typeOf;
+  /**
+   * Alias of inspect().
+   * @function
+   * @name inspect.variable
+   * @param {*} u
+   * @param {object|number|boolean|string} [options]
+   *    Object: options.
+   *    Integer: depth.
+   *    Boolean: protos.
+   *    String: message
+   * @returns {void}
+   *    Logs to browser console, if exists
+   */
+  inspect.variable = function(u, options) {
+    cnsl(
+      vrbl(u, options)
+    );
+  };
+  /**
+   * Get variable inspection as string.
+   * @function
+   * @name inspect.variable
+   * @param {*} u
+   * @param {object|number|boolean|string} [options]
+   *    Object: options.
+   *    Integer: depth.
+   *    Boolean: protos.
+   *    String: message
+   * @returns {string}
+   */
+  inspect.variableGet = function(u, options) {
+    return vrbl(u, options);
+  };
   /**
    * Trace error and send output to console log.
    *
@@ -543,41 +628,28 @@
    *    Object: options.
    *    Integer: limit; default 5.
    *    String: message.
-   * @return {void}
+   * @returns {void}
    *    Logs to browser console, if exists.
    */
   inspect.trace = function(error, options) {
-    var er = error, bcktrc, limit = trcLmt, msg = '', trace;
-    if (options) {
-      switch (typeof options) {
-        case 'object':
-          msg = options.message || '';
-          limit = options.limit || trcLmt;
-          break;
-        case 'number':
-          limit = options;
-          break;
-        case 'string':
-          msg = options;
-          break;
-      }
-      if (limit < 1) {
-        limit = trcLmt;
-      }
-    }
-    if (!er) {
-      bcktrc = true;
-      try {
-        throw new Error(); // <- Not a mistake.
-      }
-      catch (rrr) {
-        er = rrr;
-      }
-    }
-    trace = trc(er, bcktrc, limit);
     cnsl(
-      (!msg ? '' : (msg + ':\n')) + '[Inspect trace ' + flLn(null, trace) + ']\n' + trace
+      trcGt(error, options)
     );
+  };
+  /**
+   * Get trace as string.
+   * @function
+   * @name inspect.trace
+   * @param {Error|undefined} [error]
+   *    Falsy: do backtrace.
+   * @param {object|number|string} [options]
+   *    Object: options.
+   *    Integer: limit; default 5.
+   *    String: message.
+   * @returns {string}
+   */
+  inspect.traceGet = function(error, options) {
+    return trcGt(error, options);
   };
   /**
    * Use for checking if that window.inspect is actually the one we are
