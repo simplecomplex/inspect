@@ -50,6 +50,11 @@ class InspectToLog
         $logger = $container->get('logger');
         /** @var \SimpleComplex\Inspect\Inspect $inspect */
         $inspect = $container->get('inspect');
-        $logger->log($logLevel, $message . "\n" . $inspect->inspect($subject, ['wrappers' => 1]), $context);
+        $logger->log(
+            $logLevel,
+            ($message === '' ? '' : ($message . "\n"))
+                . $inspect->inspect($subject, ['wrappers' => 1]),
+            $context
+        );
     }
 }

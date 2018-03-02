@@ -1035,7 +1035,7 @@ class Inspector
                 if (!$class) {
                     $output .= $delim . 'function: ' . $function;
                 } else {
-                    $output .= $delim . 'static method: ' . $class . ($type ? $type : '::') . $function;
+                    $output .= $delim . 'method: ' . $class . ($type ? $type : '::') . $function;
                 }
             }
 
