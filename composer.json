@@ -16,6 +16,9 @@
         "simplecomplex/utils": "^1.1 || dev-develop",
         "simplecomplex/validate": "^1.0 || dev-develop"
     },
+    "suggest": {
+        "simplecomplex/config": "For better configuration management."
+    },
     "autoload": {
         "psr-4": {
             "SimpleComplex\\Inspect\\": "src/"
