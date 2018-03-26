@@ -1,3 +1,10 @@
+SimpleComplex/Inspect 2.x, 2018-03-26
+-------------------------------------
+- Reduce dependencies: Config package no longer required.
+- Use Utils SectionedMapInterface instead of Config SectionedConfigInterface.
+- Deprecated Inspect::setConfig(); doesn't solve any (non-existing) problem.
+- Convenience class InspectToLog.
+
 SimpleComplex/Inspect 2.x, 2017-10-05
 -------------------------------------
 - Frontend JS inspect new methods variable, variableGet, traceGet.

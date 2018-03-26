@@ -9,8 +9,8 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Config\Interfaces\SectionedConfigInterface;
-use SimpleComplex\Config\EnvSectionedConfig;
+use SimpleComplex\Utils\Interfaces\SectionedMapInterface;
+use SimpleComplex\Utils\SectionedMap;
 use SimpleComplex\Utils\Unicode;
 use SimpleComplex\Utils\Sanitize;
 use SimpleComplex\Validate\Validate;
@@ -89,7 +89,7 @@ class Inspect
      *
      * See also ../config-ini/inspect.ini
      *
-     * @var SectionedConfigInterface|null
+     * @var SectionedMapInterface
      */
     public $config;
 
@@ -129,19 +129,41 @@ class Inspect
      * }
      * @endcode
      *
-     * @see JsonLog::setConfig()
+     * @see \SimpleComplex\Utils\Interfaces\SectionedMapInterface
+     * @see \SimpleComplex\Config\Interfaces\SectionedConfigInterface
      * @see \SimpleComplex\Config\EnvSectionedConfig
      *
-     * @param SectionedConfigInterface|null $config
-     *      Uses/instantiates SimpleComplex\Config\EnvSectionedConfig
-     *      _on demand_, as fallback.
+     * @code
+     * Dependency::genericSet('inspect', function() use ($container) {
+     *     return new \SimpleComplex\Inspect\Inspect($container->get('config'));
+     * });
+     * Dependency::genericSet('inspect', function() {
+     *     return new \SimpleComplex\Inspect\Inspect([
+     *         'trace_limit' => 3,
+     *     ]);
+     * });
+     * Dependency::genericSet('inspect', function() {
+     *     // Use \SimpleComplex\Config\EnvSectionedConfig, if exists.
+     *     return new \SimpleComplex\Inspect\Inspect();
+     * });
+     * @endcode
+     *
+     * @param SectionedMapInterface|object|array|null $config
+     *      Non-SectionedMapInterface object|array: will be used
+     *          as JsonLog specific settings.
+     *      Null: instance will on demand use
+     *          \SimpleComplex\Config\EnvSectionedConfig, if exists.
      */
-    public function __construct(/*?SectionedConfigInterface*/ $config = null)
+    public function __construct($config = null)
     {
         // Dependencies.--------------------------------------------------------
         // Extending class' constructor might provide instances by other means.
         if (!$this->config && isset($config)) {
-            $this->setConfig($config);
+            if ($config instanceof SectionedMapInterface) {
+                $this->config = $config;
+            } else {
+                $this->config = (new SectionedMap())->setSection(static::CONFIG_SECTION, $config);
+            }
         }
 
         // Business.------------------------------------------------------------
@@ -149,21 +171,23 @@ class Inspect
     }
 
     /**
-     * Overcome mutual dependency, provide a config object after instantiation.
+     * @deprecated
+     *      This method will be removed; doesn't solve anything in terms
+     *      of mutual dependency, and there hardly is any such issue anyway.
      *
-     * This class does not need a config object at all, if defaults are adequate.
-     *
-     * @param SectionedConfigInterface $config
+     * @param SectionedMapInterface $config
      *
      * @return void
      */
-    public function setConfig(SectionedConfigInterface $config) /*: void*/
+    public function setConfig(SectionedMapInterface $config) /*: void*/
     {
         $this->config = $config;
     }
 
     /**
      * Load dependencies on demand.
+     *
+     * @see \SimpleComplex\Config\EnvSectionedConfig
      *
      * @return void
      */
@@ -173,7 +197,13 @@ class Inspect
             $this->validate = Validate::getInstance();
 
             if (!$this->config) {
-                $this->setConfig(EnvSectionedConfig::getInstance());
+                // Use enviroment variable wrapper config class if exists;
+                // fall back on empty sectioned map.
+                if (class_exists('\\SimpleComplex\\Config\\EnvSectionedConfig')) {
+                    $this->config = call_user_func('\\SimpleComplex\\Config\\EnvSectionedConfig::getInstance');
+                } else {
+                    $this->config = new SectionedMap();
+                }
             }
             if (!$this->unicode) {
                 $this->unicode = Unicode::getInstance();
