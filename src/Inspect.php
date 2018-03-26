@@ -157,7 +157,8 @@ class Inspect
     public function __construct($config = null)
     {
         // Dependencies.--------------------------------------------------------
-        // Extending class' constructor might provide instances by other means.
+        // Extending class' constructor might provide configuration
+        // by other means.
         if (!$this->config && isset($config)) {
             if ($config instanceof SectionedMapInterface) {
                 $this->config = $config;

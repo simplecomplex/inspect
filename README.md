@@ -101,6 +101,9 @@ To server log:
 ### Requirements ###
 
 - PHP >=7.0
-- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
-- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
 - [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
+- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
+
+##### Suggestions #####
+
+- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
