@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2018-04-07
+-------------------------------------
+- Package requires Utils package ^1.2.
+- Release 2.2.
+
 SimpleComplex/Inspect 2.x, 2018-03-26
 -------------------------------------
 - Reduce dependencies: Config package no longer required.
