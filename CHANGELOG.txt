@@ -1,5 +1,10 @@
 SimpleComplex/Inspect 2.x, 2018-04-07
 -------------------------------------
+- Beware of class_exists+autoload; lethal if rubbish spl_autoload.
+- Release 2.2.1.
+
+SimpleComplex/Inspect 2.x, 2018-04-07
+-------------------------------------
 - Package requires Utils package ^1.2.
 - Release 2.2.
 
