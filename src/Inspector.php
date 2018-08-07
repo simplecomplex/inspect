@@ -940,6 +940,10 @@ class Inspector
                 }
                 $trace = $throwableOrNull->getTrace();
                 $n_full_stack = count($trace);
+                if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
+                    array_splice($trace, 0, $this->options['wrappers']);
+                    $n_full_stack -= $this->options['wrappers'];
+                }
                 if ($n_full_stack > $this->options['limit']) {
                     array_splice($trace, $this->options['limit']);
                 }
@@ -973,6 +977,10 @@ class Inspector
             }
             // Enforce the trace limit.
             $n_full_stack = count($trace);
+            if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
+                array_splice($trace, 0, $this->options['wrappers']);
+                $n_full_stack -= $this->options['wrappers'];
+            }
             if ($n_full_stack > $this->options['limit']) {
                 // Plus one because we need the bucket holding the initial event.
                 array_splice($trace, $this->options['limit'] + 1);
