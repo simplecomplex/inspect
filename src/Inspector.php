@@ -128,7 +128,7 @@ class Inspector
      * @var string[]
      */
     const NEEDLES = [
-        "\0", "\n", "\r", "\t", '"', "'",
+        "\0", "\1", "\n", "\r", "\t", '"', "'",
     ];
 
     /**
@@ -137,7 +137,7 @@ class Inspector
      * @var string[]
      */
     const REPLACERS = [
-        '_NUL_', '_NL_', '_CR_', '_TB_', '”', '’',
+        '_NUL_', '_SOH_', '_NL_', '_CR_', '_TB_', '”', '’',
     ];
 
     /**
@@ -146,7 +146,7 @@ class Inspector
      * @var string[]
      */
     const NEEDLES_ESCAPE_HTML = [
-        "\0", "\n", "\r", "\t", '<', '>', '"', "'",
+        "\0", "\1", "\n", "\r", "\t", '<', '>', '"', "'",
     ];
 
     /**
@@ -155,7 +155,7 @@ class Inspector
      * @var string[]
      */
     const REPLACERS_ESCAPE_HTML = [
-        '_NUL_', '_NL_', '_CR_', '_TB_', '&lt;', '&gt;', '&quot;', '&apos;',
+        '_NUL_', '_SOH_', '_NL_', '_CR_', '_TB_', '&lt;', '&gt;', '&quot;', '&apos;',
     ];
 
     /**
@@ -939,6 +939,7 @@ class Inspector
                     $this->code = $throwableOrNull->getCode();
                 }
                 $trace = $throwableOrNull->getTrace();
+                // Enforce wrappers and trace limit.
                 $n_full_stack = count($trace);
                 if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
                     array_splice($trace, 0, $this->options['wrappers']);
@@ -975,7 +976,7 @@ class Inspector
             if ($i_frame > -1) {
                 $trace = array_slice($trace, $i_frame);
             }
-            // Enforce the trace limit.
+            // Enforce wrappers and trace limit.
             $n_full_stack = count($trace);
             if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
                 array_splice($trace, 0, $this->options['wrappers']);
