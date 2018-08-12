@@ -1,6 +1,7 @@
 SimpleComplex/Inspect 2.x, 2018-08-11
 -------------------------------------
-- Escape digit one (SOH, Start of Heading) in binary string.
+- Escape digit one (SOH, Start of Heading), for binary string.
+- Release 2.2.5.
 
 SimpleComplex/Inspect 2.x, 2018-08-07
 -------------------------------------
