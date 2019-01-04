@@ -592,7 +592,7 @@ class Inspector
     {
         if ($this->length > $this->options['output_max']) {
             $this->abort = true;
-            if ($kind = 'variable') {
+            if ($this->kind == 'variable') {
                 $this->warnings[] = 'Variable inspection aborted - output length ' . $this->length
                     . ' exceeds output_max ' . $this->options['output_max'] . '.'
                     . ' Using depth ' . $this->options['depth'] . ' and truncate ' . $this->options['truncate'] . '.'
@@ -644,7 +644,7 @@ class Inspector
             return false;
         }
         if (time() > $started + ($timeout * $this->options['exectime_percent'] / 100)) {
-            if ($kind = 'variable') {
+            if ($this->kind == 'variable') {
                 $this->warnings[] = 'Variable inspection aborted after ' . $this->options['exectime_percent']
                     . '% of PHP max_execution_time ' . $timeout . ' passed,'
                     . ' using depth ' . $this->options['depth'] . '.'

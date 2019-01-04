@@ -1,3 +1,8 @@
+SimpleComplex/Inspect 2.x, 2019-01-04
+-------------------------------------
+- Bad and stupid assignment-in-condition bugs in exceeds time/length checkers.
+- Release 2.3.
+
 SimpleComplex/Inspect 2.x, 2018-08-11
 -------------------------------------
 - Escape digit one (SOH, Start of Heading), for binary string.
