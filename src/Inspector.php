@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2020 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);

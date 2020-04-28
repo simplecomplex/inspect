@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2020 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -41,8 +41,6 @@ class Inspect
      * First object instantiated via this method, disregarding class called on.
      *
      * @deprecated Use a dependency injection container instead.
-     * @see \SimpleComplex\Utils\Dependency
-     * @see \Slim\Container
      *
      * @param mixed ...$constructorParams
      *
@@ -59,14 +57,14 @@ class Inspect
     }
 
     /**
-     * Class name of \SimpleComplex\JsonLog\JsonLogEvent or extending class.
+     * Class name of \SimpleComplex\Inspect\Inspector or extending class.
      *
      * @code
      * // Overriding class must use fully qualified (namespaced) class name.
      * const CLASS_INSPECTOR = \Package\Library\CustomInspector::class;
      * @endcode
      *
-     * @see \SimpleComplex\JsonLog\JsonLogEvent
+     * @see \SimpleComplex\Inspect\Inspector
      *
      * @var string
      */
