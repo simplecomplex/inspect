@@ -1,3 +1,13 @@
+SimpleComplex/Inspect 3.x, 2020-04-28
+-------------------------------------
+- All dependencies eliminated.
+- Constructor no longer explicit, to ease framework accommodation.
+- New configure() method, which must be called prior to use of Inspect.
+- Config helper class to ease accommodation in frameworks.
+- Removal of document root from strings is no longer attempted.
+- Class InspectToLog abandoned, due to no globally supported means of getting
+  and using dependency injection containers; constructor throws exception.
+
 SimpleComplex/Inspect 2.x, 2019-01-04
 -------------------------------------
 - Bad and stupid assignment-in-condition bugs in exceeds time/length checkers.

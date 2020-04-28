@@ -63,7 +63,7 @@ class Config
     /**
      * @var string
      */
-    protected $classAlias = 'unknown';
+    protected $getMode = 'direct';
 
     /**
      * @var object|null
@@ -72,23 +72,20 @@ class Config
 
     /**
      * @param object|null $config
-     *      Null: If no custom value(s), overriding Inspecter defaults.
+     *      Null if no custom value(s), overriding Inspecter defaults.
      */
-    public function __construct(?object $config)
+    public function __construct(?object $config = null)
     {
         if ($config) {
             if (class_exists($class = '\\Drupal\\Core\\Config\\ImmutableConfig')
                 && is_a($config, $class)
             ) {
-                $this->classAlias = 'drupal_ImmutableConfig';
+                $this->getMode = 'simple';
             }
             elseif (class_exists($interface = '\\SimpleComplex\\Config\\Interfaces\\SectionedConfigInterface')
                 && is_subclass_of($config, $interface)
             ) {
-                $this->classAlias = 'simplecomplex_SectionedConfigInterface';
-            }
-            else {
-                $this->classAlias = 'unknown';
+                $this->getMode = 'sectioned_scx';
             }
 
             $this->config = $config;
@@ -129,7 +126,7 @@ class Config
      *
      * Fallback: $this->config->{$key}
      *
-     * Method name deliberately ugly; to mitigate collision.
+     * Method name deliberately ugly, to mitigate collision.
      *
      * @param string $key
      *
@@ -138,17 +135,17 @@ class Config
      */
     protected function getViaInnerConfigInstance(string $key)
     {
-        switch ($this->classAlias) {
-            case 'drupal_ImmutableConfig':
+        switch ($this->getMode) {
+            case 'simple':
                 /**
                  * \Drupal\Core\Config\ImmutableConfig
                  */
                 return $this->config->get($key) ?? null;
-            case 'simplecomplex_SectionedConfigInterface':
+            case 'sectioned_scx':
                 /**
                  * \SimpleComplex\Config\Interfaces\SectionedConfigInterface
                  */
-                return $this->config->get('lib_simplecomplex_inspect', $key);
+                return $this->config->get('lib_simplecomplex_inspect', $key, null);
         }
 
         return $this->config->{$key} ?? null;

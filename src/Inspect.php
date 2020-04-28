@@ -9,16 +9,26 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Utils\Interfaces\SectionedMapInterface;
-use SimpleComplex\Utils\SectionedMap;
-use SimpleComplex\Utils\Unicode;
-use SimpleComplex\Utils\Sanitize;
-use SimpleComplex\Validate\Validate;
+use SimpleComplex\Inspect\Helper\Config;
+use SimpleComplex\Inspect\Helper\Unicode;
 
 /**
  * Variable analyzer and exception tracer.
  *
- * Mostly proxy class for Inspector.
+ * Proxy class for Inspector.
+ *
+ * @code
+ * try {
+ *     $subject = unknown_variable();
+ *     if (!$subject || !$subject instanceof ExpectedClass::class) {
+ *         // Do stringify Inspector instance when logging.
+ *         $logger->warning('Unexpected unknown_variable():' . "\n" . $inspect->inspect($subject));
+ *     }
+ * }
+ * catch (\Throwable $xcptn) {
+ *     $logger->warning('Unexpected unknown_variable():' . "\n" . $inspect->trace($xcptn));
+ * }
+ * @endcode
  *
  * @dependency-injection-container-id inspect
  *      Suggested ID of the JsonLog instance.
@@ -27,7 +37,7 @@ use SimpleComplex\Validate\Validate;
  *
  * @package SimpleComplex\Inspect
  */
-class Inspect
+class Inspect implements InspectInterface
 {
     /**
      * Reference to first object instantiated via the getInstance() method,
@@ -42,27 +52,37 @@ class Inspect
      *
      * @deprecated Use a dependency injection container instead.
      *
-     * @param mixed ...$constructorParams
-     *
      * @return Inspect
      *      static, really, but IDE might not resolve that.
      */
-    public static function getInstance(...$constructorParams)
+    public static function getInstance()
     {
-        // Unsure about null ternary ?? for class and instance vars.
         if (!static::$instance) {
-            static::$instance = new static(...$constructorParams);
+            static::$instance = (new static())->configure();
         }
         return static::$instance;
     }
 
     /**
-     * Class name of \SimpleComplex\Inspect\Inspector or extending class.
+     * Class name of \SimpleComplex\Inspect\Helper\Config or extending class.
      *
-     * @code
-     * // Overriding class must use fully qualified (namespaced) class name.
-     * const CLASS_INSPECTOR = \Package\Library\CustomInspector::class;
-     * @endcode
+     * @see \SimpleComplex\Inspect\Helper\Config
+     *
+     * @var string
+     */
+    const CLASS_CONFIG = Config::class;
+
+    /**
+     * Class name of \SimpleComplex\Inspect\Helper\Unicode or extending class.
+     *
+     * @see \SimpleComplex\Inspect\Helper\Unicode
+     *
+     * @var string
+     */
+    const CLASS_UNICODE = Unicode::class;
+
+    /**
+     * Class name of \SimpleComplex\Inspect\Inspector or extending class.
      *
      * @see \SimpleComplex\Inspect\Inspector
      *
@@ -71,150 +91,52 @@ class Inspect
     const CLASS_INSPECTOR = Inspector::class;
 
     /**
-     * Conf var default namespace.
-     *
-     * @var string
-     */
-    const CONFIG_SECTION = 'lib_simplecomplex_inspect';
-
-    /**
-     *  Config vars, and their effective defaults:
-     *  - (int) trace_limit:        5 (Inspector::TRACE_LIMIT_DEFAULT)
-     *  - (int) truncate:           1000 (Inspector::TRUNCATE_DEFAULT)
-     *  - (bool) escape_html:       false (Inspector::ESCAPE_HTML)
-     *  - (int) output_max:         ~1Mb (Inspector::OUTPUT_DEFAULT)
-     *  - (int) exectime_percent:   90 (Inspector::EXEC_TIMEOUT_DEFAULT)
-     *
-     * See also ../config-ini/inspect.ini
-     *
-     * @var SectionedMapInterface
+     * @var \SimpleComplex\Inspect\Helper\Config
      */
     public $config;
 
     /**
-     * @var Unicode
+     * @var \SimpleComplex\Inspect\Helper\Unicode
      */
     public $unicode;
 
     /**
-     * @var Sanitize
+     * @var bool
      */
-    public $sanitize;
+    protected $configured = false;
 
-    /**
-     * @var Validate
-     */
-    public $validate;
-
-    /**
-     * Proxy class for Inspector.
+    /*
+     * No explicit constructor, to allow use of framework specific parameters.
      *
-     * @code
-     * use \SimpleComplex\JsonLog\JsonLog;
-     * use \SimpleComplex\Inspect\Inspect;
-     *
-     * $logger = JsonLog::getInstance();
-     * $inspect = Inspect::getInstance();
-     *
-     * $subject = unknown_variable();
-     * if (!$subject || !$subject instanceof ExpectedClass::class) {
-     *
-     *     // Correct: stringify, implicitly using Inspector's __toString() method.
-     *     $logger->warning('Unexpected unknown_variable(): ' . $inspect->inspect($subject));
-     *
-     *     // Risky: logger may not accept an (Inspector) object as arg message (though JsonLog do).
-     *     $logger->warning($inspect->inspect($subject));
-     * }
-     * @endcode
-     *
-     * @see \SimpleComplex\Utils\Interfaces\SectionedMapInterface
-     * @see \SimpleComplex\Config\Interfaces\SectionedConfigInterface
-     * @see \SimpleComplex\Config\EnvSectionedConfig
-     *
-     * @code
-     * Dependency::genericSet('inspect', function() use ($container) {
-     *     return new \SimpleComplex\Inspect\Inspect($container->get('config'));
-     * });
-     * Dependency::genericSet('inspect', function() {
-     *     return new \SimpleComplex\Inspect\Inspect([
-     *         'trace_limit' => 3,
-     *     ]);
-     * });
-     * Dependency::genericSet('inspect', function() {
-     *     // Use \SimpleComplex\Config\EnvSectionedConfig, if exists.
-     *     return new \SimpleComplex\Inspect\Inspect();
-     * });
-     * @endcode
-     *
-     * @param SectionedMapInterface|object|array|null $config
-     *      Non-SectionedMapInterface object|array: will be used
-     *          as JsonLog specific settings.
-     *      Null: instance will on demand use
-     *          \SimpleComplex\Config\EnvSectionedConfig, if exists.
-     */
-    public function __construct($config = null)
+    public function __construct()
     {
-        // Dependencies.--------------------------------------------------------
-        // Extending class' constructor might provide configuration
-        // by other means.
-        if (!$this->config && isset($config)) {
-            if ($config instanceof SectionedMapInterface) {
-                $this->config = $config;
-            } else {
-                $this->config = (new SectionedMap())->setSection(static::CONFIG_SECTION, $config);
-            }
+    }*/
+
+    /**
+     * This method must be called before use of the class.
+     *
+     * Otherwise similar work must be done in constructor or other method.
+     *
+     * @param object|null $config
+     *      Null if no custom value(s), overriding Inspecter defaults.
+     *
+     * @return Inspect|self
+     */
+    public function configure(?object $config = null) : self
+    {
+        if (!$this->configured) {
+            $class_config = static::CLASS_CONFIG;
+            // Pass arg $config to new Config instance,
+            // unless $config already is such.
+            $this->config = $config && is_a($config, $class_config) ? $config : new $class_config($config);
+
+            $class_unicode = static::CLASS_UNICODE;
+            $this->unicode = new $class_unicode();
+
+            $this->configured = true;
         }
 
-        // Business.------------------------------------------------------------
-        // None.
-    }
-
-    /**
-     * @deprecated
-     *      This method will be removed; doesn't solve anything in terms
-     *      of mutual dependency, and there hardly is any such issue anyway.
-     *
-     * @param SectionedMapInterface $config
-     *
-     * @return void
-     */
-    public function setConfig(SectionedMapInterface $config) /*: void*/
-    {
-        $this->config = $config;
-    }
-
-    /**
-     * Load dependencies on demand.
-     *
-     * @see \SimpleComplex\Config\EnvSectionedConfig
-     *
-     * @return void
-     */
-    protected function loadDependencies() /*: void*/
-    {
-        if (!$this->validate) {
-            $this->validate = Validate::getInstance();
-
-            if (!$this->config) {
-                // Use enviroment variable wrapper config class if exists;
-                // fall back on empty sectioned map.
-                try {
-                    if (class_exists('\\SimpleComplex\\Config\\EnvSectionedConfig')) {
-                        $this->config = call_user_func('\\SimpleComplex\\Config\\EnvSectionedConfig::getInstance');
-                    } else {
-                        $this->config = new SectionedMap();
-                    }
-                } catch (\Throwable $ignore) {
-                    $this->config = new SectionedMap();
-                }
-            }
-            if (!$this->unicode) {
-                $this->unicode = Unicode::getInstance();
-            }
-            if (!$this->sanitize) {
-                $this->sanitize = Sanitize::getInstance();
-            }
-        }
+        return $this;
     }
 
     /**
@@ -223,11 +145,6 @@ class Inspect
      * Back-tracing (without Throwable) can also be accomplished by passing
      * 'trace':true option.
      *
-     * @code
-     * # CLI
-     * \SimpleComplex\Inspect\Inspect::getInstance()->inspect($GLOBALS);
-     * @endcode
-     *
      * @see Inspector::$options
      *
      * @param mixed $subject
@@ -235,14 +152,15 @@ class Inspect
      *
      * @return Inspector
      *      Stringable.
+     *
+     * @throws \LogicException
+     *      Instance not configured.
      */
-    public function inspect($subject, $options = []) : Inspector
+    public function inspect($subject, $options = []) : InspectorInterface
     {
-        // Init.----------------------------------------------------------------
-        $this->loadDependencies();
-
-        // Business.------------------------------------------------------------
-
+        if (!$this->configured) {
+            throw new \LogicException(get_class($this) . ' is not configured.');
+        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -262,14 +180,15 @@ class Inspect
      *
      * @return Inspector
      *      Stringable.
+     *
+     * @throws \LogicException
+     *      Instance not configured.
      */
-    public function variable($subject, $options = []) : Inspector
+    public function variable($subject, $options = []) : InspectorInterface
     {
-        // Init.----------------------------------------------------------------
-        $this->loadDependencies();
-
-        // Business.------------------------------------------------------------
-
+        if (!$this->configured) {
+            throw new \LogicException(get_class($this) . ' is not configured.');
+        }
         $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -290,14 +209,15 @@ class Inspect
      *
      * @return Inspector
      *      Stringable.
+     *
+     * @throws \LogicException
+     *      Instance not configured.
      */
-    public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : Inspector
+    public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
     {
-        // Init.----------------------------------------------------------------
-        $this->loadDependencies();
-
-        // Business.------------------------------------------------------------
-
+        if (!$this->configured) {
+            throw new \LogicException(get_class($this) . ' is not configured.');
+        }
         $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */

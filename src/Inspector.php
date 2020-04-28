@@ -9,8 +9,6 @@ declare(strict_types=1);
 
 namespace SimpleComplex\Inspect;
 
-use SimpleComplex\Utils\Utils;
-
 /**
  * Variable analyzer and exception tracer.
  *
@@ -18,15 +16,8 @@ use SimpleComplex\Utils\Utils;
  *
  * @package SimpleComplex\Inspect
  */
-class Inspector
+class Inspector implements InspectorInterface
 {
-    /**
-     * Conf var default namespace.
-     *
-     * @var string
-     */
-    const CONFIG_SECTION = 'lib_simplecomplex_inspect';
-
     /**
      * Maximum sub var recursion depth.
      *
@@ -262,16 +253,6 @@ class Inspector
     protected $proxy;
 
     /**
-     * @var Utils
-     */
-    protected $utils;
-
-    /**
-     * @var int|null
-     */
-    protected $documentRootsMinLength;
-
-    /**
      * Do not call this directly, use Inspect instead.
      *
      * @see Inspect::__construct()
@@ -290,9 +271,6 @@ class Inspector
     public function __construct(Inspect $proxy, $subject, $options = [])
     {
         $this->proxy = $proxy;
-
-        $this->utils = Utils::getInstance();
-        $this->documentRootsMinLength = $this->utils->documentRootsMinLength();
 
         $kind = '';
         $depth_or_limit = 0;
@@ -360,9 +338,6 @@ class Inspector
         // Prepare options.-----------------------------------------------------
         $opts =& $this->options;
 
-        // Prime sectioned config; load the whole section into memory.
-        $this->proxy->config->remember(static::CONFIG_SECTION);
-
         // logger.
         // Keep default: null.
         // code.
@@ -379,20 +354,15 @@ class Inspector
         } elseif ($depth_or_limit && $depth_or_limit <= static::TRACE_LIMIT_MAX) {
             $opts['limit'] = $depth_or_limit;
         } else {
-            // Doesn't use ??-operator ~ casting class var to int is redundant.
-            $opts['limit'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'trace_limit')) ?
-                (int) $tmp : static::TRACE_LIMIT_DEFAULT;
+            $opts['limit'] = $this->proxy->config->trace_limit ?? static::TRACE_LIMIT_DEFAULT;
         }
         // truncate.
-        // Doesn't use ??-operator ~ casting class var to int is redundant.
-        $opts['truncate'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'truncate')) ?
-            (int) $tmp : static::TRUNCATE_DEFAULT;
+        $opts['truncate'] = $this->proxy->config->truncate ?? static::TRUNCATE_DEFAULT;
         // skip_keys.
         // Keep default: empty array.
         // escape_html.
         if(
-            !($opts['escape_html'] =
-                $this->proxy->config->get(static::CONFIG_SECTION, 'escape_html', static::ESCAPE_HTML))
+            !($opts['escape_html'] = $this->proxy->config->escape_html ?? static::ESCAPE_HTML)
         ) {
             // needles; only arg options override if arg options replacers.
             $opts['needles'] = static::NEEDLES;
@@ -403,18 +373,11 @@ class Inspector
             $opts['replacers'] = static::REPLACERS_ESCAPE_HTML;
         }
         // output_max.
-        // Doesn't use ??-operator ~ casting class var to int is redundant.
-        $opts['output_max'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'output_max')) ?
-            (int) $tmp : static::OUTPUT_DEFAULT;
+        $opts['output_max'] = $this->proxy->config->output_max ?? static::OUTPUT_DEFAULT;
         // exectime_percent.
-        // Doesn't use ??-operator ~ casting class var to int is redundant.
-        $opts['exectime_percent'] = ($tmp = $this->proxy->config->get(static::CONFIG_SECTION, 'exectime_percent')) ?
-            (int) $tmp : static::EXEC_TIMEOUT_DEFAULT;
+        $opts['exectime_percent'] = $this->proxy->config->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
         // wrappers.
         // Keep default: zero.
-
-        // Relieve config memory.
-        $this->proxy->config->forget(static::CONFIG_SECTION);
 
         // Overriding options by argument.--------------------------------------
         if ($use_arg_options) {
@@ -527,15 +490,7 @@ class Inspector
             $this->output =& $output;
             $this->length = $len_preface + strlen($output);
         } catch (\Throwable $xc) {
-            $file = $xc->getFile();
-            try {
-                $tmp = $this->utils->pathReplaceDocumentRoot($file);
-                if ($tmp) {
-                    $file = $tmp;
-                }
-            } catch (\Throwable $ignore) {
-            }
-            $msg = 'Inspect ' . $kind . ' failure: ' . get_class($xc) . '@' . $file . ':' . $xc->getLine()
+            $msg = 'Inspect ' . $kind . ' failure: ' . get_class($xc) . '@' . $xc->getFile() . ':' . $xc->getLine()
                 . ': ' . addcslashes($xc->getMessage(), "\0..\37");
 
             error_log($msg);
@@ -702,9 +657,9 @@ class Inspector
             // Throwable.
             if ($is_object && $subject instanceof \Throwable) {
                 return '(' . get_class($subject) . ':' . $subject->getCode(). ')@'
-                    . $this->utils->pathReplaceDocumentRoot($subject->getFile()) . ':'
-                    . $subject->getLine() . ': ' . addcslashes(
-                        $this->utils->pathReplaceDocumentRoot($subject->getMessage()),
+                    . $subject->getFile() . ':' . $subject->getLine()
+                    . ': ' . addcslashes(
+                        $subject->getMessage(),
                         "\0..\37"
                     );
             }
@@ -796,7 +751,7 @@ class Inspector
                                     . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
                             }
                         } else {
-                            $output .= $key . ': (' . Utils::getType($element) . ') *';
+                            $output .= $key . ': (' . static::getType($element) . ') *';
                         }
                     }
                     else {
@@ -830,7 +785,7 @@ class Inspector
                     $output = '(' . (is_nan($subject) ? 'NaN' : 'infinite') . ')';
                 } else {
                     $output = '(' . ($type == 'double' ? 'float' : $type) . ') '
-                        . (!$subject ? '0' : $this->proxy->sanitize->numberToString($subject));
+                        . (!$subject ? '0' : static::numberToString($subject));
                 }
                 break;
 
@@ -841,42 +796,19 @@ class Inspector
                 $len_bytes = strlen($subject);
                 if (!$len_bytes) {
                     $output .= '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
-                } elseif (!$this->proxy->validate->unicode($subject)) {
+                }
+                elseif (!$this->proxy->unicode->validate($subject)) {
                     $output .= '?|' . $len_bytes . '|0) *INVALID_UTF8*';
-                } else {
+                }
+                else {
                     $len_unicode = $this->proxy->unicode->strlen($subject);
                     $output .= $len_unicode . ':' . $len_bytes;
                     $truncate = $this->options['truncate'];
                     if (!$truncate) {
                         $output .= ':0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
-                    } else {
+                    }
+                    else {
                         $trunced_to = 0;
-                        // Replace document root?
-                        if (
-                            $len_bytes >= $this->documentRootsMinLength
-                            && (
-                                strpos($subject, '/') !== false
-                                || (DIRECTORY_SEPARATOR == '\\' && strpos($subject, '\\') !== false)
-                            )
-                        ) {
-                            $docroot_replace = true;
-                        } else {
-                            $docroot_replace = false;
-                        }
-                        // Long string; shorten before replacing.
-                        if ($len_unicode > $truncate) {
-                            // Replace document root before truncation?
-                            if ($docroot_replace && $truncate < $this->documentRootsMinLength) {
-                                $docroot_replace = false;
-                                $subject = $this->utils->pathReplaceDocumentRoot($subject);
-                            }
-                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
-                            $trunced_to = $truncate;
-                        }
-                        // Remove document root after truncation.
-                        if ($docroot_replace) {
-                            $subject = $this->utils->pathReplaceDocumentRoot($subject);
-                        }
                         // Replace listed needles with harmless symbols.
                         $subject = str_replace($this->options['needles'], $this->options['replacers'], $subject);
                         // Escape lower ASCIIs.
@@ -951,7 +883,7 @@ class Inspector
             }
             else {
                 throw new \TypeError(
-                    'Arg throwableOrNull type[' . Utils::getType($throwableOrNull) . '] is not Throwable or null.'
+                    'Arg throwableOrNull type[' . static::getType($throwableOrNull) . '] is not Throwable or null.'
                 );
             }
         }
@@ -993,20 +925,19 @@ class Inspector
         // If exception: resolve its origin and render code and message.
         if ($thrwbl_class) {
             $output = $thrwbl_class . '(' . $throwableOrNull->getCode() . ')'
-                . '@' . $this->utils->pathReplaceDocumentRoot($throwableOrNull->getFile())
-                . ':' . $throwableOrNull->getLine()
+                . '@' . $throwableOrNull->getFile() . ':' . $throwableOrNull->getLine()
                 . $delim
                 . addcslashes(
-                    $this->utils->pathReplaceDocumentRoot($throwableOrNull->getMessage()),
+                    $throwableOrNull->getMessage(),
                     "\0..\37"
                 );
             if (($previous = $throwableOrNull->getPrevious())) {
                 $output .= $delim . 'Previous: '
                     . get_class($previous) . '(' . $previous->getCode() . ')@'
-                    . $this->utils->pathReplaceDocumentRoot($previous->getFile()) . ':'
+                    . $previous->getFile() . ':'
                     . $previous->getLine() . $delim
                     . addcslashes(
-                        $this->utils->pathReplaceDocumentRoot($previous->getMessage()),
+                        $previous->getMessage(),
                         "\0..\37"
                     );
             }
@@ -1020,9 +951,9 @@ class Inspector
         foreach ($trace as $frame) {
             $output .= $delim . (++$i_frame) . ' ' . static::FORMAT['trace_spacer'];
             if (isset($frame['file'])) {
-                $output .= $delim . '@' . $this->utils->pathReplaceDocumentRoot($frame['file'])
-                    . ':' . (isset($frame['line']) ? $frame['line'] : '?');
-            } else {
+                $output .= $delim . '@' . $frame['file'] . ':' . (isset($frame['line']) ? $frame['line'] : '?');
+            }
+            else {
                 $output .= $delim . '@unknown';
             }
 
@@ -1091,7 +1022,7 @@ class Inspector
             $i_frame > -1
             && (!$this->options['wrappers'] || !empty($trace[$i_frame += $this->options['wrappers']]['file']))
         ) {
-            return $this->utils->pathReplaceDocumentRoot($trace[$i_frame]['file'])
+            return $trace[$i_frame]['file']
                 . ':' . (isset($trace[$i_frame]['line']) ? $trace[$i_frame]['line'] : '?');
         }
         return '';
@@ -1120,5 +1051,65 @@ class Inspector
             $preface .= static::FORMAT['newline'] . join(static::FORMAT['newline'], $this->warnings);
         }
         return $preface;
+    }
+
+    /**
+     * Get subject class name or (non-object) type.
+     *
+     * Counter to native gettype() this method returns:
+     * - class name instead of 'object'
+     * - 'float' instead of 'double'
+     * - 'null' instead of 'NULL'
+     *
+     * Like native gettype() this method returns:
+     * - 'boolean' not 'bool'
+     * - 'integer' not 'int'
+     * - 'unknown type' for unknown type
+     *
+     * @param mixed $subject
+     *
+     * @return string
+     */
+    public static function getType($subject)
+    {
+        if (!is_object($subject)) {
+            $type = gettype($subject);
+            switch ($type) {
+                case 'double':
+                    return 'float';
+                case 'NULL':
+                    return 'null';
+                default:
+                    return $type;
+            }
+        }
+        return get_class($subject);
+    }
+
+    /**
+     * Convert number to string avoiding E-notation for numbers outside system
+     * precision range.
+     *
+     * @param mixed $var
+     *      Gets stringified.
+     *
+     * @return string
+     *
+     * @throws \InvalidArgumentException
+     *      If arg var isn't integer/float nor number-like when stringified.
+     */
+    public static function numberToString($var) : string
+    {
+        static $precision;
+        if (!$precision) {
+            $precision = pow(10, (int)ini_get('precision'));
+        }
+        $v = '' . $var;
+        if (!is_numeric($v)) {
+            throw new \InvalidArgumentException('Arg var is not integer/float nor number-like when stringified.');
+        }
+
+        // If within system precision, just string it.
+        return ($v > -$precision && $v < $precision) ? $v : number_format((float) $v, 0, '.', '');
     }
 }

@@ -19,6 +19,7 @@ And values of other sensitives can be hidden using 'skip_keys' option.
 ### PHP and Javascript ###
 
 Inspect consists of a PHP library for serverside inspection and tracing, and a Javascript library for clientside ditto.  
+NB: The Javascript library is has not been maintained since 2015.
 
 ### Maturity ###
 
@@ -27,7 +28,7 @@ The core has been refined continuously whereas the wrapping has evolved from a r
 
 ### Used in - *extended by* - Drupal ###
 
-The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) is (an old version of) SimpleComplex Inspect.
+The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) is SimpleComplex Inspect.
 The Drupal module (D7 as well as D8) extends Inspect to accomodate to the context - that is: uses Drupal's APIs and features when it makes sense.  
 Thus the Drupal module is an example of specializing contextually, by overriding attributes, methods and defaults.
 
@@ -100,10 +101,4 @@ To server log:
 
 ### Requirements ###
 
-- PHP >=7.0
-- [SimpleComplex Utils](https://github.com/simplecomplex/php-utils)
-- [SimpleComplex Validate](https://github.com/simplecomplex/php-validate)
-
-##### Suggestions #####
-
-- [SimpleComplex Config](https://github.com/simplecomplex/php-config)
+- PHP >=7.2
