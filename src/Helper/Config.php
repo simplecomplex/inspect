@@ -15,8 +15,8 @@ use SimpleComplex\Inspect\Inspector;
  * Configuration proxy.
  *
  * We cannot know the workings of a framework's configuration mechanism.
- * To accommodate Inspect in framework, extend this class.
- * @see Config::getViaInnerConfigInstance()
+ * To accommodate Inspect in a framework, extend this class.
+ * @see Config::__get()
  *
  *
  * @see Inspector::DEPTH_DEFAULT
@@ -61,11 +61,6 @@ class Config
     ];
 
     /**
-     * @var string
-     */
-    protected $getMode = 'direct';
-
-    /**
      * @var object|null
      */
     protected $config;
@@ -76,26 +71,14 @@ class Config
      */
     public function __construct(?object $config = null)
     {
-        if ($config) {
-            if (class_exists($class = '\\Drupal\\Core\\Config\\ImmutableConfig')
-                && is_a($config, $class)
-            ) {
-                $this->getMode = 'simple';
-            }
-            elseif (class_exists($interface = '\\SimpleComplex\\Config\\Interfaces\\SectionedConfigInterface')
-                && is_subclass_of($config, $interface)
-            ) {
-                $this->getMode = 'sectioned_scx';
-            }
-
-            $this->config = $config;
-        }
+        $this->config = $config;
     }
 
     /**
      * Get a configuration property.
      *
-     * @see Config::getViaInnerConfigInstance()
+     * Supports simplecomplex configuration regime
+     * plus simple direct access: $this->config->{$name} ?? null;
      *
      * @param string $name
      *
@@ -106,48 +89,55 @@ class Config
      */
     public function __get(string $name)
     {
+        static $useGetMethod;
         if (array_key_exists($name, static::PROPERTIES)) {
             if (!$this->config) {
                 return null;
             }
-            return $this->getViaInnerConfigInstance($name);
+            if (!$useGetMethod) {
+                if (class_exists($interface = '\\SimpleComplex\\Config\\Interfaces\\SectionedConfigInterface')
+                    && is_subclass_of($this->config, $interface)
+                ) {
+                    $useGetMethod = 1;
+                }
+                else {
+                    $useGetMethod = -1;
+                }
+            }
+            if ($useGetMethod == 1) {
+                /**
+                 * \SimpleComplex\Config\Interfaces\SectionedConfigInterface
+                 */
+                return $this->config->get('lib_simplecomplex_inspect', $name, null);
+            }
+            return $this->config->{$name} ?? null;
         }
         throw new \OutOfBoundsException(
             'Inspect configuration ' . get_class($this) . ' instance exposes no property[' . $name . '].'
         );
     }
 
-    /**
-     * Override this method to accommodate to framework.
+    /*
+     * Drupal override example.
      *
-     * Knows how to work with:
-     * - \Drupal\Core\Config\ImmutableConfig
-     * - \SimpleComplex\Config\Interfaces\SectionedConfigInterface
+     * Get a configuration property.
      *
-     * Fallback: $this->config->{$key}
-     *
-     * Method name deliberately ugly, to mitigate collision.
-     *
-     * @param string $key
+     * @param string $name
      *
      * @return mixed|null
-     *      Null on non-existent key.
-     */
-    protected function getViaInnerConfigInstance(string $key)
+     *
+     * @throws \OutOfBoundsException
+     *      If unsupported configuration property name.
+     *
+    public function __get(string $name)
     {
-        switch ($this->getMode) {
-            case 'simple':
-                /**
-                 * \Drupal\Core\Config\ImmutableConfig
-                 */
-                return $this->config->get($key) ?? null;
-            case 'sectioned_scx':
-                /**
-                 * \SimpleComplex\Config\Interfaces\SectionedConfigInterface
-                 */
-                return $this->config->get('lib_simplecomplex_inspect', $key, null);
+        if (array_key_exists($name, static::PROPERTIES)) {
+            //  \Drupal\Core\Config\ImmutableConfig
+            return $this->config->get($key) ?? null;
         }
-
-        return $this->config->{$key} ?? null;
+        throw new \OutOfBoundsException(
+            'Inspect configuration ' . get_class($this) . ' instance exposes no property[' . $name . '].'
+        );
     }
+    */
 }

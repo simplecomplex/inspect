@@ -101,21 +101,39 @@ class Inspect implements InspectInterface
     public $unicode;
 
     /**
-     * @var bool
+     * No parameters, to allow overriding constructor
+     * to use framework specific parameters.
      */
-    protected $configured = false;
-
-    /*
-     * No explicit constructor, to allow use of framework specific parameters.
-     *
     public function __construct()
     {
-    }*/
+        $class_unicode = static::CLASS_UNICODE;
+        $this->unicode = new $class_unicode();
+    }
+
+    /*
+     * Drupal override example.
+     *
+     * @param ConfigFactoryInterface $config_factory
+     *
+    public function __construct(ConfigFactoryInterface $config_factory)
+    {
+        parent::__construct();
+
+        $this->configure(
+            $config_factory->get('inspect.settings')
+        );
+        // OR, do what configure() essentially does.
+        $this->config = new \Drupal\inspect\Helper\Config(
+            $config_factory->get('inspect.settings')
+        );
+    }
+    */
 
     /**
-     * This method must be called before use of the class.
+     * This method must be called before use of the instance.
      *
-     * Otherwise similar work must be done in constructor or other method.
+     * Otherwise similar work must be done in overriding constructor
+     * or other method.
      *
      * @param object|null $config
      *      Null if no custom value(s), overriding Inspecter defaults.
@@ -124,18 +142,13 @@ class Inspect implements InspectInterface
      */
     public function configure(?object $config = null) : self
     {
-        if (!$this->configured) {
+        if (!$this->config) {
             $class_config = static::CLASS_CONFIG;
             // Pass arg $config to new Config instance,
-            // unless $config already is such.
-            $this->config = $config && is_a($config, $class_config) ? $config : new $class_config($config);
-
-            $class_unicode = static::CLASS_UNICODE;
-            $this->unicode = new $class_unicode();
-
-            $this->configured = true;
+            // unless $config already is a Config.
+            $this->config = $config && is_a($config, $class_config) ? $config :
+                new $class_config($config);
         }
-
         return $this;
     }
 
@@ -158,7 +171,7 @@ class Inspect implements InspectInterface
      */
     public function inspect($subject, $options = []) : InspectorInterface
     {
-        if (!$this->configured) {
+        if (!$this->config) {
             throw new \LogicException(get_class($this) . ' is not configured.');
         }
         $class_inspector = static::CLASS_INSPECTOR;
@@ -186,7 +199,7 @@ class Inspect implements InspectInterface
      */
     public function variable($subject, $options = []) : InspectorInterface
     {
-        if (!$this->configured) {
+        if (!$this->config) {
             throw new \LogicException(get_class($this) . ' is not configured.');
         }
         $options['kind'] = 'variable';
@@ -215,7 +228,7 @@ class Inspect implements InspectInterface
      */
     public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
     {
-        if (!$this->configured) {
+        if (!$this->config) {
             throw new \LogicException(get_class($this) . ' is not configured.');
         }
         $options['kind'] = 'trace';
