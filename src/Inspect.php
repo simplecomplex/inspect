@@ -50,7 +50,7 @@ class Inspect implements InspectInterface
     /**
      * First object instantiated via this method, disregarding class called on.
      *
-     * @deprecated Use a dependency injection container instead.
+     * Don't use method if there's a dependency injection container available.
      *
      * @return Inspect
      *      static, really, but IDE might not resolve that.
@@ -138,7 +138,7 @@ class Inspect implements InspectInterface
      * @param object|null $config
      *      Null if no custom value(s), overriding Inspecter defaults.
      *
-     * @return Inspect|self
+     * @return Inspect
      */
     public function configure(?object $config = null) : self
     {
