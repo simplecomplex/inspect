@@ -114,6 +114,11 @@ class Inspector implements InspectorInterface
     const EXEC_TIMEOUT_DEFAULT = 90;
 
     /**
+     * @var bool
+     */
+    const ROOT_DIR_REPLACE = true;
+
+    /**
      * String variable str_replace() needles.
      *
      * @var string[]
@@ -196,6 +201,7 @@ class Inspector implements InspectorInterface
      * - (arr) replacers: replace in strings; REPLACERS/REPLACERS_ESCAPE_HTML
      * - (int) output_max: replace in strings; OUTPUT_DEFAULT
      * - (int) exectime_percent: replace in strings; EXEC_TIMEOUT_DEFAULT
+     * - (bool) rootdir_replace: replace root dir in strings; ROOT_DIR_REPLACE
      * - (int) wrappers: number of wrapping functions/methods, to be hidden; zero
      * - (str) kind: (auto) trace when subject is \Throwable, otherwise variable
      *
@@ -212,6 +218,7 @@ class Inspector implements InspectorInterface
         'escape_html' => false,
         'output_max' => 0,
         'exectime_percent' => 0,
+        'rootdir_replace' => true,
         'wrappers' => 0,
         'kind' => '',
     );
@@ -230,6 +237,14 @@ class Inspector implements InspectorInterface
     protected $warnings = [];
 
     protected $nspctCall = 0;
+
+    /**
+     * Unlike Inspect ditto this is zero when root dir shan't be replaced,
+     * not negative.
+     *
+     * @var int
+     */
+    protected $rootDirLength = 0;
 
 
     // Output properties.-------------------------------------------------------
@@ -372,10 +387,10 @@ class Inspector implements InspectorInterface
             $opts['needles'] = static::NEEDLES_ESCAPE_HTML;
             $opts['replacers'] = static::REPLACERS_ESCAPE_HTML;
         }
-        // output_max.
         $opts['output_max'] = $this->proxy->config->output_max ?? static::OUTPUT_DEFAULT;
-        // exectime_percent.
         $opts['exectime_percent'] = $this->proxy->config->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
+        $opts['rootdir_replace'] = $this->proxy->config->rootdir_replace ?? static::ROOT_DIR_REPLACE;
+
         // wrappers.
         // Keep default: zero.
 
@@ -448,11 +463,22 @@ class Inspector implements InspectorInterface
                 $opts['exectime_percent'] = $tmp;
             }
 
+            if (isset($options['rootdir_replace'])) {
+                $opts['rootdir_replace'] = !!$options['rootdir_replace'];
+            }
+
             if (
                 !empty($options['wrappers'])
                 && ($tmp = (int) $options['wrappers']) > 0
             ) {
                 $opts['wrappers'] = $tmp;
+            }
+        }
+
+        if ($opts['rootdir_replace']) {
+            $this->rootDirLength = $this->proxy->rootDirLength();
+            if ($this->rootDirLength < 0) {
+                $this->rootDirLength = 0;
             }
         }
 
@@ -489,9 +515,16 @@ class Inspector implements InspectorInterface
 
             $this->output =& $output;
             $this->length = $len_preface + strlen($output);
-        } catch (\Throwable $xc) {
-            $msg = 'Inspect ' . $kind . ' failure: ' . get_class($xc) . '@' . $xc->getFile() . ':' . $xc->getLine()
-                . ': ' . addcslashes($xc->getMessage(), "\0..\37");
+        }
+        catch (\Throwable $xc) {
+            $file = $xc->getFile();
+            $msg = $xc->getMessage();
+            if ($this->rootDirLength) {
+                $file = $this->proxy->rootDirReplace($file, true);
+                $msg = $this->proxy->rootDirReplace($msg);
+            }
+            $msg = 'Inspect ' . $kind . ' failure: ' . get_class($xc) . '@' . $file . ':' . $xc->getLine()
+                . ': ' . addcslashes($msg, "\0..\37");
 
             error_log($msg);
 
@@ -656,12 +689,15 @@ class Inspector implements InspectorInterface
         if (($is_object = is_object($subject)) || ($is_array = is_array($subject))) {
             // Throwable.
             if ($is_object && $subject instanceof \Throwable) {
+                $file = $subject->getFile();
+                $msg = $subject->getMessage();
+                if ($this->rootDirLength) {
+                    $file = $this->proxy->rootDirReplace($file, true);
+                    $msg = $this->proxy->rootDirReplace($msg);
+                }
                 return '(' . get_class($subject) . ':' . $subject->getCode(). ')@'
-                    . $subject->getFile() . ':' . $subject->getLine()
-                    . ': ' . addcslashes(
-                        $subject->getMessage(),
-                        "\0..\37"
-                    );
+                    . $file . ':' . $subject->getLine()
+                    . ': ' . addcslashes($msg, "\0..\37");
             }
             // Containers.
             if ($is_array) {
@@ -750,7 +786,8 @@ class Inspector implements InspectorInterface
                                 $output .= $key . ': (string:' . $this->proxy->unicode->strlen($element) . ':'
                                     . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
                             }
-                        } else {
+                        }
+                        else {
                             $output .= $key . ': (' . static::getType($element) . ') *';
                         }
                     }
@@ -809,6 +846,37 @@ class Inspector implements InspectorInterface
                     }
                     else {
                         $trunced_to = 0;
+
+                        // Replace site root?
+                        if (
+                            $this->rootDirLength
+                            && $len_unicode >= $this->rootDirLength
+                            && (
+                                $this->proxy->unicode->strpos($subject, '/') !== false
+                                || (DIRECTORY_SEPARATOR == '\\' && $this->proxy->unicode->strpos($subject, '\\') !== false)
+                            )
+                        ) {
+                            $siteroot_replace = true;
+                        }
+                        else {
+                            $siteroot_replace = false;
+                        }
+
+                        // Long string; shorten before replacing.
+                        if ($len_unicode > $truncate) {
+                            // Replace document root before truncation?
+                            if ($siteroot_replace && $truncate < $this->rootDirLength) {
+                                $siteroot_replace = false;
+                                $subject = $this->proxy->rootDirReplace($subject);
+                            }
+                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
+                            $trunced_to = $truncate;
+                        }
+                        // Remove document root after truncation.
+                        if ($siteroot_replace) {
+                            $subject = $this->proxy->rootDirReplace($subject);
+                        }
+
                         // Replace listed needles with harmless symbols.
                         $subject = str_replace($this->options['needles'], $this->options['replacers'], $subject);
                         // Escape lower ASCIIs.
@@ -924,22 +992,27 @@ class Inspector implements InspectorInterface
 
         // If exception: resolve its origin and render code and message.
         if ($thrwbl_class) {
+            $file = $throwableOrNull->getFile();
+            $msg = $throwableOrNull->getMessage();
+            if ($this->rootDirLength) {
+                $file = $this->proxy->rootDirReplace($file, true);
+                $msg = $this->proxy->rootDirReplace($msg);
+            }
             $output = $thrwbl_class . '(' . $throwableOrNull->getCode() . ')'
-                . '@' . $throwableOrNull->getFile() . ':' . $throwableOrNull->getLine()
+                . '@' . $file . ':' . $throwableOrNull->getLine()
                 . $delim
-                . addcslashes(
-                    $throwableOrNull->getMessage(),
-                    "\0..\37"
-                );
+                . addcslashes($msg, "\0..\37");
             if (($previous = $throwableOrNull->getPrevious())) {
+                $file = $previous->getFile();
+                $msg = $previous->getMessage();
+                if ($this->rootDirLength) {
+                    $file = $this->proxy->rootDirReplace($file, true);
+                    $msg = $this->proxy->rootDirReplace($msg);
+                }
                 $output .= $delim . 'Previous: '
                     . get_class($previous) . '(' . $previous->getCode() . ')@'
-                    . $previous->getFile() . ':'
-                    . $previous->getLine() . $delim
-                    . addcslashes(
-                        $previous->getMessage(),
-                        "\0..\37"
-                    );
+                    . $file . ':' . $previous->getLine() . $delim
+                    . addcslashes($msg, "\0..\37");
             }
             unset($previous);
         } else {
@@ -951,7 +1024,11 @@ class Inspector implements InspectorInterface
         foreach ($trace as $frame) {
             $output .= $delim . (++$i_frame) . ' ' . static::FORMAT['trace_spacer'];
             if (isset($frame['file'])) {
-                $output .= $delim . '@' . $frame['file'] . ':' . (isset($frame['line']) ? $frame['line'] : '?');
+                $file = $frame['file'];
+                if ($this->rootDirLength) {
+                    $file = $this->proxy->rootDirReplace($file, true);
+                }
+                $output .= $delim . '@' . $file . ':' . ($frame['line'] ?? '?');
             }
             else {
                 $output .= $delim . '@unknown';
@@ -1022,8 +1099,11 @@ class Inspector implements InspectorInterface
             $i_frame > -1
             && (!$this->options['wrappers'] || !empty($trace[$i_frame += $this->options['wrappers']]['file']))
         ) {
-            return $trace[$i_frame]['file']
-                . ':' . (isset($trace[$i_frame]['line']) ? $trace[$i_frame]['line'] : '?');
+            $file = $trace[$i_frame]['file'];
+            if ($this->rootDirLength) {
+                $file = $this->proxy->rootDirReplace($file, true);
+            }
+            return $file . ':' . ($trace[$i_frame]['line'] ?? '?');
         }
         return '';
     }

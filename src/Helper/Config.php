@@ -38,6 +38,9 @@ use SimpleComplex\Inspect\Inspector;
  * @see Inspector::EXEC_TIMEOUT_DEFAULT
  * @property-read int|null $exectime_percent
  *
+ * @see Inspector::ROOT_DIR_REPLACE
+ * @property-read bool|null $rootdir_replace
+ *
  *
  * @package SimpleComplex\Inspect
  */
@@ -58,6 +61,7 @@ class Config
         'escape_html' => true,
         'output_max' => true,
         'exectime_percent' => true,
+        'rootdir_replace' => true,
     ];
 
     /**

@@ -91,6 +91,11 @@ class Inspect implements InspectInterface
     const CLASS_INSPECTOR = Inspector::class;
 
     /**
+     * @see Inspect::rootDirReplace()
+     */
+    const ROOT_DIR_SUBSTITUTE = '[root dir]';
+
+    /**
      * @var \SimpleComplex\Inspect\Helper\Config
      */
     public $config;
@@ -99,6 +104,20 @@ class Inspect implements InspectInterface
      * @var \SimpleComplex\Inspect\Helper\Unicode
      */
     public $unicode;
+
+    /**
+     * @var string
+     */
+    protected $rootDir;
+
+    /**
+     * Values:
+     * - zero: root dir definition not attempted yet
+     * - negative: root dir cannot be established
+     *
+     * @var int
+     */
+    protected $rootDirLength = 0;
 
     /**
      * No parameters, to allow overriding constructor
@@ -239,5 +258,73 @@ class Inspect implements InspectInterface
             $throwableOrNull,
             $options
         );
+    }
+
+    /**
+     * Root of the application or document root.
+     *
+     * Do override to accommodate to framework;
+     * like Symfony kernel project dir or Drupal root.
+     *
+     * @return string
+     *      Empty: root dir cannot be established.
+     */
+    public function rootDir() : string
+    {
+        if (!$this->rootDirLength) {
+            $class_utils = '\\SimpleComplex\\Utils\\Utils';
+            if (class_exists($class_utils)) {
+                try {
+                    /** @var \SimpleComplex\Utils\Utils $utils */
+                    $utils = call_user_func($class_utils . '::getInstance');
+                    $this->rootDir = $utils->documentRoot();
+                    $this->rootDirLength = $this->unicode->strlen($this->rootDir);
+                    return $this->rootDir;
+                }
+                catch (\Throwable $xcptn) {
+                    error_log($xcptn->getMessage());
+                }
+            }
+            // Flag that root dir cannot be established.
+            $this->rootDir = '';
+            $this->rootDirLength = -1;
+        }
+        return $this->rootDir;
+    }
+
+    /**
+     * @return int
+     *      Negative: root dir cannot be established.
+     */
+    public function rootDirLength() : int
+    {
+        if (!$this->rootDirLength) {
+            $this->rootDir();
+        }
+        return $this->rootDirLength;
+    }
+
+    /**
+     * Replace root dir from string.
+     *
+     * @param string $subject
+     * @param bool $leading
+     *      True: replace only if start of subject.
+     *
+     * @return string
+     */
+    public function rootDirReplace(string $subject, bool $leading = false) : string {
+        if (!$this->rootDirLength) {
+            $this->rootDir();
+        }
+        if ($this->rootDirLength > 0) {
+            if (!$leading) {
+                return str_replace($this->rootDir, static::ROOT_DIR_SUBSTITUTE, $subject);
+            }
+            elseif ($this->unicode->strpos($subject, $this->rootDir) === 0) {
+                return static::ROOT_DIR_SUBSTITUTE . substr($subject, $this->rootDirLength);
+            }
+        }
+        return $subject;
     }
 }

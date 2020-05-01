@@ -19,40 +19,15 @@ namespace SimpleComplex\Inspect\Helper;
 class Unicode
 {
     /**
-     * @see Unicode::getInstance()
+     * @var bool
+     */
+    protected $extMbString;
+
+    /**
      */
     public function __construct()
     {
-        $this->nativeSupport();
-    }
-
-    /**
-     * @var bool[] {
-     *      @var bool $mbstring
-     *      @var bool $intl
-     * }
-     */
-    protected $nativeSupport = [];
-
-    /**
-     * @param string $ext
-     *      Values: mbstring|intl. Default: empty.
-     *
-     * @return bool|bool[]
-     *      Array: on empty arg ext.
-     */
-    public function nativeSupport(string $ext = '')
-    {
-        $support = $this->nativeSupport;
-        if (!$support) {
-            $support['mbstring'] = function_exists('mb_strlen');
-            $support['intl'] = function_exists('intl_error_name');
-            $this->nativeSupport = $support;
-        }
-        if ($ext) {
-            return !empty($support[$ext]);
-        }
-        return $support;
+        $this->extMbString = function_exists('mb_strlen');
     }
 
     /**
@@ -100,7 +75,7 @@ class Unicode
         if ($v === '') {
             return 0;
         }
-        if ($this->nativeSupport['mbstring']) {
+        if ($this->extMbString) {
             return mb_strlen($v);
         }
 
@@ -130,6 +105,35 @@ class Unicode
     }
 
     /**
+     * @param string $haystack
+     *      Gets stringified.
+     * @param string $needle
+     *      Gets stringified.
+     *
+     * @return bool|int
+     *      False: if needle not found, or if either arg evaluates to empty string.
+     */
+    public function strpos($haystack, $needle)
+    {
+        $hstck = '' . $haystack;
+        $ndl = '' . $needle;
+        if ($hstck === '' || $ndl === '') {
+            return false;
+        }
+        if ($this->extMbString) {
+            return mb_strpos($hstck, $ndl);
+        }
+
+        $pos = strpos($hstck, $ndl);
+        if (!$pos) {
+            return $pos;
+        }
+        return count(
+            preg_split('//u', substr($hstck, 0, $pos), null, PREG_SPLIT_NO_EMPTY)
+        );
+    }
+
+    /**
      * Multibyte-safe sub string.
      *
      * Does not check if arg $v is valid UTF-8.
@@ -145,7 +149,7 @@ class Unicode
      * @throws \InvalidArgumentException
      *      Bad arg start or length.
      */
-    public function substr($var, int $start, /*?int*/ $length = null) : string
+    public function substr($var, int $start, ?int $length = null) : string
     {
         if ($start < 0) {
             throw new \InvalidArgumentException('Arg start is not non-negative integer.');
@@ -157,7 +161,7 @@ class Unicode
         if (!$length || $v === '') {
             return '';
         }
-        if ($this->nativeSupport['mbstring']) {
+        if ($this->extMbString) {
             return !$length ? mb_substr($v, $start) : mb_substr($v, $start, $length);
         }
 
