@@ -30,18 +30,4 @@ interface InspectorInterface
      * @return array
      */
     public function get() : array;
-
-    /**
-     * Generated output exceeds limit?
-     *
-     * @return bool
-     */
-    public function exceedsLength() : bool;
-
-    /**
-     * Execution closing in to timeout?
-     *
-     * @return bool
-     */
-    public function exceedsTime() : bool;
 }

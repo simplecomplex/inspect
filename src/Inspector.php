@@ -580,18 +580,20 @@ class Inspector implements InspectorInterface
     {
         if ($this->length > $this->options['output_max']) {
             $this->abort = true;
-            if ($this->kind == 'variable') {
-                $this->warnings[] = 'Variable inspection aborted - output length ' . $this->length
-                    . ' exceeds output_max ' . $this->options['output_max'] . '.'
-                    . ' Using depth ' . $this->options['depth'] . ' and truncate ' . $this->options['truncate'] . '.'
-                    . ' Try less depth or truncate value.';
-            }
-            else {
-                $this->warnings[] = 'Trace inspection aborted - output length ' . $this->length
-                    . ' exceeds output_max ' . $this->options['output_max'] . '.'
-                    . ' Using limit ' . $this->options['limit'] . ', depth ' . $this->options['depth']
-                    . ' and truncate ' . $this->options['truncate'] . '.'
-                    . ' Try less limit, depth or truncate value.';
+            if (!isset($this->warnings['length'])) {
+                if ($this->kind == 'variable') {
+                    $this->warnings['length'] = 'Variable inspection aborted - output length ' . $this->length
+                        . ' exceeds output_max ' . $this->options['output_max'] . '.'
+                        . ' Using depth ' . $this->options['depth'] . ' and truncate ' . $this->options['truncate'] . '.'
+                        . ' Try less depth or truncate value.';
+                }
+                else {
+                    $this->warnings['length'] = 'Trace inspection aborted - output length ' . $this->length
+                        . ' exceeds output_max ' . $this->options['output_max'] . '.'
+                        . ' Using limit ' . $this->options['limit'] . ', depth ' . $this->options['depth']
+                        . ' and truncate ' . $this->options['truncate'] . '.'
+                        . ' Try less limit, depth or truncate value.';
+                }
             }
             return true;
         }
@@ -632,17 +634,19 @@ class Inspector implements InspectorInterface
             return false;
         }
         if (time() > $started + ($timeout * $this->options['exectime_percent'] / 100)) {
-            if ($this->kind == 'variable') {
-                $this->warnings[] = 'Variable inspection aborted after ' . $this->options['exectime_percent']
-                    . '% of PHP max_execution_time ' . $timeout . ' passed,'
-                    . ' using depth ' . $this->options['depth'] . '.'
-                    . ' Try less depth.';
-            }
-            else {
-                $this->warnings[] = 'Trace inspection aborted after ' . $this->options['exectime_percent']
-                    . '% of PHP max_execution_time ' . $timeout . ' passed,'
-                    . ' using limit ' . $this->options['limit'] . ' and depth ' . $this->options['depth'] . '.'
-                    . ' Try less limit or depth.';
+            if (!isset($this->warnings['time'])) {
+                if ($this->kind == 'variable') {
+                    $this->warnings['time'] = 'Variable inspection aborted after ' . $this->options['exectime_percent']
+                        . '% of PHP max_execution_time ' . $timeout . ' passed,'
+                        . ' using depth ' . $this->options['depth'] . '.'
+                        . ' Try less depth.';
+                }
+                else {
+                    $this->warnings['time'] = 'Trace inspection aborted after ' . $this->options['exectime_percent']
+                        . '% of PHP max_execution_time ' . $timeout . ' passed,'
+                        . ' using limit ' . $this->options['limit'] . ' and depth ' . $this->options['depth'] . '.'
+                        . ' Try less limit or depth.';
+                }
             }
             return true;
         }
