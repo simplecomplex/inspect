@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace SimpleComplex\Inspect;
 
 /**
- * Variable analyzer and exception tracer.
+ * Produces variable inspection or backtrace,
+ * accessible via __toString() or Psr\Log-like methods.
  *
- * @internal
+ * @internal  Allowed for InspectInterface only.
+ * @see InspectInterface
  *
  * @package SimpleComplex\Inspect
  */
@@ -268,14 +270,14 @@ class Inspector implements InspectorInterface
     protected $proxy;
 
     /**
-     * Do not call this directly, use Inspect instead.
+     * Produces variable inspection or backtrace.
      *
      * @see Inspect::__construct()
      * @see Inspect::getInstance()
      *
-     * @internal
+     * @internal  Allowed for InspectInterface only.
      *
-     * @param Inspect $proxy
+     * @param InspectInterface $proxy
      * @param mixed $subject
      * @param array|int|string $options
      *   Integer when inspecting variable: maximum depth.
@@ -283,7 +285,7 @@ class Inspector implements InspectorInterface
      *   String: kind (variable|trace); otherwise ignored.
      *   Not array|integer|string: ignored.
      */
-    public function __construct(Inspect $proxy, $subject, $options = [])
+    public function __construct(InspectInterface $proxy, $subject, $options = [])
     {
         $this->proxy = $proxy;
 
@@ -554,6 +556,94 @@ class Inspector implements InspectorInterface
     }
 
     /**
+     * Is not extend \Psr\Log\LoggerTrait in order to prevent dependency.
+     *
+     * @see \Psr\Log\LoggerTrait
+     *
+     * @inheritDoc
+     */
+    public function log($level, $message, array $context = [])
+    {
+        $msg = '' . $message;
+        if ($context) {
+            foreach ($context as $k => $v) {
+                $msg = str_replace('{' . $k . '}', '' . $v, $msg);
+            }
+        }
+        error_log(
+            '' . $level . ': ' . str_replace(["\r", "\n"], ['', ' '], $msg)
+        );
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function emergency($message, array $context = [])
+    {
+        $this->log('emergency', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function alert($message, array $context = [])
+    {
+        $this->log('alert', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function critical($message, array $context = [])
+    {
+        $this->log('critical', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function error($message, array $context = [])
+    {
+        $this->log('error', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function warning($message, array $context = [])
+    {
+        $this->log('warning', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function notice($message, array $context = [])
+    {
+        $this->log('notice', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function info($message, array $context = [])
+    {
+        $this->log('info', $message, $context);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function debug($message, array $context = [])
+    {
+        $this->log('debug', $message, $context);
+    }
+
+    /**
+     * List of inspection properties.
+     *
+     * Available for alternative ways of using the products of an instance.
+     *
      * @return array {
      *      @var string $preface
      *      @var string $output
