@@ -13,6 +13,8 @@ namespace SimpleComplex\Inspect;
 interface InspectInterface
 {
     /**
+     * Inspect variable or trace exception.
+     *
      * @param mixed $subject
      * @param array $options
      *
@@ -21,6 +23,8 @@ interface InspectInterface
     public function inspect($subject, $options = []) : InspectorInterface;
 
     /**
+     * Inspect variable.
+     *
      * @param mixed $subject
      * @param array $options
      *
@@ -29,6 +33,8 @@ interface InspectInterface
     public function variable($subject, $options = []) : InspectorInterface;
 
     /**
+     * Trace exception or do back-trace.
+     *
      * @param \Throwable|null $throwableOrNull
      * @param array $options
      *
