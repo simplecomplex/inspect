@@ -11,9 +11,7 @@ namespace SimpleComplex\Inspect;
 
 /**
  * Produces variable inspection or backtrace,
- * accessible via __toString() or Psr\Log-like methods.
- *
- * Does not extend Psr\Log\LoggerInterface in order to prevent dependency.
+ * stringable and loggable.
  *
  * @package SimpleComplex\Inspect
  */
@@ -43,106 +41,21 @@ interface InspectorInterface
     public function __toString() : string;
 
     /**
-     * Does not extend Psr\Log\LoggerInterface in order to prevent dependency.
+     * Works like PSR log() and may use PSR logger if available.
+     *
+     * If $message is non-empty it gets prepended to inspection output.
      *
      * @see \Psr\Log\LoggerInterface::log()
      *
      * @param string|int $level
      * @param mixed $message
      *      Non-string becomes stringified.
+     *      Non-empty gets prepended to inspection output.
      * @param mixed[] $context
      *
      * @return void
      */
-    public function log($level, $message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::emergency()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function emergency($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::alert()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function alert($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::critical()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function critical($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::error()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function error($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::warning()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function warning($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::notice()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function notice($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::info()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function info($message, array $context = []);
-
-    /**
-     * @see \Psr\Log\LoggerInterface::debug()
-     *
-     * @param mixed $message
-     *      Non-string becomes stringified.
-     * @param mixed[] $context
-     *
-     * @return void
-     */
-    public function debug($message, array $context = []);
+    public function log($level = 'debug', $message = '', array $context = []);
 
     /**
      * List of inspection properties.
