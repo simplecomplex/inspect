@@ -23,6 +23,8 @@ use SimpleComplex\Inspect\Helper\Unicode;
  *     if (!$subject || !$subject instanceof ExpectedClass::class) {
  *         // Do stringify Inspector instance when logging.
  *         $logger->warning('Unexpected unknown_variable():' . "\n" . $inspect->inspect($subject));
+ *         // Alternative ease-of-comfort procedure.
+ *         $inspect->inspect($subject))->log('warning', 'Unexpected unknown_variable():');
  *     }
  * }
  * catch (\Throwable $xcptn) {
@@ -31,7 +33,7 @@ use SimpleComplex\Inspect\Helper\Unicode;
  * @endcode
  *
  * @dependency-injection-container-id inspect
- *      Suggested ID of the JsonLog instance.
+ *      Suggested ID of the Inspect instance.
  *
  * @see Inspector
  *
@@ -306,6 +308,9 @@ class Inspect implements InspectInterface
 
     /**
      * Replace root dir from string.
+     *
+     * @see Helper\Config::$rootdir_replace
+     * @see Inspector::$options['rootdir_replace']
      *
      * @param string $subject
      * @param bool $leading

@@ -41,6 +41,9 @@ interface InspectorInterface
     public function __toString() : string;
 
     /**
+     * Convenience method allowing method chaining,
+     * e.g. inspect->variable(...)->log().
+     *
      * Works like PSR log() and may use PSR logger if available.
      *
      * If $message is non-empty it gets prepended to inspection output.
@@ -48,6 +51,7 @@ interface InspectorInterface
      * @see \Psr\Log\LoggerInterface::log()
      *
      * @param string|int $level
+     *      Beware that a strict PSR logger won't accept integer.
      * @param mixed $message
      *      Non-string becomes stringified.
      *      Non-empty gets prepended to inspection output.
@@ -60,7 +64,7 @@ interface InspectorInterface
     /**
      * List of inspection properties.
      *
-     * Available for alternative ways of using the products of an instance.
+     * Available for alternative ways of using the products of an inspection.
      *
      * @return array
      */

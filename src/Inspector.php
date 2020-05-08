@@ -30,6 +30,9 @@ class Inspector implements InspectorInterface
     /**
      * Default sub var recursion depth.
      *
+     * @see Helper\Config::$depth
+     * @see Inspector::$options['depth']
+     *
      * @var int
      */
     const DEPTH_DEFAULT = 10;
@@ -37,6 +40,8 @@ class Inspector implements InspectorInterface
     /**
      * Default sub var recursion depth, when tracer inspects
      * function/method arguments.
+     *
+     * @see Inspector::$options['depth']
      *
      * @var int
      */
@@ -52,6 +57,9 @@ class Inspector implements InspectorInterface
     /**
      * Default stack frame depth.
      *
+     * @see Helper\Config::$trace_limit
+     * @see Inspector::$options['limit']
+     *
      * @var int
      */
     const TRACE_LIMIT_DEFAULT = 5;
@@ -66,12 +74,18 @@ class Inspector implements InspectorInterface
     /**
      * Default string truncation; multibyte (Unicode) length.
      *
+     * @see Helper\Config::$truncate
+     * @see Inspector::$options['truncate']
+     *
      * @var int
      */
     const TRUNCATE_DEFAULT = 1000;
 
     /**
      * Whether to escape HTML in strings.
+     *
+     * @see Helper\Config::$escape_html
+     * @see Inspector::$options['escape_html']
      *
      * @var bool
      */
@@ -90,6 +104,10 @@ class Inspector implements InspectorInterface
     /**
      * Default maximum byte (ASCII) length of an inspection/trace output.
      *
+     * @see Helper\Config::$output_max
+     * @see Inspector::$options['output_max']
+     * @see Inspector::exceedsLength()
+     *
      * @var int
      */
     const OUTPUT_DEFAULT = 1048576;
@@ -102,26 +120,34 @@ class Inspector implements InspectorInterface
     const OUTPUT_MARGIN = 512;
 
     /**
-     * Used as percentage.
-     *
-     * @see Inspector::abortExecutionTimeExceeded()
-     *
      * @var int
      */
     const EXEC_TIMEOUT_MAX = 95;
 
     /**
+     * Percentage of max_execution_time.
+     *
+     * @see Helper\Config::$exectime_percent
+     * @see Inspector::$options['exectime_percent']
+     * @see Inspector::exceedsTime()
+     *
      * @var int
      */
     const EXEC_TIMEOUT_DEFAULT = 90;
 
     /**
+     * @see Helper\Config::$rootdir_replace
+     * @see Inspector::$options['rootdir_replace']
+     * @see Inspect::rootDirReplace()
+     *
      * @var bool
      */
     const ROOT_DIR_REPLACE = true;
 
     /**
      * String variable str_replace() needles.
+     *
+     * @see Inspector::$options['needles']
      *
      * @var string[]
      */
@@ -132,6 +158,8 @@ class Inspector implements InspectorInterface
     /**
      * String variable str_replace() replacers.
      *
+     * @see Inspector::$options['replacers']
+     *
      * @var string[]
      */
     const REPLACERS = [
@@ -141,6 +169,8 @@ class Inspector implements InspectorInterface
     /**
      * String variable str_replace() needles when option 'escape_html'.
      *
+     * @see Inspector::$options['needles']
+     *
      * @var string[]
      */
     const NEEDLES_ESCAPE_HTML = [
@@ -149,6 +179,8 @@ class Inspector implements InspectorInterface
 
     /**
      * String variable str_replace() replacers when option 'escape_html'.
+     *
+     * @see Inspector::$options['replacers']
      *
      * @var string[]
      */
@@ -276,6 +308,8 @@ class Inspector implements InspectorInterface
      * @see Inspect::getInstance()
      *
      * @internal  Allowed for InspectInterface only.
+     *
+     * @see Inspector::$options
      *
      * @param InspectInterface $proxy
      * @param mixed $subject
@@ -556,8 +590,13 @@ class Inspector implements InspectorInterface
     }
 
     /**
-     * This implementation uses error_log() because knowledge of a PSR logger
-     * would require cross-framework dependency/service injection awareness.
+     * This implementation attempts to get PSR logger via SimpleComplex DIC
+     * if available, and uses plain error_log() as fallback.
+     *
+     * Cross-framework dependency/service injection awareness is unfortunately
+     * not possible, due to missing standard.
+     *
+     * Do override this method in accordance with framework (if any).
      *
      * @see error_log()
      *
@@ -565,28 +604,48 @@ class Inspector implements InspectorInterface
      */
     public function log($level = 'debug', $message = '', array $context = [])
     {
+        // Leave $level validation to PSR logger (or equivalent).
+
+        /** @var \Psr\Log\LoggerInterface|null $logger */
+        $logger = null;
+        // Attempt getting via SimpleComplex DIC.
+        $class_dependency = '\\SimpleComplex\\Utils\\Dependency';
+        if (class_exists($class_dependency)) {
+            /** @var \SimpleComplex\Utils\Dependency|\Psr\Container\ContainerInterface $container */
+            $container = call_user_func($class_dependency . '::container');
+            if ($container->has('logger')) {
+                $logger = $container->get('logger');
+            }
+        }
+
         if ($message) {
             $msg = '' . $message;
-            if ($context) {
+            // Do replace context vars if no PSR logger.
+            if ($context && !$logger) {
                 foreach ($context as $k => $v) {
                     $msg = str_replace('{' . $k . '}', '' . $v, $msg);
                 }
             }
-            $msg .= ' ' . $this->__toString();
+            $msg .= "\n" . $this->__toString();
         }
         else {
             $msg = $this->__toString();
         }
 
-        error_log(
-            '' . $level . ': ' . str_replace(["\r", "\n"], ['', ' '], $msg)
-        );
+        if ($logger) {
+            $logger->log($level, $msg, $context);
+        }
+        else {
+            error_log(
+                '' . $level . ': ' . str_replace(["\r", "\n"], ['', ' '], $msg)
+            );
+        }
     }
 
     /**
      * List of inspection properties.
      *
-     * Available for alternative ways of using the products of an instance.
+     * Available for alternative ways of using the products of an inspection.
      *
      * @return array {
      *      @var string $preface
@@ -608,6 +667,11 @@ class Inspector implements InspectorInterface
     }
 
     /**
+     * Whether inspection output length exceeds maximum.
+     *
+     * @see Inspector::OUTPUT_DEFAULT
+     * @see Inspector::$options['output_max']
+     *
      * @return bool
      */
     public function exceedsLength() : bool
@@ -640,6 +704,11 @@ class Inspector implements InspectorInterface
     protected static $requestTime = -1;
 
     /**
+     * Whether inspection duration is about to exceed maximum.
+     *
+     * @see Inspector::EXEC_TIMEOUT_DEFAULT
+     * @see Inspector::$options['exectime_percent']
+     *
      * Check if time exceeds request start time plus
      * option 'exectime_percent'/EXEC_TIMEOUT_DEFAULT
      * percent of max_execution_time.
@@ -693,6 +762,8 @@ class Inspector implements InspectorInterface
     protected static $nInspections = 0;
 
     /**
+     * @recursive
+     *
      * @param mixed $subject
      * @param int $depth
      *
