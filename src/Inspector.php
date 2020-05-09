@@ -618,27 +618,22 @@ class Inspector implements InspectorInterface
             }
         }
 
-        if ($message) {
-            $msg = '' . $message;
-            // Do replace context vars if no PSR logger.
-            if ($context && !$logger) {
-                foreach ($context as $k => $v) {
-                    $msg = str_replace('{' . $k . '}', '' . $v, $msg);
-                }
+        $msg = '' . $message . (!$message ? '' : "\n") . $this->__toString();
+        // Do replace context vars if no PSR logger.
+        if ($context && !$logger) {
+            foreach ($context as $k => $v) {
+                $msg = str_replace('{' . $k . '}', '' . $v, $msg);
             }
-            $msg .= "\n" . $this->__toString();
-        }
-        else {
-            $msg = $this->__toString();
         }
 
         if ($logger) {
             $logger->log($level, $msg, $context);
         }
         else {
-            error_log(
-                '' . $level . ': ' . str_replace(["\r", "\n"], ['', ' '], $msg)
-            );
+            if (PHP_SAPI != 'cli') {
+                $msg = str_replace(["\r", "\n"], ['', ' '], $msg);
+            }
+            error_log('' . $level . ': ' . $msg);
         }
     }
 
