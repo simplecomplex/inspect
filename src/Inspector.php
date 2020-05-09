@@ -1222,11 +1222,11 @@ class Inspector implements InspectorInterface
     protected function preface() : string
     {
         if ($this->kind == 'variable') {
-            $preface = '[Inspect variable - #' . static::$nInspections . ' - depth:' . $this->options['depth']
+            $preface = '[Inspect variable|#' . static::$nInspections . '|depth:' . $this->options['depth']
                 . '|truncate:' . $this->options['truncate'] . ']';
         }
         else {
-            $preface = '[Inspect trace - #' . static::$nInspections . ' - limit:' . $this->options['limit']
+            $preface = '[Inspect trace|#' . static::$nInspections . '|limit:' . $this->options['limit']
                 . '|depth:' . $this->options['depth'] . '|truncate:' . $this->options['truncate'] . ']';
         }
         $preface .= '@' . $this->fileLine;

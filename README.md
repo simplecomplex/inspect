@@ -61,20 +61,23 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 - (str) **kind**: (auto) trace when subject is \Throwable, otherwise variable
 
 ```PHP
+// If dependency injection container exists.
+$inspect = $container->get('inspect');
+// Otherwise use maker.
 $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 
-// (auto) Analyze variable; trace exception.
+// (auto) Analyze variable or trace exception.
 $inspect->inspect($subject);
+// Log inspection immediately.
+$inspect->inspect($subject)->log();
+// Or pass to logger.
+$logger->debug('' . $inspect->inspect($subject));
 
 // Analyze variable, even if exception.
 $inspect->variable($variable);
 
 // Back-trace null; trace exception.
 $inspect->trace($throwableOrNull);
-
-// Pass directly to logger.
-$logger->debug('' . $inspect->inspect($subject));
-$logger->error('' . $inspect->inspect($throwable));
 ```
 
 ##### Javascript #####
