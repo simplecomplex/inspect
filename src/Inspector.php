@@ -600,7 +600,7 @@ class Inspector implements InspectorInterface
      *
      * @see error_log()
      *
-     * @inheritDoc
+     * {@inheritDoc}
      */
     public function log($level = 'debug', $message = '', array $context = [])
     {
