@@ -1190,7 +1190,7 @@ class Inspector implements InspectorInterface
      */
     protected function fileLine() : string
     {
-        $trace = debug_backtrace();
+        $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         // Find first frame whose file isn't named like our library files.
         $le = count($trace);
         $i_frame = -1;

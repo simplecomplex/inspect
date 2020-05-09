@@ -236,11 +236,12 @@ class Inspect implements InspectInterface
     }
 
     /**
-     * Force back-tracing, if arg $throwableOrNull is null (back-trace).
+     * Trace exception or do back-trace.
      *
      * @see Inspector::$options
      *
      * @param \Throwable|null $throwableOrNull
+     *      Null: do back-trace.
      * @param array|int|string $options
      *
      * @return Inspector
