@@ -932,14 +932,16 @@ class Inspector implements InspectorInterface
 
             case 'string':
                 $output = '(string:';
-                // (string:n0|n1|n2): n0 ~ multibyte length, n1 ~ ascii length,
+                // (string:n0:n1|n2): n0 ~ multibyte length, n1 ~ ascii length,
                 // n2 only occurs if truncation.
                 $len_bytes = strlen($subject);
                 if (!$len_bytes) {
                     $output .= '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                 }
                 elseif (!$this->proxy->unicode->validate($subject)) {
-                    $output .= '?|' . $len_bytes . '|0) *INVALID_UTF8*';
+                    // Last delimiter is pipe because logstash may fail
+                    // on N:N:N sequence.
+                    $output .= '?:' . $len_bytes . '|0) *INVALID_UTF8*';
                 }
                 else {
                     $len_unicode = $this->proxy->unicode->strlen($subject);
@@ -1001,7 +1003,9 @@ class Inspector implements InspectorInterface
                         }
 
                         if ($trunced_to) {
-                            $output .= ':' . $trunced_to;
+                            // Last delimiter is pipe because logstash may fail
+                            // on N:N:N sequence.
+                            $output .= '|' . $trunced_to;
                         }
                         $output .= ') ' . static::FORMAT['quote'] . $subject . static::FORMAT['quote'];
                     }

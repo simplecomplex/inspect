@@ -146,9 +146,8 @@
             h: /\['$|\-\>$/,
             i: /\['(\d+)'\]/g,
             j: /^(\.[ ]{2})+/,
-            k: /\(string:(\d+)\|(\d+)\) `(.*)`$/, // String lengths.
-            l: /\(string:(\d+)\|(\d+)\|(\d+)\) `(.*)\.{3}`$/, // String truncation.
-            m: /\(string:(\d+)\|(\d+)\|(\-|\d+)\|\!\) `\.{3}(.*)`$/, // String truncation + path removal.
+            k: /\(string:(\d+):(\d+)\) `(.*)`$/, // String lengths.
+            l: /\(string:(\d+):(\d+)\|(\d+)\) `(.*)\.{3}`$/, // String truncation.
             n: /\(([a-zA-Z_][a-zA-Z\d_]*):(\d+)\) (\[\.{3}\]|\{\.{3}\})/, // Container truncation.
             o: /\(([a-zA-Z_][a-zA-Z\d_]*)(:)?([\d\?\|]+)*\) \*([A-Z\d_]+)\*/,
             p: /\['(\d+)'\]/g,
@@ -300,15 +299,11 @@
                   line.replace(/^(\.  )+/, '').
                     replace( // string lengths
                       rgx.k,
-                      '(string:' + ssu + '$1' + se + '|' + ssa + '$2' + se + ') ' + st + '`' + se + '$3' + st + '`' + st
+                      '(string:' + ssu + '$1' + se + ':' + ssa + '$2' + se + ') ' + st + '`' + se + '$3' + st + '`' + st
                     ).
                     replace( // highlight string truncation
                       rgx.l,
-                      '(string:' + ssu + '$1' + se + '|' + ssa + '$2' + se + '|' + sst + '$3' + se + ') ' + st + '`' + se + '$4' + st + '...`' + st
-                    ).
-                    replace( // highlight path removal
-                      rgx.m,
-                      '(string:' + ssu + '$1' + se + '|' + ssa + '$2' + se + '|' + sst + '$3' + se + '|' + ssp + '!' + se + ') ' + st + '`...' + se + '$4' + st + '`' + st
+                      '(string:' + ssu + '$1' + se + ':' + ssa + '$2' + se + '|' + sst + '$3' + se + ') ' + st + '`' + se + '$4' + st + '...`' + st
                     ).
                     replace(rgx.n, '($1:$2) ' + st + '$3' + se). // highlight container truncation
                     replace(rgx.o, '($1$2$3) ' + sw + '*$4*' + se). // highlight error
