@@ -84,7 +84,7 @@ class Unicode
         $leading = false;
         for ($i = 0; $i < $le; $i++) {
             // ASCII.
-            if (($ord = ord($v{$i})) < 128) {
+            if (($ord = ord($v[$i])) < 128) {
                 ++$n;
                 $leading = false;
             }
@@ -185,7 +185,7 @@ class Unicode
         $leading = false;
         for ($i = 0; $i < $le; $i++) {
             // ASCII.
-            if (($ord = ord($v{$i})) < 128) {
+            if (($ord = ord($v[$i])) < 128) {
                 if ((++$n) > $length) {
                     return substr($v, 0, $i);
                 }
@@ -256,7 +256,7 @@ class Unicode
                 return '';
             }
             // An ASCII byte.
-            elseif (($ord = ord($v{$le})) < 128) {
+            elseif (($ord = ord($v[$le])) < 128) {
                 // We can break before an ASCII byte.
                 $ascii = true;
                 $leading = false;
