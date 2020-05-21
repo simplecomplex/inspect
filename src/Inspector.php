@@ -590,6 +590,37 @@ class Inspector implements InspectorInterface
     }
 
     /**
+     * List of inspection properties.
+     *
+     * Available for alternative ways of using the products of an inspection.
+     *
+     * @param bool $options
+     *      True: get options bucket too.
+     *
+     * @return array {
+     *      @var string $preface
+     *      @var string $output
+     *      @var int $length  Byte (ASCII) length.
+     *      @var string $fileLine
+     *      @var int $code
+     * }
+     */
+    public function toArray(bool $options = false) : array
+    {
+        $a = [
+            'preface' => $this->preface,
+            'output' => $this->output,
+            'length' => $this->length,
+            'fileLine' => $this->fileLine,
+            'code' => $this->code,
+        ];
+        if ($options) {
+            $a['options'] = $this->options;
+        }
+        return $a;
+    }
+
+    /**
      * This implementation attempts to get PSR logger via SimpleComplex DIC
      * if available, and uses plain error_log() as fallback.
      *
@@ -638,27 +669,21 @@ class Inspector implements InspectorInterface
     }
 
     /**
-     * List of inspection properties.
+     * @deprecated  Use toArray() instead, this method will removed soon.
      *
-     * Available for alternative ways of using the products of an inspection.
+     * @see Inspector::toArray()
      *
-     * @return array {
-     *      @var string $preface
-     *      @var string $output
-     *      @var int $length  Byte (ASCII) length.
-     *      @var string $fileLine
-     *      @var int $code
-     * }
+     * Triggers PHP error; E_USER_DEPRECATED.
+     *
+     * @return array
      */
     public function get() : array
     {
-        return [
-            'preface' => $this->preface,
-            'output' => $this->output,
-            'length' => $this->length,
-            'fileLine' => $this->fileLine,
-            'code' => $this->code,
-        ];
+        @trigger_error(
+            __CLASS__ . '::' . __METHOD__ . ' method is deprecated and will be removed soon, use toArray() instead.',
+            E_USER_DEPRECATED
+        );
+        return $this->toArray();
     }
 
     /**

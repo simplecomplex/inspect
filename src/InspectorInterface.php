@@ -40,6 +40,16 @@ interface InspectorInterface
      */
     public function __toString() : string;
 
+    /*
+     * List of inspection properties.
+     *
+     * Available for alternative ways of using the products of an inspection.
+     *
+     * @return array
+     *
+    public function toArray() : array;
+     */
+
     /**
      * Convenience method allowing method chaining,
      * e.g. inspect->variable(...)->log().
@@ -60,13 +70,4 @@ interface InspectorInterface
      * @return void
      */
     public function log($level = 'debug', $message = '', array $context = []);
-
-    /**
-     * List of inspection properties.
-     *
-     * Available for alternative ways of using the products of an inspection.
-     *
-     * @return array
-     */
-    public function get() : array;
 }
