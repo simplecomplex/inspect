@@ -8,11 +8,11 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 ### Added
 * Config helper class to ease accommodation in frameworks.
-* Inspect configure() method, which must be called prior to use of Inspect.
+* Inspect configure() method.
 * New option rootdir_replace.
-* Inspector log() method; thus reintroducing (see v. 2.0) direct (chainable)
-logging.
 * Inspector toArray() method.
+* Inspector log() method; thus reintroducing direct (chainable) logging
+(see v. 2.0).
 
 ### Changed
 * All package dependencies eliminated.
@@ -21,7 +21,7 @@ logging.
 and using dependency injection containers; constructor throws exception.
 * Root dir replacement no longer targeted specifically at document root;
 may be whatever directory considered 'root' in context.
-* Inspector method toArray() replaces get(); get() deprecated.
+* Deprecated Inspector get() method; use toArray().
 * Changelog in standard keepachangelog format; previous was idiosyncratic. @todo: remove CHANGELOG.txt
 
 ### Fixed

@@ -187,15 +187,13 @@ class Inspect implements InspectInterface
      * @param array|int|string $options
      *
      * @return Inspector
-     *      Stringable.
-     *
-     * @throws \LogicException
-     *      Instance not configured.
+     *      Stringable. Chainable.
      */
     public function inspect($subject, $options = []) : InspectorInterface
     {
         if (!$this->config) {
-            throw new \LogicException(get_class($this) . ' is not configured.');
+            // Use defaults.
+            $this->configure();
         }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -215,15 +213,13 @@ class Inspect implements InspectInterface
      * @param array|int|string $options
      *
      * @return Inspector
-     *      Stringable.
-     *
-     * @throws \LogicException
-     *      Instance not configured.
+     *      Stringable. Chainable.
      */
     public function variable($subject, $options = []) : InspectorInterface
     {
         if (!$this->config) {
-            throw new \LogicException(get_class($this) . ' is not configured.');
+            // Use defaults.
+            $this->configure();
         }
         $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
@@ -245,15 +241,13 @@ class Inspect implements InspectInterface
      * @param array|int|string $options
      *
      * @return Inspector
-     *      Stringable.
-     *
-     * @throws \LogicException
-     *      Instance not configured.
+     *      Stringable. Chainable.
      */
     public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
     {
         if (!$this->config) {
-            throw new \LogicException(get_class($this) . ' is not configured.');
+            // Use defaults.
+            $this->configure();
         }
         $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
