@@ -156,3 +156,9 @@ even if we don't listen to any request init event.
 * Fixed frontend file:line resolver; failed to identify inspect.js self.
 * Frontend: stricter typeOf() array check; some jQuery extensions (old
 dataTables) were erroneously assessed as array.
+
+
+## [0.1] - 2011-10-16
+
+### Added
+* Initial version, as [Drupal module Inspect](https://www.drupal.org/project/inspect/).

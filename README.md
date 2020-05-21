@@ -1,5 +1,7 @@
 ## (PHP+JS) Inspect: variable dumps and stack traces ##
 
+- [Principal methods and options](#Principal-methods-and-options)
+
 ### What ###
 
 Produces tidy and informative variable dumps and exception/back traces.  
@@ -19,7 +21,7 @@ And values of other sensitives can be hidden using 'skip_keys' option.
 ### PHP and Javascript ###
 
 Inspect consists of a PHP library for serverside inspection and tracing, and a Javascript library for clientside ditto.  
-NB: The Javascript library is has not been maintained since 2015.
+NB: The Javascript library has not been maintained since 2015.
 
 ### Maturity ###
 
@@ -42,54 +44,89 @@ Thus the Drupal module is an example of specializing contextually, by overriding
 
 ### Principal methods and options ###
 
-##### PHP #####
+#### PHP ####
 
-(array) $options
+```PHP
+$var = 'what is this?';
+$xcptn = new \Exception('Doh');
+```
 
-- (int) **depth**: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
-- (int) **limit**: max trace frame; TRACE_LIMIT_DEFAULT
-- (int) **code**: error code, overrides exception code; none
-- (int) **truncate**: string truncation; TRUNCATE_DEFAULT
-- (arr) **skip_keys**: skip those object/array keys; none
-- (arr) **needles**: replace in strings; NEEDLES
-- (arr) **replacers**: replace in strings; REPLACERS
-- (bool) **escape_html**: replace in strings; ESCAPE_HTML
-- (int) **output_max**: replace in strings; OUTPUT_DEFAULT
-- (int) **exectime_percent**: replace in strings; EXEC_TIMEOUT_DEFAULT
-- (bool) **rootdir_replace**: replace root dir in strings; ROOT_DIR_REPLACE
-- (int) **wrappers**: number of wrapping functions/methods, to be hidden; zero
-- (str) **kind**: (auto) trace when subject is \Throwable, otherwise variable
-
+##### Get Inspect #####
 ```PHP
 // If dependency injection container exists.
 $inspect = $container->get('inspect');
 // Otherwise use maker.
 $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
-
-// (auto) Analyze variable or trace exception.
-$inspect->inspect($subject);
-// Log inspection immediately.
-$inspect->inspect($subject)->log();
-// Or pass to logger.
-$logger->debug('' . $inspect->inspect($subject));
-
-// Analyze variable, even if exception.
-$inspect->variable($variable);
-
-// Back-trace null; trace exception.
-$inspect->trace($throwableOrNull);
 ```
 
-##### Javascript #####
+##### (array) $options #####
+
+- (int) `depth`: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
+- (int) `limit`: max trace frame; TRACE_LIMIT_DEFAULT
+- (int) `code`: error code, overrides exception code; none
+- (int) `truncate`: string truncation; TRUNCATE_DEFAULT
+- (arr) `skip_keys`: skip those object/array keys; none
+- (arr) `needles`: replace in strings; NEEDLES
+- (arr) `replacers`: replace in strings; REPLACERS
+- (bool) `escape_html`: replace in strings; ESCAPE_HTML
+- (int) `output_max`: replace in strings; OUTPUT_DEFAULT
+- (int) `exectime_percent`: replace in strings; EXEC_TIMEOUT_DEFAULT
+- (bool) `rootdir_replace`: replace root dir in strings; ROOT_DIR_REPLACE
+- (int) `wrappers`: number of wrapping functions/methods, to be hidden; zero
+- (str) `kind`: (auto) 'trace' when subject is \Throwable, otherwise 'variable'
+
+##### inspect($subject, $options = []) : Inspector #####
+
+Do variable inspection, unless arg $subject is a throwable; then trace.
+```PHP
+// Inspect:
+$inspect->inspect($var);
+// Trace:
+$inspect->inspect($xcptn);
+```
+
+##### variable($subject, $options = []) : Inspector #####
+
+Force variable inspection, even if subject is a throwable.
+```PHP
+$inspect->variable($var);
+```
+
+##### trace($throwableOrNull, $options = []) : Inspector #####
+
+Trace exception or do back-trace.
+```PHP
+// Trace exception:
+$inspect->trace($xcptn);
+// Do back-trace:
+$inspect->trace(null);
+```
+
+##### Logging #####
+
+The Inspector returned by inspect|variable|trace() is stringable. Pass it directly to a PSR logger:
+```PHP
+$logger->debug('Darned ding' . "\n" . $inspect->variable($var));
+```
+
+Or use the Inspector's own PSR logger-like method:
+
+**log($level = 'debug', $message = '', array $context = []) : void**
+
+```PHP
+$inspect->variable($var)->log('debug', 'darned ding');
+```
+
+#### Javascript ####
 
 (object) options
 
-- (string) **message**: content headline and options as string also interprets to message (except when 'protos'/'func_body')
-- (integer) **depth**: array|object recursion max (default 10, max 10)
-- (boolean) **protos**: analyze prototypal properties too
-- (boolean) **func_body**: print bodies of functions
-- (string) **type**: default 'inspect'/'inspect trace'
-- (string) **severity**: default 'debug'/'error'
+- (string) `message`: content headline and options as string also interprets to message (except when 'protos'/'func_body')
+- (integer) `depth`: array|object recursion max (default 10, max 10)
+- (boolean) `protos`: analyze prototypal properties too
+- (boolean) `func_body`: print bodies of functions
+- (string) `type`: default 'inspect'/'inspect trace'
+- (string) `severity`: default 'debug'/'error'
 
 To console:  
 ```javascript
