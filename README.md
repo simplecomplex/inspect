@@ -1,6 +1,7 @@
 ## (PHP+JS) Inspect: variable dumps and stack traces ##
 
 - [Description](#Description)
+- [License](#MIT-licensed)
 - [Requirements](#Requirements)
 
 ### Principal methods and options ###
@@ -131,9 +132,9 @@ The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) 
 The Drupal module (D7 as well as D8) extends Inspect to accomodate to the context - that is: uses Drupal's APIs and features when it makes sense.  
 Thus the Drupal module is an example of specializing contextually, by overriding attributes, methods and defaults.
 
-#### MIT licensed ####
+### MIT licensed ###
 
-[License and copyright](https://github.com/simplecomplex/inspect/blob/master/LICENSE).  
+[License and copyright](https://github.com/simplecomplex/inspect/blob/master/LICENSE).
 [Explained](https://tldrlegal.com/license/mit-license).
 
 ### Requirements ###
