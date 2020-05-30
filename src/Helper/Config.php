@@ -44,7 +44,7 @@ use SimpleComplex\Inspect\Inspector;
  *
  * @package SimpleComplex\Inspect
  */
-class Config
+class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializable
 {
     /**
      * Keys list supported property names.
@@ -65,9 +65,18 @@ class Config
     ];
 
     /**
+     * Injected configuration object, or null.
+     *
      * @var object|null
      */
     protected $config;
+
+    /**
+     * For count()'ing and foreach'ing.
+     *
+     * @var string[]
+     */
+    protected $explorableIndex;
 
     /**
      * @param object|null $config
@@ -76,6 +85,9 @@ class Config
     public function __construct(?object $config = null)
     {
         $this->config = $config;
+
+        // Copy.
+        $this->explorableIndex = array_keys(static::PROPERTIES);
     }
 
     /**
@@ -144,4 +156,126 @@ class Config
         );
     }
     */
+
+
+    /**
+     * For isset|empty().
+     *
+     * @param string $name
+     *
+     * @return bool
+     */
+    public function __isset($name) : bool
+    {
+        return in_array($name, $this->explorableIndex, true) && $this->__get($name) !== null;
+    }
+
+
+    // Countable.---------------------------------------------------------------
+
+    /**
+     * @see \Countable::count()
+     *
+     * @return int
+     */
+    public function count() : int
+    {
+        return count($this->explorableIndex);
+    }
+
+
+    // Foreachable (Iterator).--------------------------------------------------
+
+    /**
+     * @see \Iterator::rewind()
+     *
+     * @return void
+     */
+    public function rewind() : void
+    {
+        reset($this->explorableIndex);
+    }
+
+    /**
+     * @see \Iterator::key()
+     *
+     * @return string
+     */
+    public function key() : string
+    {
+        return current($this->explorableIndex);
+    }
+
+    /**
+     * @see \Iterator::current()
+     *
+     * @return mixed
+     */
+    public function current()
+    {
+        return $this->__get(current($this->explorableIndex));
+    }
+
+    /**
+     * @see \Iterator::next()
+     *
+     * @return void
+     */
+    public function next() : void
+    {
+        next($this->explorableIndex);
+    }
+
+    /**
+     * @see \Iterator::valid()
+     *
+     * @return bool
+     */
+    public function valid() : bool
+    {
+        // The null check is cardinal; without it foreach runs out of bounds.
+        $key = key($this->explorableIndex);
+        return $key !== null && $key < count($this->explorableIndex);
+    }
+
+
+    // JsonSerializable.--------------------------------------------------------
+
+    /**
+     * Dumps publicly readable properties to standard object.
+     *
+     * @return \stdClass
+     */
+    public function toObject() : \stdClass
+    {
+        $o = new \stdClass();
+        foreach ($this->explorableIndex as $property) {
+            $o->{$property} = $this->__get($property);
+        }
+        return $o;
+    }
+
+    /**
+     * Dumps publicly readable properties to array.
+     *
+     * @return array
+     */
+    public function toArray() : array
+    {
+        $a = [];
+        foreach ($this->explorableIndex as $property) {
+            $a[$property] = $this->__get($property);
+        }
+        return $a;
+    }
+
+    /**
+     * JSON serializes to object listing all publicly readable properties.
+     *
+     * @return string
+     */
+    public function jsonSerialize()
+    {
+        return $this->toObject();
+    }
 }
