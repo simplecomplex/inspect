@@ -4,20 +4,15 @@
 - [License](#MIT-licensed)
 - [Requirements](#Requirements)
 
-### Principal methods and options ###
-
-```PHP
-$var = 'what is this?';
-$xcptn = new \Exception('Doh');
-```
-
-#### Get Inspect ####
+### Get Inspect ###
 ```PHP
 // If dependency injection container exists.
 $inspect = $container->get('inspect');
 // Otherwise use maker.
 $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 ```
+
+### Principal methods and options ###
 
 #### (array) $options ####
 
@@ -39,6 +34,8 @@ $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 
 Do variable inspection, unless arg $subject is a throwable; then trace.
 ```PHP
+$var = 'what is this?'; $xcptn = new \Exception('Doh');
+
 // Inspect:
 $inspect->inspect($var);
 // Trace:
