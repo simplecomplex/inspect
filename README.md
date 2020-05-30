@@ -66,7 +66,7 @@ The Inspector returned by inspect|variable|trace() is stringable. Pass it direct
 $logger->debug('Darned ding' . "\n" . $inspect->variable($var));
 ```
 
-Or use the Inspector's own PSR logger-like method:
+Or use the Inspector's own chainable PSR logger-like method:
 
 **log($level = 'debug', $message = '', array $context = []) : void**
 
