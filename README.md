@@ -126,8 +126,7 @@ The core has been refined continuously whereas the wrapping has evolved from a r
 #### Used in - *extended by* - Drupal ####
 
 The backbone of the [Drupal Inspect module](https://drupal.org/project/inspect) is SimpleComplex Inspect.
-The Drupal module (D7 as well as D8) extends Inspect to accomodate to the context - that is: uses Drupal's APIs and features when it makes sense.  
-Thus the Drupal module is an example of specializing contextually, by overriding attributes, methods and defaults.
+The Drupal module (D7 as well as D8) extends Inspect to accomodate to the context - that is: uses Drupal's APIs and features when it makes sense.
 
 ### MIT licensed ###
 
