@@ -54,15 +54,13 @@ class Inspect implements InspectInterface
      *
      * Don't use method if there's a dependency injection container available.
      *
-     * Passing overriding config vars is not possible.
-     *
      * @return Inspect
      *      static, really, but IDE might not resolve that.
      */
     public static function getInstance()
     {
         if (!static::$instance) {
-            static::$instance = (new static())->configure();
+            static::$instance = new static();
         }
         return static::$instance;
     }

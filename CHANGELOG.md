@@ -22,10 +22,12 @@ and using dependency injection containers; constructor throws exception.
 * Root dir replacement no longer targeted specifically at document root;
 may be whatever directory considered 'root' in context.
 * Deprecated Inspector get() method; use toArray().
-* Changelog in standard keepachangelog format; previous was idiosyncratic. @todo: remove CHANGELOG.txt
+* Changelog in standard keepachangelog format; previous was idiosyncratic.
 
 ### Fixed
 * Unicode helper doesn't need to now about the intl extension, never used.
+* PHP 7.4 deprecation: The array and string offset access syntax using curly
+braces is deprecated.
 
 
 ## [2.3] - 2019-01-04
