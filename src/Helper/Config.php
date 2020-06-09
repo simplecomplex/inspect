@@ -111,7 +111,8 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
                 return null;
             }
             if (!$useGetMethod) {
-                if (class_exists($interface = '\\SimpleComplex\\Config\\Interfaces\\SectionedConfigInterface')
+                $interface = '\\SimpleComplex\\Config\\Interfaces\\SectionedConfigInterface';
+                if (interface_exists($interface)
                     && is_subclass_of($this->config, $interface)
                 ) {
                     $useGetMethod = 1;
