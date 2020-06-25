@@ -854,7 +854,16 @@ class Inspector implements InspectorInterface
                             $is_num_array_access = true;
                         }
                     }
-                } else {
+                }
+                elseif (method_exists($subject, '__debugInfo')) {
+                    // Don't like to assign argument, despite legal and without
+                    // side effects in PHP (when not argument by &$reference).
+                    // But assigning (array) $subject value to a var would
+                    // result in copying; not optimal performancewise.
+                    $subject = $subject->__debugInfo();
+                    $n_elements = count($subject);
+                }
+                else {
                     $n_elements = count(get_object_vars($subject));
                 }
             }
