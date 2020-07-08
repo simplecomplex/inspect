@@ -4,7 +4,7 @@ All notable changes to **simplecomplex/inspect** will be documented in this file
 using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
-## [Unreleased]
+## [3.0]
 
 ### Added
 * Config helper class to ease accommodation in frameworks.
@@ -13,6 +13,7 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 * Inspector toArray() method.
 * Inspector log() method; thus reintroducing direct (chainable) logging
 (see v. 2.0).
+* Inspector use magic method __debugInfo() when it exists.
 
 ### Changed
 * All package dependencies eliminated.
