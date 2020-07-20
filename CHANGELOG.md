@@ -4,6 +4,20 @@ All notable changes to **simplecomplex/inspect** will be documented in this file
 using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
+## [Unreleased]
+
+### Added
+* Separate depth config var for tracing; trace_depth.
+
+### Changed
+* Integer as $options argument for inspect()|trace() is now always interpreted
+  as 'depth'; no longer interpreted as 'limit' when tracing.
+* Minimum depth when tracing is now zero; i.e. don't inspect method arguments.
+
+### Fixed
+* Options interpretation algo disentangled; was probably flawed.
+
+
 ## [3.0]
 
 ### Added

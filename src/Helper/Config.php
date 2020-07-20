@@ -20,8 +20,10 @@ use SimpleComplex\Inspect\Inspector;
  *
  *
  * @see Inspector::DEPTH_DEFAULT
- * @see Inspector::TRACE_DEPTH_DEFAULT
  * @property-read int|null $depth
+ *
+ * @see Inspector::TRACE_DEPTH_DEFAULT
+ * @property-read int|null $trace_depth
  *
  * @see Inspector::TRACE_LIMIT_DEFAULT
  * @property-read int|null $trace_limit
@@ -56,6 +58,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      */
     const PROPERTIES = [
         'depth' => true,
+        'trace_depth' => true,
         'trace_limit' => true,
         'truncate' => true,
         'escape_html' => true,

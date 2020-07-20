@@ -241,7 +241,7 @@ class Inspector implements InspectorInterface
      *
      * @var array
      */
-    protected $options = array(
+    protected $options = [
         'depth' => 0,
         'limit' => 0,
         'code' => 0,
@@ -255,7 +255,7 @@ class Inspector implements InspectorInterface
         'rootdir_replace' => true,
         'wrappers' => 0,
         'kind' => '',
-    );
+    ];
 
     /**
      * @var string
@@ -314,201 +314,150 @@ class Inspector implements InspectorInterface
      * @param InspectInterface $proxy
      * @param mixed $subject
      * @param array|int|string $options
-     *   Integer when inspecting variable: maximum depth.
-     *   Integer when tracing: stack frame limit.
+     *   Integer: maximum depth.
      *   String: kind (variable|trace); otherwise ignored.
      *   Not array|integer|string: ignored.
      */
     public function __construct(InspectInterface $proxy, $subject, $options = [])
     {
         $this->proxy = $proxy;
-
+        $opt_depth = -1;
         $kind = '';
-        $depth_or_limit = 0;
-        $use_arg_options = $trace = $back_trace = false;
-        if ($options) {
-            $type = gettype($options);
-            switch ($type) {
-                case 'array':
-                    if (!empty($options['kind'])) {
-                        switch ('' . $options['kind']) {
-                            case 'variable':
-                                $kind = 'variable';
-                                break;
-                            case 'trace':
-                                $trace = true;
-                                $kind = 'trace';
-                                break;
-                        }
-                    }
-                    unset($options['kind']);
-                    $use_arg_options = !!$options;
-                    break;
-                case 'integer':
-                    // Depends on kind.
-                    if ($options > 0) {
-                        $depth_or_limit = $options;
-                    }
-                    break;
-                case 'string':
-                    // Kind.
-                    switch ($options) {
-                        case 'variable':
-                            $kind = 'variable';
-                            break;
-                        case 'trace':
-                            $trace = true;
-                            $kind = 'trace';
-                            break;
-                        default:
-                            // Ignore.
-                    }
-                    break;
-                default:
-                    // Ignore.
+        $back_trace = $trace = false;
+        $arg_opts = false;
+        if (is_array($options)) {
+            if (!empty($options['kind'])) {
+                $kind = '' . $options['kind'];
+            }
+            if (isset($options['depth']) && is_int($options['depth'])) {
+                $opt_depth = $options['depth'];
+            }
+            unset($options['kind'], $options['depth']);
+            if ($options) {
+                $arg_opts = true;
             }
         }
+        elseif (is_int($options)) {
+            $opt_depth = $options;
+        }
+        elseif ($options && is_string($options)) {
+            $kind = $options;
+        }
+        // Else ignore.
 
         // Establish kind - variable|trace - before preparing options.----------
-        if (!$kind) {
-            // No kind + exception|error: do trace.
-            if ($subject && is_object($subject) && $subject instanceof \Throwable) {
+        if ($kind) {
+            if ($kind == 'trace') {
                 $trace = true;
-                $kind = 'trace';
-            } else {
-                $kind = 'variable';
-            }
-        } elseif ($trace) {
-            // Trace + not exception|error: do back trace.
-            if (!$subject || !is_object($subject) || !$subject instanceof \Throwable) {
-                $back_trace = true;
+                $this->kind = 'trace';
+                // Pass null to trc().
+                if (!($subject instanceof \Throwable)) {
+                    $back_trace = true;
+                }
             }
         }
-        $this->kind = $kind;
+        elseif ($subject instanceof \Throwable) {
+            // No kind and is exception.
+            $trace = true;
+            $this->kind = 'trace';
+        }
+        unset($kind);
 
         // Prepare options.-----------------------------------------------------
         $opts =& $this->options;
 
-        // logger.
-        // Keep default: null.
-        // code.
-        // Keep default: zero.
         // depth.
-        if (!$trace && $depth_or_limit && $depth_or_limit <= static::DEPTH_MAX) {
-            $opts['depth'] = $depth_or_limit;
-        } else {
-            $opts['depth'] = !$trace ? static::DEPTH_DEFAULT : static::TRACE_DEPTH_DEFAULT;
+        if ($opt_depth > -1 && $opt_depth <= static::DEPTH_MAX) {
+            // Minimum depth is 1 when inspecting, 0 when tracing.
+            $opts['depth'] = $opt_depth || $trace ? $opt_depth : 1;
         }
-        // limit; only used when tracing.
-        if (!$trace) {
-            unset($opts['limit']);
-        } elseif ($depth_or_limit && $depth_or_limit <= static::TRACE_LIMIT_MAX) {
-            $opts['limit'] = $depth_or_limit;
-        } else {
-            $opts['limit'] = $this->proxy->config->trace_limit ?? static::TRACE_LIMIT_DEFAULT;
+        else {
+            $opts['depth'] = !$trace ? ($this->proxy->config->depth ?? static::DEPTH_DEFAULT) :
+                ($this->proxy->config->trace_depth ?? static::TRACE_DEPTH_DEFAULT);
         }
-        // truncate.
-        $opts['truncate'] = $this->proxy->config->truncate ?? static::TRUNCATE_DEFAULT;
-        // skip_keys.
-        // Keep default: empty array.
-        // escape_html.
-        if(
-            !($opts['escape_html'] = $this->proxy->config->escape_html ?? static::ESCAPE_HTML)
+
+        // limit.
+        if ($trace) {
+            if ($arg_opts && isset($options['limit']) && is_int($v = $options['limit'])
+                && $v > 0 && $v <= static::TRACE_LIMIT_MAX
+            ) {
+                $opts['limit'] = $v;
+            }
+            else {
+                $opts['limit'] = $this->proxy->config->trace_limit ?? static::TRACE_LIMIT_DEFAULT;
+            }
+        }
+
+        // code.
+        if ($arg_opts && !empty($options['code']) && is_int($v = $options['code']) && $v > 0) {
+            $opts['code'] = $v;
+        }
+
+        // truncate; minimum zero.
+        if ($arg_opts && isset($options['truncate']) && is_int($v = $options['truncate'])
+            && $v >= 0 && $v <= static::TRUNCATE_MAX
         ) {
-            // needles; only arg options override if arg options replacers.
-            $opts['needles'] = static::NEEDLES;
-            // replacers.
-            $opts['replacers'] = static::REPLACERS;
-        } else {
-            $opts['needles'] = static::NEEDLES_ESCAPE_HTML;
-            $opts['replacers'] = static::REPLACERS_ESCAPE_HTML;
+            $opts['truncate'] = $v;
         }
-        $opts['output_max'] = $this->proxy->config->output_max ?? static::OUTPUT_DEFAULT;
-        $opts['exectime_percent'] = $this->proxy->config->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
-        $opts['rootdir_replace'] = $this->proxy->config->rootdir_replace ?? static::ROOT_DIR_REPLACE;
+        else {
+            $opts['truncate'] = $this->proxy->config->truncate ?? static::TRUNCATE_DEFAULT;
+        }
 
-        // wrappers.
-        // Keep default: zero.
+        // skip_keys; default to empty array.
+        if ($arg_opts && !empty($options['skip_keys'])) {
+            $opts['skip_keys'] = is_array($options['skip_keys']) ? $options['skip_keys'] : [
+                // Stringify.
+                '' . $options['skip_keys']
+            ];
+        }
 
-        // Overriding options by argument.--------------------------------------
-        if ($use_arg_options) {
-            if (
-                !empty($options['code'])
-                && ($tmp = (int) $options['code']) > 0
-            ) {
-                $opts['code'] = $tmp;
-            }
+        // escape_html.
+        $opts['escape_html'] = isset($options['escape_html']) ? ((bool) $options['escape_html']) : static::ESCAPE_HTML;
 
-            if (
-                !empty($options['depth'])
-                && ($tmp = (int) $options['depth']) > 0 && $tmp <= static::DEPTH_MAX
-            ) {
-                $opts['depth'] = $tmp;
-            }
-
-            if (
-                $trace && !empty($options['limit'])
-                && ($tmp = (int) $options['limit']) > 0 && $tmp <= static::TRACE_LIMIT_MAX
-            ) {
-                $opts['limit'] = $tmp;
-            }
-
-            if (
-                isset($options['truncate'])
-                && ($tmp = (int) $options['truncate']) >= 0 && $tmp <= static::TRUNCATE_MAX
-            ) {
-                $opts['truncate'] = $tmp;
-            }
-
-            if (isset($options['escape_html'])) {
-                $opts['escape_html'] = !!$options['escape_html'];
-            }
-
-            if (!empty($options['skip_keys'])) {
-                if (is_array($options['skip_keys'])) {
-                    $opts['skip_keys'] = $options['skip_keys'];
-                } else {
-                    $opts['skip_keys'] = [
-                        // Stringify.
-                        '' . $options['skip_keys']
-                    ];
-                }
-            }
-
-            $any_opt_replacers = false;
-            if (!empty($options['replacers']) && is_array($options['replacers'])) {
-                $any_opt_replacers = true;
-                $opts['replacers'] = $options['replacers'];
-            }
-
-            if ($any_opt_replacers && !empty($options['needles']) && is_array($options['needles'])) {
+        // needles/replacers.
+        if ($arg_opts && !empty($options['replacers']) && is_array($options['replacers'])) {
+            $opts['replacers'] = $options['replacers'];
+            // Custom needles required custom replacers.
+            if (!empty($options['needles']) && is_array($options['needles'])) {
                 $opts['needles'] = $options['needles'];
             }
-
-            if (
-                !empty($options['output_max'])
-                && ($tmp = (int) $options['output_max']) > 0 && $tmp <= static::OUTPUT_MAX
-            ) {
-                $opts['output_max'] = $tmp;
+            else {
+                $opts['needles'] = !$opts['escape_html'] ? static::NEEDLES : static::NEEDLES_ESCAPE_HTML;
             }
+        }
+        else {
+            $opts['needles'] = !$opts['escape_html'] ? static::NEEDLES : static::NEEDLES_ESCAPE_HTML;
+            $opts['replacers'] = !$opts['escape_html'] ? static::REPLACERS : static::REPLACERS_ESCAPE_HTML;
+        }
 
-            if (
-                !empty($options['exectime_percent'])
-                && ($tmp = (int) $options['exectime_percent']) > 0 && $tmp <= static::EXEC_TIMEOUT_MAX
-            ) {
-                $opts['exectime_percent'] = $tmp;
-            }
+        // output_max; minimim 1.
+        if ($arg_opts && isset($options['output_max']) && is_int($v = $options['output_max'])
+            && $v > 0 && $v <= static::OUTPUT_MAX
+        ) {
+            $opts['output_max'] = $v;
+        }
+        else {
+            $opts['output_max'] = $this->proxy->config->output_max ?? static::OUTPUT_DEFAULT;
+        }
 
-            if (isset($options['rootdir_replace'])) {
-                $opts['rootdir_replace'] = !!$options['rootdir_replace'];
-            }
+        // exectime_percent; minimum 1.
+        if ($arg_opts && isset($options['exectime_percent']) && is_int($v = $options['exectime_percent'])
+            && $v > 0 && $v <= static::EXEC_TIMEOUT_MAX
+        ) {
+            $opts['exectime_percent'] = $v;
+        }
+        else {
+            $opts['exectime_percent'] = $this->proxy->config->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
+        }
 
-            if (
-                !empty($options['wrappers'])
-                && ($tmp = (int) $options['wrappers']) > 0
-            ) {
-                $opts['wrappers'] = $tmp;
-            }
+        // rootdir_replace.
+        $opts['rootdir_replace'] = $arg_opts && isset($options['rootdir_replace']) ?
+            ((bool) $options['rootdir_replace']) :
+            ($this->proxy->config->rootdir_replace ?? static::ROOT_DIR_REPLACE);
+
+        // wrappers; default to zero.
+        if ($arg_opts && isset($options['wrappers']) && is_int($v = $options['wrappers']) && $v > 0) {
+            $opts['wrappers'] = $v;
         }
 
         if ($opts['rootdir_replace']) {
@@ -529,7 +478,7 @@ class Inspector implements InspectorInterface
             // Don't enclose in tag in cli mode.
             if (static::FORMAT['enclose_tag'] && PHP_SAPI != 'cli') {
                 $output = '<' . static::FORMAT['enclose_tag']
-                    . ' class="simplecomplex-inspect inspect-' . $kind . '">'
+                    . ' class="simplecomplex-inspect inspect-' . $this->kind . '">'
                     . $output . '</' . static::FORMAT['enclose_tag'] . '>';
             }
 
@@ -1201,9 +1150,17 @@ class Inspector implements InspectorInterface
             // Args.
             if (isset($frame['args'])) {
                 $le = count($frame['args']);
-                $output .= $delim . 'args (' . $le . ')' . (!$le ? '' : ':');
-                for ($i = 0; $i < $le; ++$i) {
-                    $output .= $delim . $this->nspct($frame['args'][$i]);
+                if (!$this->options['depth']) {
+                    $output .= ' (args:' . $le . ')';
+                }
+                else {
+                    $output .= $delim . 'args (' . $le . ')';
+                    if ($le) {
+                        $output .= ':';
+                        for ($i = 0; $i < $le; ++$i) {
+                            $output .= $delim . $this->nspct($frame['args'][$i]);
+                        }
+                    }
                 }
             }
         }
