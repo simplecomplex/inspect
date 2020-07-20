@@ -182,7 +182,9 @@ class Inspect implements InspectInterface
      * @see Inspector::$options
      *
      * @param mixed $subject
-     * @param array|int|string $options
+     * @param array|int $options
+     *   Integer: maximum depth.
+     *   Ignored if not array|int.
      *
      * @return Inspector
      *      Stringable. Chainable.
@@ -208,7 +210,9 @@ class Inspect implements InspectInterface
      * @see Inspector::$options
      *
      * @param mixed $subject
-     * @param array|int|string $options
+     * @param array|int $options
+     *   Integer: maximum depth.
+     *   Ignored if not array|int.
      *
      * @return Inspector
      *      Stringable. Chainable.
@@ -219,13 +223,13 @@ class Inspect implements InspectInterface
             // Use defaults.
             $this->configure();
         }
-        $options['kind'] = 'variable';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
             $this,
             $subject,
-            $options
+            $options,
+            $subject && $subject instanceof \Throwable
         );
     }
 
@@ -236,7 +240,9 @@ class Inspect implements InspectInterface
      *
      * @param \Throwable|null $throwableOrNull
      *      Null: do back-trace.
-     * @param array|int|string $options
+     * @param array|int $options
+     *   Integer: maximum depth.
+     *   Ignored if not array|int.
      *
      * @return Inspector
      *      Stringable. Chainable.
@@ -247,13 +253,13 @@ class Inspect implements InspectInterface
             // Use defaults.
             $this->configure();
         }
-        $options['kind'] = 'trace';
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
             $this,
             $throwableOrNull,
-            $options
+            $options,
+            true
         );
     }
 

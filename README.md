@@ -14,6 +14,10 @@ $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 
 ### Principal methods and options ###
 
+#### (int) $options ####
+
+`depth`: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
+
 #### (array) $options ####
 
 - (int) `depth`: max object/array recursion; DEPTH_DEFAULT/TRACE_DEPTH_DEFAULT
@@ -21,14 +25,13 @@ $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 - (int) `code`: error code, overrides exception code; none
 - (int) `truncate`: string truncation; TRUNCATE_DEFAULT
 - (arr) `skip_keys`: skip those object/array keys; none
-- (arr) `needles`: replace in strings; NEEDLES
-- (arr) `replacers`: replace in strings; REPLACERS
+- (arr) `needles`: replace in strings; NEEDLES/NEEDLES_ESCAPE_HTML
+- (arr) `replacers`: replace in strings; REPLACERS/REPLACERS_ESCAPE_HTML
 - (bool) `escape_html`: replace in strings; ESCAPE_HTML
 - (int) `output_max`: replace in strings; OUTPUT_DEFAULT
 - (int) `exectime_percent`: replace in strings; EXEC_TIMEOUT_DEFAULT
 - (bool) `rootdir_replace`: replace root dir in strings; ROOT_DIR_REPLACE
 - (int) `wrappers`: number of wrapping functions/methods, to be hidden; zero
-- (str) `kind`: (auto) 'trace' when subject is \Throwable, otherwise 'variable'
 
 #### inspect($subject, $options = []) : Inspector ####
 

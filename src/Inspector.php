@@ -216,11 +216,17 @@ class Inspector implements InspectorInterface
     ];
 
     /**
-     * @var string[]
+     * Keys are file names, values are irrelevant.
+     * Allows a child class to extend parent's list by doing
+     * const LIB_FILENAMES = [
+     *   'SomeInspector.php' => null,
+     * ] + ParentClass::LIB_FILENAMES;
+     *
+     * @var null[]
      */
     const LIB_FILENAMES = [
-        'Inspect.php',
-        'Inspector.php',
+        'Inspect.php' => null,
+        'Inspector.php' => null,
     ];
 
     /**
@@ -237,7 +243,6 @@ class Inspector implements InspectorInterface
      * - (int) exectime_percent: replace in strings; EXEC_TIMEOUT_DEFAULT
      * - (bool) rootdir_replace: replace root dir in strings; ROOT_DIR_REPLACE
      * - (int) wrappers: number of wrapping functions/methods, to be hidden; zero
-     * - (str) kind: (auto) trace when subject is \Throwable, otherwise variable
      *
      * @var array
      */
@@ -254,7 +259,6 @@ class Inspector implements InspectorInterface
         'exectime_percent' => 0,
         'rootdir_replace' => true,
         'wrappers' => 0,
-        'kind' => '',
     ];
 
     /**
@@ -313,26 +317,25 @@ class Inspector implements InspectorInterface
      *
      * @param InspectInterface $proxy
      * @param mixed $subject
-     * @param array|int|string $options
+     * @param array|object|int $options
      *   Integer: maximum depth.
-     *   String: kind (variable|trace); otherwise ignored.
-     *   Not array|integer|string: ignored.
+     *   Not array|int: ignored.
+     * @param bool $trace
      */
-    public function __construct(InspectInterface $proxy, $subject, $options = [])
+    public function __construct(InspectInterface $proxy, $subject, $options = [], bool $trace = false)
     {
         $this->proxy = $proxy;
+
+        if ($trace) {
+            $this->kind = 'trace';
+        }
         $opt_depth = -1;
-        $kind = '';
-        $back_trace = $trace = false;
         $arg_opts = false;
         if (is_array($options)) {
-            if (!empty($options['kind'])) {
-                $kind = '' . $options['kind'];
-            }
             if (isset($options['depth']) && is_int($options['depth'])) {
                 $opt_depth = $options['depth'];
             }
-            unset($options['kind'], $options['depth']);
+            unset($options['depth']);
             if ($options) {
                 $arg_opts = true;
             }
@@ -340,28 +343,7 @@ class Inspector implements InspectorInterface
         elseif (is_int($options)) {
             $opt_depth = $options;
         }
-        elseif ($options && is_string($options)) {
-            $kind = $options;
-        }
         // Else ignore.
-
-        // Establish kind - variable|trace - before preparing options.----------
-        if ($kind) {
-            if ($kind == 'trace') {
-                $trace = true;
-                $this->kind = 'trace';
-                // Pass null to trc().
-                if (!($subject instanceof \Throwable)) {
-                    $back_trace = true;
-                }
-            }
-        }
-        elseif ($subject instanceof \Throwable) {
-            // No kind and is exception.
-            $trace = true;
-            $this->kind = 'trace';
-        }
-        unset($kind);
 
         // Prepare options.-----------------------------------------------------
         $opts =& $this->options;
@@ -473,7 +455,7 @@ class Inspector implements InspectorInterface
             if (!$trace) {
                 $output = $this->nspct($subject);
             } else {
-                $output = $this->trc(!$back_trace ? $subject : null);
+                $output = $this->trc($subject && $subject instanceof \Throwable ? $subject : null);
             }
             // Don't enclose in tag in cli mode.
             if (static::FORMAT['enclose_tag'] && PHP_SAPI != 'cli') {
@@ -508,7 +490,7 @@ class Inspector implements InspectorInterface
                 $file = $this->proxy->rootDirReplace($file, true);
                 $msg = $this->proxy->rootDirReplace($msg);
             }
-            $msg = 'Inspect ' . $kind . ' failure: ' . get_class($xc) . '@' . $file . ':' . $xc->getLine()
+            $msg = 'Inspect ' . $this->kind . ' failure: ' . get_class($xc) . '@' . $file . ':' . $xc->getLine()
                 . ': ' . addcslashes($msg, "\0..\37");
 
             error_log($msg);
@@ -1020,30 +1002,23 @@ class Inspector implements InspectorInterface
      * @throws \TypeError
      *      Arg throwableOrNull not \Throwable or null.
      */
-    protected function trc(/*?\Throwable*/ $throwableOrNull) : string
+    protected function trc(?\Throwable $throwableOrNull) : string
     {
         // Received Throwable, by arg.
         if ($throwableOrNull) {
-            if ($throwableOrNull instanceof \Throwable) {
-                $thrwbl_class = get_class($throwableOrNull);
-                if (!$this->code) {
-                    $this->code = $throwableOrNull->getCode();
-                }
-                $trace = $throwableOrNull->getTrace();
-                // Enforce wrappers and trace limit.
-                $n_full_stack = count($trace);
-                if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
-                    array_splice($trace, 0, $this->options['wrappers']);
-                    $n_full_stack -= $this->options['wrappers'];
-                }
-                if ($n_full_stack > $this->options['limit']) {
-                    array_splice($trace, $this->options['limit']);
-                }
+            $thrwbl_class = get_class($throwableOrNull);
+            if (!$this->code) {
+                $this->code = $throwableOrNull->getCode();
             }
-            else {
-                throw new \TypeError(
-                    'Arg throwableOrNull type[' . static::getType($throwableOrNull) . '] is not Throwable or null.'
-                );
+            $trace = $throwableOrNull->getTrace();
+            // Enforce wrappers and trace limit.
+            $n_full_stack = count($trace);
+            if ($this->options['wrappers'] && $this->options['wrappers'] < $n_full_stack) {
+                array_splice($trace, 0, $this->options['wrappers']);
+                $n_full_stack -= $this->options['wrappers'];
+            }
+            if ($n_full_stack > $this->options['limit']) {
+                array_splice($trace, $this->options['limit']);
             }
         }
         // Create trace, when none given by arg.
@@ -1054,11 +1029,12 @@ class Inspector implements InspectorInterface
             array_shift($trace);
             // Find first frame whose file isn't named like our library files.
             $le = count($trace);
+            $self_files = array_keys(static::LIB_FILENAMES);
             $i_frame = -1;
             for ($i = 0; $i < $le; ++$i) {
                 if (
                     !empty($trace[$i]['file'])
-                    && !in_array(basename($trace[$i]['file']), static::LIB_FILENAMES)
+                    && !in_array(basename($trace[$i]['file']), $self_files)
                 ) {
                     $i_frame = $i;
                     break;
@@ -1150,16 +1126,10 @@ class Inspector implements InspectorInterface
             // Args.
             if (isset($frame['args'])) {
                 $le = count($frame['args']);
-                if (!$this->options['depth']) {
-                    $output .= ' (args:' . $le . ')';
-                }
-                else {
-                    $output .= $delim . 'args (' . $le . ')';
-                    if ($le) {
-                        $output .= ':';
-                        for ($i = 0; $i < $le; ++$i) {
-                            $output .= $delim . $this->nspct($frame['args'][$i]);
-                        }
+                $output .= ' (args:' . $le . ')';
+                if ($le && $this->options['depth']) {
+                    for ($i = 0; $i < $le; ++$i) {
+                        $output .= $delim . static::FORMAT['indent'] . $this->nspct($frame['args'][$i], 1);
                     }
                 }
             }
@@ -1185,10 +1155,11 @@ class Inspector implements InspectorInterface
         // Find first frame whose file isn't named like our library files.
         $le = count($trace);
         $i_frame = -1;
+        $self_files = array_keys(static::LIB_FILENAMES);
         for ($i = 1; $i < $le; ++$i) {
             if (
                 !empty($trace[$i]['file'])
-                && !in_array(basename($trace[$i]['file']), static::LIB_FILENAMES)
+                && !in_array(basename($trace[$i]['file']), $self_files)
             ) {
                 $i_frame = $i;
                 break;

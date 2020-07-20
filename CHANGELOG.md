@@ -12,10 +12,15 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 ### Changed
 * Integer as $options argument for inspect()|trace() is now always interpreted
   as 'depth'; no longer interpreted as 'limit' when tracing.
+* $options argument is now array|int; string ignored.
 * Minimum depth when tracing is now zero; i.e. don't inspect method arguments.
+* Option 'kind' removed.
+* Inspector::LIB_FILENAMES is now an array whose keys are filenames.
 
 ### Fixed
-* Options interpretation algo disentangled; was probably flawed.
+* Passing non-array $options spelled fatal error.
+* Tracing always inspected arguments to one level deeper than the depth option.
+* Options interpretation disentangled; was probably flawed.
 
 
 ## [3.0]
