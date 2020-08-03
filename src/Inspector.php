@@ -222,7 +222,7 @@ class Inspector implements InspectorInterface
      *   'SomeInspector.php' => null,
      * ] + ParentClass::LIB_FILENAMES;
      *
-     * @var null[]
+     * @var mixed[]
      */
     const LIB_FILENAMES = [
         'Inspect.php' => null,
@@ -317,7 +317,7 @@ class Inspector implements InspectorInterface
      *
      * @param InspectInterface $proxy
      * @param mixed $subject
-     * @param array|object|int $options
+     * @param array|int $options
      *   Integer: maximum depth.
      *   Not array|int: ignored.
      * @param bool $trace
@@ -399,7 +399,7 @@ class Inspector implements InspectorInterface
         // needles/replacers.
         if ($arg_opts && !empty($options['replacers']) && is_array($options['replacers'])) {
             $opts['replacers'] = $options['replacers'];
-            // Custom needles required custom replacers.
+            // Custom needles requires custom replacers, thus sub condition.
             if (!empty($options['needles']) && is_array($options['needles'])) {
                 $opts['needles'] = $options['needles'];
             }
@@ -454,9 +454,11 @@ class Inspector implements InspectorInterface
         try {
             if (!$trace) {
                 $output = $this->nspct($subject);
-            } else {
+            }
+            else {
                 $output = $this->trc($subject && $subject instanceof \Throwable ? $subject : null);
             }
+
             // Don't enclose in tag in cli mode.
             if (static::FORMAT['enclose_tag'] && PHP_SAPI != 'cli') {
                 $output = '<' . static::FORMAT['enclose_tag']
