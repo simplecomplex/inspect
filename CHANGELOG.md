@@ -4,7 +4,7 @@ All notable changes to **simplecomplex/inspect** will be documented in this file
 using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
-## [Unreleased]
+## [3.1] - 2020-08-07
 
 ### Added
 * Separate depth config var for tracing; trace_depth.
@@ -23,7 +23,7 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 * Options interpretation disentangled; was probably flawed.
 
 
-## [3.0]
+## [3.0] - 2020-07-08
 
 ### Added
 * Config helper class to ease accommodation in frameworks.
