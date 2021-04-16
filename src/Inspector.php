@@ -394,7 +394,8 @@ class Inspector implements InspectorInterface
         }
 
         // escape_html.
-        $opts['escape_html'] = isset($options['escape_html']) ? ((bool) $options['escape_html']) : static::ESCAPE_HTML;
+        $opts['escape_html'] = isset($options['escape_html']) ? ((bool) $options['escape_html']) :
+            ($this->proxy->config->escape_html ?? static::ESCAPE_HTML);
 
         // needles/replacers.
         if ($arg_opts && !empty($options['replacers']) && is_array($options['replacers'])) {

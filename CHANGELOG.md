@@ -4,6 +4,11 @@ All notable changes to **simplecomplex/inspect** will be documented in this file
 using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
+## [Unreleased]
+### Fixed
+- Inspector use config `escape_html` property.
+
+
 ## [3.1] - 2020-08-07
 
 ### Added
