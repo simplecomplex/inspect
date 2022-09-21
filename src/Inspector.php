@@ -539,7 +539,14 @@ class Inspector implements InspectorInterface
      *      @var int $code
      * }
      */
-    public function toArray(bool $options = false) : array
+    #[ArrayShape([
+        'preface' => "string",
+        'output' => "string",
+        'length' => "int",
+        'fileLine' => "string",
+        'code' => "int|mixed",
+        'options' => "array"
+    ])] public function toArray(bool $options = false) : array
     {
         $a = [
             'preface' => $this->preface,

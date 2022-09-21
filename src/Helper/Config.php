@@ -276,7 +276,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
     /**
      * JSON serializes to object listing all publicly readable properties.
      *
-     * @return string
+     * @return mixed
      */
     public function jsonSerialize()
     {

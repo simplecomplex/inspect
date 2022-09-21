@@ -129,7 +129,7 @@ class Unicode
             return $pos;
         }
         return count(
-            preg_split('//u', substr($hstck, 0, $pos), null, PREG_SPLIT_NO_EMPTY)
+            preg_split('//u', substr($hstck, 0, $pos), -1, PREG_SPLIT_NO_EMPTY)
         );
     }
 
