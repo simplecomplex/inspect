@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SimpleComplex\Inspect;
 
 use SimpleComplex\Inspect\Helper\Config;
+use SimpleComplex\Inspect\Helper\UnicodeInterface;
 use SimpleComplex\Inspect\Helper\Unicode;
 
 /**
@@ -45,9 +46,9 @@ class Inspect implements InspectInterface
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
      *
-     * @var Inspect
+     * @var Inspect|null
      */
-    protected static $instance;
+    protected static ?Inspect $instance;
 
     /**
      * First object instantiated via this method, disregarding class called on.
@@ -98,19 +99,19 @@ class Inspect implements InspectInterface
     const ROOT_DIR_SUBSTITUTE = '[root dir]';
 
     /**
-     * @var \SimpleComplex\Inspect\Helper\Config
+     * @var \SimpleComplex\Inspect\Helper\Config|null
      */
-    public $config;
+    protected ?Config $config;
 
     /**
-     * @var \SimpleComplex\Inspect\Helper\Unicode
+     * @var \SimpleComplex\Inspect\Helper\UnicodeInterface
      */
-    public $unicode;
+    protected UnicodeInterface $unicode;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $rootDir;
+    protected ?string $rootDir;
 
     /**
      * Values:
@@ -119,7 +120,7 @@ class Inspect implements InspectInterface
      *
      * @var int
      */
-    protected $rootDirLength = 0;
+    protected int $rootDirLength = 0;
 
     /**
      * No parameters, to allow overriding constructor
@@ -151,29 +152,6 @@ class Inspect implements InspectInterface
     */
 
     /**
-     * This method must be called before use of the instance.
-     *
-     * Otherwise similar work must be done in overriding constructor
-     * or other method.
-     *
-     * @param object|null $config
-     *      Null if no custom value(s), overriding Inspecter defaults.
-     *
-     * @return Inspect
-     */
-    public function configure(?object $config = null) : self
-    {
-        if (!$this->config) {
-            $class_config = static::CLASS_CONFIG;
-            // Pass arg $config to new Config instance,
-            // unless $config already is a Config.
-            $this->config = $config && is_a($config, $class_config) ? $config :
-                new $class_config($config);
-        }
-        return $this;
-    }
-
-    /**
      * Do variable inspection, unless arg $subject is a throwable; then trace.
      *
      * Back-tracing (without Throwable) can also be accomplished by passing
@@ -191,10 +169,6 @@ class Inspect implements InspectInterface
      */
     public function inspect($subject, $options = []) : InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -219,10 +193,6 @@ class Inspect implements InspectInterface
      */
     public function variable($subject, $options = []) : InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -249,10 +219,6 @@ class Inspect implements InspectInterface
      */
     public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -261,6 +227,34 @@ class Inspect implements InspectInterface
             $options,
             true
         );
+    }
+
+    /**
+     * Get configuration object.
+     *
+     * @param object|null $config
+     *      Ignored if internal configuration object already set.
+     *
+     * @return object
+     */
+    public function getConfig(?object $config = null): object {
+        if (!$this->config) {
+            $class_config = static::CLASS_CONFIG;
+            // Pass arg $config to new Config instance,
+            // unless $config already is a Config.
+            $this->config = $config && is_a($config, $class_config) ? $config :
+                new $class_config($config);
+        }
+        return $this->config;
+    }
+
+    /**
+     * Get unicode helper.
+     *
+     * @return \SimpleComplex\Inspect\Helper\UnicodeInterface
+     */
+    public function getUnicode(): UnicodeInterface {
+        return $this->unicode;
     }
 
     /**

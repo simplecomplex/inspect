@@ -12,11 +12,9 @@ namespace SimpleComplex\Inspect\Helper;
 /**
  * Unicode string methods.
  *
- * Trimmed clone of SimpleComplex\Utils\Unicode.
- *
  * @package SimpleComplex\Inspect
  */
-class Unicode
+class Unicode implements UnicodeInterface
 {
     /**
      * @var bool
@@ -113,7 +111,7 @@ class Unicode
      * @return bool|int
      *      False: if needle not found, or if either arg evaluates to empty string.
      */
-    public function strpos($haystack, $needle)
+    public function strpos($haystack, $needle): bool|int
     {
         $hstck = '' . $haystack;
         $ndl = '' . $needle;
@@ -162,7 +160,7 @@ class Unicode
             return '';
         }
         if ($this->extMbString) {
-            return !$length ? mb_substr($v, $start) : mb_substr($v, $start, $length);
+            return mb_substr($v, $start, $length);
         }
 
         // The actual algo (further down) only works when start is zero.
@@ -174,10 +172,6 @@ class Unicode
                     $this->substr($v, 0, $start)
                 )
             );
-        }
-        // And the algo needs a length.
-        if (!$length) {
-            $length = $this->strlen($v);
         }
 
         $n = 0;
@@ -225,7 +219,7 @@ class Unicode
      * @throws \InvalidArgumentException
      *      Bad arg length.
      */
-    public function truncateToByteLength($var, int $length)
+    public function truncateToByteLength($var, int $length): string
     {
         if ($length < 0) {
             throw new \InvalidArgumentException('Arg length is not non-negative integer.');
