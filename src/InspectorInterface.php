@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2020 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2020-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -24,21 +24,21 @@ interface InspectorInterface
      *
      * @param InspectInterface $proxy
      * @param mixed $subject
-     * @param array|int|string $options
+     * @param array|int $options
      */
-    public function __construct(InspectInterface $proxy, $subject, $options = []);
+    public function __construct(InspectInterface $proxy, mixed $subject, array|int $options = []);
 
     /**
      * @param bool $noPreface
      *
      * @return string
      */
-    public function toString($noPreface = false) : string;
+    public function toString(bool $noPreface = false): string;
 
     /**
      * @return string
      */
-    public function __toString() : string;
+    public function __toString(): string;
 
     /*
      * List of inspection properties.
@@ -47,7 +47,7 @@ interface InspectorInterface
      *
      * @return array
      *
-    public function toArray() : array;
+    public function toArray(): array;
      */
 
     /**
@@ -69,5 +69,5 @@ interface InspectorInterface
      *
      * @return void
      */
-    public function log($level = 'debug', $message = '', array $context = []);
+    public function log(string|int $level = 'debug', mixed $message = '', array $context = []): void;
 }

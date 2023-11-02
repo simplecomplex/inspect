@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2020 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2020-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -17,31 +17,31 @@ interface InspectInterface
      * Inspect variable or trace exception.
      *
      * @param mixed $subject
-     * @param array $options
+     * @param array|int $options
      *
      * @return InspectorInterface
      */
-    public function inspect($subject, $options = []): InspectorInterface;
+    public function inspect(mixed $subject, array|int $options = []): InspectorInterface;
 
     /**
      * Inspect variable.
      *
      * @param mixed $subject
-     * @param array $options
+     * @param array|int $options
      *
      * @return InspectorInterface
      */
-    public function variable($subject, $options = []): InspectorInterface;
+    public function variable(mixed $subject, array|int $options = []): InspectorInterface;
 
     /**
      * Trace exception or do back-trace.
      *
      * @param \Throwable|null $throwableOrNull
-     * @param array $options
+     * @param array|int $options
      *
      * @return InspectorInterface
      */
-    public function trace(?\Throwable $throwableOrNull, $options = []): InspectorInterface;
+    public function trace(?\Throwable $throwableOrNull, array|int $options = []): InspectorInterface;
 
     /**
      * Get configuration object.
@@ -59,16 +59,16 @@ interface InspectInterface
      */
     public function getUnicode(): UnicodeInterface;
 
-  /**
-   * Root of the application or document root.
-   *
-   * Do override to accommodate to framework;
-   * like Symfony kernel project dir or Drupal root.
-   *
-   * @return string
-   *      Empty: root dir cannot be established.
-   */
-  public function rootDir(): string;
+    /**
+     * Root of the application or document root.
+     *
+     * Do override to accommodate to framework;
+     * like Symfony kernel project dir or Drupal root.
+     *
+     * @return string
+     *      Empty: root dir cannot be established.
+     */
+    public function rootDir(): string;
 
     /**
      * @return int

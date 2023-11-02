@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2017-2022 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -22,7 +22,7 @@ interface UnicodeInterface
      * @return bool
      *      True on empty.
      */
-    public function validate($subject): bool;
+    public function validate(mixed $subject): bool;
 
     /**
      * Multibyte-safe string length.
@@ -32,7 +32,7 @@ interface UnicodeInterface
      *
      * @return int
      */
-    public function strlen($var): int;
+    public function strlen(mixed $var): int;
 
     /**
      * @param string $haystack
@@ -43,7 +43,7 @@ interface UnicodeInterface
      * @return bool|int
      *      False: if needle not found, or if either arg evaluates to empty string.
      */
-    public function strpos($haystack, $needle): bool|int;
+    public function strpos(mixed $haystack, mixed $needle): bool|int;
 
     /**
      * Multibyte-safe sub string.
@@ -58,7 +58,7 @@ interface UnicodeInterface
      *
      * @return string
      */
-    public function substr($var, int $start, ?int $length = null): string;
+    public function substr(mixed $var, int $start, ?int $length = null): string;
 
     /**
      * Truncate multibyte safe until ~ASCII length is equal to/less than arg
@@ -73,5 +73,5 @@ interface UnicodeInterface
      *
      * @return string
      */
-    public function truncateToByteLength($var, int $length): string;
+    public function truncateToByteLength(mixed $var, int $length): string;
 }

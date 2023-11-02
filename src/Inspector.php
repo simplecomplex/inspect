@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2021 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -322,7 +322,7 @@ class Inspector implements InspectorInterface
      *   Not array|int: ignored.
      * @param bool $trace
      */
-    public function __construct(InspectInterface $proxy, $subject, $options = [], bool $trace = false)
+    public function __construct(InspectInterface $proxy, mixed $subject, array|int $options = [], bool $trace = false)
     {
         $this->proxy = $proxy;
 
@@ -457,7 +457,7 @@ class Inspector implements InspectorInterface
                 $output = $this->nspct($subject);
             }
             else {
-                $output = $this->trc($subject && $subject instanceof \Throwable ? $subject : null);
+                $output = $this->trc($subject instanceof \Throwable ? $subject : null);
             }
 
             // Don't enclose in tag in cli mode.
@@ -509,7 +509,7 @@ class Inspector implements InspectorInterface
      *
      * @return string
      */
-    public function toString($noPreface = false) : string
+    public function toString(bool $noPreface = false): string
     {
         return ($noPreface || !$this->preface ? '' : ($this->preface . static::FORMAT['newline']))
             . $this->output;
@@ -518,7 +518,7 @@ class Inspector implements InspectorInterface
     /**
      * @return string
      */
-    public function __toString() : string
+    public function __toString(): string
     {
         return $this->toString();
     }
@@ -540,7 +540,7 @@ class Inspector implements InspectorInterface
      *     int $code
      * }
      */
-    public function toArray(bool $options = false) : array
+    public function toArray(bool $options = false): array
     {
         $a = [
             'preface' => $this->preface,
@@ -568,7 +568,7 @@ class Inspector implements InspectorInterface
      *
      * {@inheritDoc}
      */
-    public function log($level = 'debug', $message = '', array $context = [])
+    public function log($level = 'debug', $message = '', array $context = []): void
     {
         // Leave $level validation to PSR logger (or equivalent).
 
@@ -612,7 +612,7 @@ class Inspector implements InspectorInterface
      *
      * @return array
      */
-    public function get() : array
+    public function get(): array
     {
         @trigger_error(
             __CLASS__ . '::' . __METHOD__ . ' method is deprecated and will be removed soon, use toArray() instead.',
@@ -629,7 +629,7 @@ class Inspector implements InspectorInterface
      *
      * @return bool
      */
-    public function exceedsLength() : bool
+    public function exceedsLength(): bool
     {
         if ($this->length > $this->options['output_max']) {
             $this->abort = true;
@@ -670,7 +670,7 @@ class Inspector implements InspectorInterface
      *
      * @return bool
      */
-    public function exceedsTime() : bool
+    public function exceedsTime(): bool
     {
         $started = static::$requestTime;
         if ($started < 1) {
@@ -727,7 +727,7 @@ class Inspector implements InspectorInterface
      * @throws \LogicException
      *      Failing recursion depth control.
      */
-    protected function nspct($subject, $depth = 0) : string
+    protected function nspct(mixed $subject, int $depth = 0): string
     {
         if ($this->abort) {
             return '';
@@ -1006,7 +1006,7 @@ class Inspector implements InspectorInterface
      * @throws \TypeError
      *      Arg throwableOrNull not \Throwable or null.
      */
-    protected function trc(?\Throwable $throwableOrNull) : string
+    protected function trc(?\Throwable $throwableOrNull): string
     {
         // Received Throwable, by arg.
         if ($throwableOrNull) {
@@ -1153,7 +1153,7 @@ class Inspector implements InspectorInterface
      * @return string
      *      Empty if no success.
      */
-    protected function fileLine() : string
+    protected function fileLine(): string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         // Find first frame whose file isn't named like our library files.
@@ -1185,7 +1185,7 @@ class Inspector implements InspectorInterface
     /**
      * @return string
      */
-    protected function preface() : string
+    protected function preface(): string
     {
         if ($this->kind == 'variable') {
             $preface = '[Inspect variable|#' . static::$nInspections . '|depth:' . $this->options['depth']
@@ -1224,18 +1224,15 @@ class Inspector implements InspectorInterface
      *
      * @return string
      */
-    public static function getType($subject)
+    public static function getType(mixed $subject): string
     {
         if (!is_object($subject)) {
             $type = gettype($subject);
-            switch ($type) {
-                case 'double':
-                    return 'float';
-                case 'NULL':
-                    return 'null';
-                default:
-                    return $type;
-            }
+            return match ($type) {
+                'double' => 'float',
+                'NULL' => 'null',
+                default => $type,
+            };
         }
         return get_class($subject);
     }
@@ -1252,7 +1249,7 @@ class Inspector implements InspectorInterface
      * @throws \InvalidArgumentException
      *      If arg var isn't integer/float nor number-like when stringified.
      */
-    public static function numberToString($var) : string
+    public static function numberToString(mixed $var): string
     {
         static $precision;
         if (!$precision) {

@@ -33,7 +33,7 @@ $inspect = \SimpleComplex\Inspect\Inspect::getInstance();
 - (bool) `rootdir_replace`: replace root dir in strings; ROOT_DIR_REPLACE
 - (int) `wrappers`: number of wrapping functions/methods, to be hidden; zero
 
-#### inspect($subject, $options = []) : Inspector ####
+#### inspect($subject, $options = []): Inspector ####
 
 Do variable inspection, unless arg $subject is a throwable; then trace.
 ```PHP
@@ -45,14 +45,14 @@ $inspect->inspect($var);
 $inspect->inspect($xcptn);
 ```
 
-#### variable($subject, $options = []) : Inspector ####
+#### variable($subject, $options = []): Inspector ####
 
 Force variable inspection, even if subject is a throwable.
 ```PHP
 $inspect->variable($var);
 ```
 
-#### trace($throwableOrNull, $options = []) : Inspector ####
+#### trace($throwableOrNull, $options = []): Inspector ####
 
 Trace exception or do back-trace.
 ```PHP
@@ -71,7 +71,7 @@ $logger->debug('Darned ding' . "\n" . $inspect->variable($var));
 
 Or use the Inspector's own chainable PSR logger-like method:
 
-**log($level = 'debug', $message = '', array $context = []) : void**
+**log($level = 'debug', $message = '', array $context = []): void**
 
 ```PHP
 $inspect->variable($var)->log('debug', 'darned ding');
@@ -138,4 +138,4 @@ The Drupal module (D7 as well as D8) extends Inspect to accomodate to the contex
 
 ### Requirements ###
 
-- PHP >=7.2
+- PHP >=8.1

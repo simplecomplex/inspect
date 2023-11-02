@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2020 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -58,7 +58,7 @@ class Inspect implements InspectInterface
      * @return Inspect
      *      static, really, but IDE might not resolve that.
      */
-    public static function getInstance()
+    public static function getInstance(): static
     {
         if (!static::$instance) {
             static::$instance = new static();
@@ -136,18 +136,16 @@ class Inspect implements InspectInterface
      * Drupal override example.
      *
      * @param ConfigFactoryInterface $config_factory
+     * @param LoggerChannelFactoryInterface $logger_factory
      *
-    public function __construct(ConfigFactoryInterface $config_factory)
+    public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory)
     {
         parent::__construct();
 
-        $this->configure(
+        $this->getConfig(
             $config_factory->get('inspect.settings')
         );
-        // OR, do what configure() essentially does.
-        $this->config = new \Drupal\inspect\Helper\Config(
-            $config_factory->get('inspect.settings')
-        );
+        $this->loggerFactory = $logger_factory;
     }
     */
 
@@ -167,7 +165,7 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function inspect($subject, $options = []) : InspectorInterface
+    public function inspect(mixed $subject, array|int $options = []): InspectorInterface
     {
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -191,7 +189,7 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function variable($subject, $options = []) : InspectorInterface
+    public function variable(mixed $subject, array|int $options = []): InspectorInterface
     {
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -199,7 +197,7 @@ class Inspect implements InspectInterface
             $this,
             $subject,
             $options,
-            $subject && $subject instanceof \Throwable
+            $subject instanceof \Throwable
         );
     }
 
@@ -217,7 +215,7 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
+    public function trace(?\Throwable $throwableOrNull, array|int $options = []): InspectorInterface
     {
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
@@ -266,7 +264,7 @@ class Inspect implements InspectInterface
      * @return string
      *      Empty: root dir cannot be established.
      */
-    public function rootDir() : string
+    public function rootDir(): string
     {
         if (!$this->rootDirLength) {
             $class_utils = '\\SimpleComplex\\Utils\\Utils';
@@ -293,7 +291,7 @@ class Inspect implements InspectInterface
      * @return int
      *      Negative: root dir cannot be established.
      */
-    public function rootDirLength() : int
+    public function rootDirLength(): int
     {
         if (!$this->rootDirLength) {
             $this->rootDir();
@@ -313,7 +311,7 @@ class Inspect implements InspectInterface
      *
      * @return string
      */
-    public function rootDirReplace(string $subject, bool $leading = false) : string {
+    public function rootDirReplace(string $subject, bool $leading = false): string {
         if (!$this->rootDirLength) {
             $this->rootDir();
         }
