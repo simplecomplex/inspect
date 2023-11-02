@@ -101,7 +101,7 @@ class Inspect implements InspectInterface
     /**
      * @var \SimpleComplex\Inspect\Helper\Config|null
      */
-    protected ?Config $config;
+    protected ?Config $config = null;
 
     /**
      * @var \SimpleComplex\Inspect\Helper\UnicodeInterface
