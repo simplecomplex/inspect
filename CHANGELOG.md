@@ -8,7 +8,8 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 ### Fixed
 - Type-hinting.
--  Code style.
+- Code style.
+- Fix that output max margin was added, not subtracted.
 - Require PHP ^8.1.
 
 ## [3.1.1] - 2021-04-19

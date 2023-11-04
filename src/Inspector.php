@@ -478,7 +478,7 @@ class Inspector implements InspectorInterface
             if ($len_output + $len_preface + static::OUTPUT_MARGIN > $opts['output_max']) {
                 $output = $this->proxy->getUnicode()->truncateToByteLength(
                     $output,
-                    $opts['output_max'] - $len_preface + static::OUTPUT_MARGIN
+                    $opts['output_max'] - ($len_preface + static::OUTPUT_MARGIN)
                 );
                 $this->preface .= static::FORMAT['newline'] . 'Truncated.';
             }
