@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2020 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace SimpleComplex\Inspect;
 
 use SimpleComplex\Inspect\Helper\Config;
+use SimpleComplex\Inspect\Helper\UnicodeInterface;
 use SimpleComplex\Inspect\Helper\Unicode;
 
 /**
@@ -45,9 +46,9 @@ class Inspect implements InspectInterface
      * Reference to first object instantiated via the getInstance() method,
      * no matter which parent/child class the method was/is called on.
      *
-     * @var Inspect
+     * @var Inspect|null
      */
-    protected static $instance;
+    protected static ?Inspect $instance;
 
     /**
      * First object instantiated via this method, disregarding class called on.
@@ -57,7 +58,7 @@ class Inspect implements InspectInterface
      * @return Inspect
      *      static, really, but IDE might not resolve that.
      */
-    public static function getInstance()
+    public static function getInstance(): static
     {
         if (!static::$instance) {
             static::$instance = new static();
@@ -98,19 +99,19 @@ class Inspect implements InspectInterface
     const ROOT_DIR_SUBSTITUTE = '[root dir]';
 
     /**
-     * @var \SimpleComplex\Inspect\Helper\Config
+     * @var \SimpleComplex\Inspect\Helper\Config|null
      */
-    public $config;
+    protected ?Config $config = null;
 
     /**
-     * @var \SimpleComplex\Inspect\Helper\Unicode
+     * @var \SimpleComplex\Inspect\Helper\UnicodeInterface
      */
-    public $unicode;
+    protected UnicodeInterface $unicode;
 
     /**
-     * @var string
+     * @var string|null
      */
-    protected $rootDir;
+    protected ?string $rootDir;
 
     /**
      * Values:
@@ -119,7 +120,7 @@ class Inspect implements InspectInterface
      *
      * @var int
      */
-    protected $rootDirLength = 0;
+    protected int $rootDirLength = 0;
 
     /**
      * No parameters, to allow overriding constructor
@@ -135,43 +136,18 @@ class Inspect implements InspectInterface
      * Drupal override example.
      *
      * @param ConfigFactoryInterface $config_factory
+     * @param LoggerChannelFactoryInterface $logger_factory
      *
-    public function __construct(ConfigFactoryInterface $config_factory)
+    public function __construct(ConfigFactoryInterface $config_factory, LoggerChannelFactoryInterface $logger_factory)
     {
         parent::__construct();
 
-        $this->configure(
+        $this->getConfig(
             $config_factory->get('inspect.settings')
         );
-        // OR, do what configure() essentially does.
-        $this->config = new \Drupal\inspect\Helper\Config(
-            $config_factory->get('inspect.settings')
-        );
+        $this->loggerFactory = $logger_factory;
     }
     */
-
-    /**
-     * This method must be called before use of the instance.
-     *
-     * Otherwise similar work must be done in overriding constructor
-     * or other method.
-     *
-     * @param object|null $config
-     *      Null if no custom value(s), overriding Inspecter defaults.
-     *
-     * @return Inspect
-     */
-    public function configure(?object $config = null) : self
-    {
-        if (!$this->config) {
-            $class_config = static::CLASS_CONFIG;
-            // Pass arg $config to new Config instance,
-            // unless $config already is a Config.
-            $this->config = $config && is_a($config, $class_config) ? $config :
-                new $class_config($config);
-        }
-        return $this;
-    }
 
     /**
      * Do variable inspection, unless arg $subject is a throwable; then trace.
@@ -189,12 +165,8 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function inspect($subject, $options = []) : InspectorInterface
+    public function inspect(mixed $subject, array|int $options = []): InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -217,19 +189,15 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function variable($subject, $options = []) : InspectorInterface
+    public function variable(mixed $subject, array|int $options = []): InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
             $this,
             $subject,
             $options,
-            $subject && $subject instanceof \Throwable
+            $subject instanceof \Throwable
         );
     }
 
@@ -247,12 +215,8 @@ class Inspect implements InspectInterface
      * @return Inspector
      *      Stringable. Chainable.
      */
-    public function trace(/*?\Throwable*/ $throwableOrNull, $options = []) : InspectorInterface
+    public function trace(?\Throwable $throwableOrNull, array|int $options = []): InspectorInterface
     {
-        if (!$this->config) {
-            // Use defaults.
-            $this->configure();
-        }
         $class_inspector = static::CLASS_INSPECTOR;
         /** @var Inspector */
         return new $class_inspector(
@@ -264,6 +228,34 @@ class Inspect implements InspectInterface
     }
 
     /**
+     * Get configuration object.
+     *
+     * @param object|null $config
+     *      Ignored if internal configuration object already set.
+     *
+     * @return object
+     */
+    public function getConfig(?object $config = null): object {
+        if (!$this->config) {
+            $class_config = static::CLASS_CONFIG;
+            // Pass arg $config to new Config instance,
+            // unless $config already is a Config.
+            $this->config = $config && is_a($config, $class_config) ? $config :
+                new $class_config($config);
+        }
+        return $this->config;
+    }
+
+    /**
+     * Get unicode helper.
+     *
+     * @return \SimpleComplex\Inspect\Helper\UnicodeInterface
+     */
+    public function getUnicode(): UnicodeInterface {
+        return $this->unicode;
+    }
+
+    /**
      * Root of the application or document root.
      *
      * Do override to accommodate to framework;
@@ -272,7 +264,7 @@ class Inspect implements InspectInterface
      * @return string
      *      Empty: root dir cannot be established.
      */
-    public function rootDir() : string
+    public function rootDir(): string
     {
         if (!$this->rootDirLength) {
             $class_utils = '\\SimpleComplex\\Utils\\Utils';
@@ -299,7 +291,7 @@ class Inspect implements InspectInterface
      * @return int
      *      Negative: root dir cannot be established.
      */
-    public function rootDirLength() : int
+    public function rootDirLength(): int
     {
         if (!$this->rootDirLength) {
             $this->rootDir();
@@ -319,7 +311,7 @@ class Inspect implements InspectInterface
      *
      * @return string
      */
-    public function rootDirReplace(string $subject, bool $leading = false) : string {
+    public function rootDirReplace(string $subject, bool $leading = false): string {
         if (!$this->rootDirLength) {
             $this->rootDir();
         }

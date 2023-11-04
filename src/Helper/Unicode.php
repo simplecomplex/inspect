@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2017-2020 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2017-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -12,16 +12,14 @@ namespace SimpleComplex\Inspect\Helper;
 /**
  * Unicode string methods.
  *
- * Trimmed clone of SimpleComplex\Utils\Unicode.
- *
  * @package SimpleComplex\Inspect
  */
-class Unicode
+class Unicode implements UnicodeInterface
 {
     /**
      * @var bool
      */
-    protected $extMbString;
+    protected bool $extMbString;
 
     /**
      */
@@ -43,7 +41,7 @@ class Unicode
      * @return bool
      *      True on empty.
      */
-    public function validate($subject) : bool
+    public function validate(mixed $subject): bool
     {
         if ($subject === null) {
             return false;
@@ -52,13 +50,12 @@ class Unicode
             return false;
         }
         $v = '' . $subject;
-        return $v === '' ? true :
-            // The PHP regex u modifier forces the whole subject to be evaluated
-            // as UTF-8. And if any byte sequence isn't valid UTF-8 preg_match()
-            // will return zero for no-match.
-            // The s modifier makes dot match newline; without it a string consisting
-            // of a newline solely would result in a false negative.
-            !!preg_match('/./us', $v);
+        // The PHP regex u modifier forces the whole subject to be evaluated
+        // as UTF-8. And if any byte sequence isn't valid UTF-8 preg_match()
+        // will return zero for no-match.
+        // The s modifier makes dot match newline; without it a string consisting
+        // of a newline solely would result in a false negative.
+        return $v === '' || !!preg_match('/./us', $v);
     }
 
     /**
@@ -69,7 +66,7 @@ class Unicode
      *
      * @return int
      */
-    public function strlen($var) : int
+    public function strlen(mixed $var): int
     {
         $v = '' . $var;
         if ($v === '') {
@@ -105,15 +102,15 @@ class Unicode
     }
 
     /**
-     * @param string $haystack
+     * @param mixed $haystack
      *      Gets stringified.
-     * @param string $needle
+     * @param mixed $needle
      *      Gets stringified.
      *
      * @return bool|int
      *      False: if needle not found, or if either arg evaluates to empty string.
      */
-    public function strpos($haystack, $needle)
+    public function strpos(mixed $haystack, mixed $needle): bool|int
     {
         $hstck = '' . $haystack;
         $ndl = '' . $needle;
@@ -129,7 +126,7 @@ class Unicode
             return $pos;
         }
         return count(
-            preg_split('//u', substr($hstck, 0, $pos), null, PREG_SPLIT_NO_EMPTY)
+            preg_split('//u', substr($hstck, 0, $pos), -1, PREG_SPLIT_NO_EMPTY)
         );
     }
 
@@ -149,7 +146,7 @@ class Unicode
      * @throws \InvalidArgumentException
      *      Bad arg start or length.
      */
-    public function substr($var, int $start, ?int $length = null) : string
+    public function substr(mixed $var, int $start, ?int $length = null): string
     {
         if ($start < 0) {
             throw new \InvalidArgumentException('Arg start is not non-negative integer.');
@@ -162,7 +159,7 @@ class Unicode
             return '';
         }
         if ($this->extMbString) {
-            return !$length ? mb_substr($v, $start) : mb_substr($v, $start, $length);
+            return mb_substr($v, $start, $length);
         }
 
         // The actual algo (further down) only works when start is zero.
@@ -176,9 +173,7 @@ class Unicode
             );
         }
         // And the algo needs a length.
-        if (!$length) {
-            $length = $this->strlen($v);
-        }
+        $length = $this->strlen($v);
 
         $n = 0;
         $le = strlen($v);
@@ -225,7 +220,7 @@ class Unicode
      * @throws \InvalidArgumentException
      *      Bad arg length.
      */
-    public function truncateToByteLength($var, int $length)
+    public function truncateToByteLength(mixed $var, int $length): string
     {
         if ($length < 0) {
             throw new \InvalidArgumentException('Arg length is not non-negative integer.');
@@ -246,7 +241,7 @@ class Unicode
         // This algo will truncate one UTF-8 char too many,
         // if the string ends with a UTF-8 char, because it doesn't check
         // if a sequence of continuation bytes is complete.
-        // Thus the check preceding this algo (actual byte length matches
+        // Thus, the check preceding this algo (actual byte length matches
         // required max length) is vital.
         do {
             --$le;

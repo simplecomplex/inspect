@@ -4,14 +4,29 @@ All notable changes to **simplecomplex/inspect** will be documented in this file
 using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
-## [3.1.1] - 2021-04-19
+## [Unreleased]
+### Added
 
+### Changed
+
+### Fixed
+
+## [4.0.0] - 2023-11-04
+### Changed
+- Require PHP ^8.1.
+
+### Fixed
+- Type-hinting.
+- Code style.
+- Fix that output max margin was added, not subtracted.
+- Remove obsolete release notes.
+
+## [3.1.1] - 2021-04-19
 ### Fixed
 - Inspector use config `escape_html` property.
 
 
 ## [3.1] - 2020-08-07
-
 ### Added
 * Separate depth config var for tracing; trace_depth.
 

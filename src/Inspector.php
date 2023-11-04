@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2021 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -246,7 +246,7 @@ class Inspector implements InspectorInterface
      *
      * @var array
      */
-    protected $options = [
+    protected array $options = [
         'depth' => 0,
         'limit' => 0,
         'code' => 0,
@@ -265,16 +265,16 @@ class Inspector implements InspectorInterface
      * @var string
      *  Values: variable|trace.
      */
-    protected $kind = 'variable';
+    protected string $kind = 'variable';
 
 
     // Control vars.------------------------------------------------------------
 
-    protected $abort = false;
+    protected bool $abort = false;
 
-    protected $warnings = [];
+    protected array $warnings = [];
 
-    protected $nspctCall = 0;
+    protected int $nspctCall = 0;
 
     /**
      * Unlike Inspect ditto this is zero when root dir shan't be replaced,
@@ -282,28 +282,28 @@ class Inspector implements InspectorInterface
      *
      * @var int
      */
-    protected $rootDirLength = 0;
+    protected int $rootDirLength = 0;
 
 
     // Output properties.-------------------------------------------------------
 
-    protected $preface = '';
+    protected string $preface = '';
 
-    protected $output = '';
+    protected string $output = '';
 
-    protected $length = 0;
+    protected int $length = 0;
 
-    protected $fileLine = '';
+    protected string $fileLine = '';
 
-    protected $code = 0;
+    protected int $code = 0;
 
 
     // Constructor.-------------------------------------------------------------
 
     /**
-     * @var Inspect
+     * @var InspectInterface
      */
-    protected $proxy;
+    protected InspectInterface $proxy;
 
     /**
      * Produces variable inspection or backtrace.
@@ -322,7 +322,7 @@ class Inspector implements InspectorInterface
      *   Not array|int: ignored.
      * @param bool $trace
      */
-    public function __construct(InspectInterface $proxy, $subject, $options = [], bool $trace = false)
+    public function __construct(InspectInterface $proxy, mixed $subject, array|int $options = [], bool $trace = false)
     {
         $this->proxy = $proxy;
 
@@ -354,8 +354,8 @@ class Inspector implements InspectorInterface
             $opts['depth'] = $opt_depth || $trace ? $opt_depth : 1;
         }
         else {
-            $opts['depth'] = !$trace ? ($this->proxy->config->depth ?? static::DEPTH_DEFAULT) :
-                ($this->proxy->config->trace_depth ?? static::TRACE_DEPTH_DEFAULT);
+            $opts['depth'] = !$trace ? ($this->proxy->getConfig()->depth ?? static::DEPTH_DEFAULT) :
+                ($this->proxy->getConfig()->trace_depth ?? static::TRACE_DEPTH_DEFAULT);
         }
 
         // limit.
@@ -366,7 +366,7 @@ class Inspector implements InspectorInterface
                 $opts['limit'] = $v;
             }
             else {
-                $opts['limit'] = $this->proxy->config->trace_limit ?? static::TRACE_LIMIT_DEFAULT;
+                $opts['limit'] = $this->proxy->getConfig()->trace_limit ?? static::TRACE_LIMIT_DEFAULT;
             }
         }
 
@@ -382,7 +382,7 @@ class Inspector implements InspectorInterface
             $opts['truncate'] = $v;
         }
         else {
-            $opts['truncate'] = $this->proxy->config->truncate ?? static::TRUNCATE_DEFAULT;
+            $opts['truncate'] = $this->proxy->getConfig()->truncate ?? static::TRUNCATE_DEFAULT;
         }
 
         // skip_keys; default to empty array.
@@ -395,7 +395,7 @@ class Inspector implements InspectorInterface
 
         // escape_html.
         $opts['escape_html'] = isset($options['escape_html']) ? ((bool) $options['escape_html']) :
-            ($this->proxy->config->escape_html ?? static::ESCAPE_HTML);
+            ($this->proxy->getConfig()->escape_html ?? static::ESCAPE_HTML);
 
         // needles/replacers.
         if ($arg_opts && !empty($options['replacers']) && is_array($options['replacers'])) {
@@ -420,7 +420,7 @@ class Inspector implements InspectorInterface
             $opts['output_max'] = $v;
         }
         else {
-            $opts['output_max'] = $this->proxy->config->output_max ?? static::OUTPUT_DEFAULT;
+            $opts['output_max'] = $this->proxy->getConfig()->output_max ?? static::OUTPUT_DEFAULT;
         }
 
         // exectime_percent; minimum 1.
@@ -430,13 +430,13 @@ class Inspector implements InspectorInterface
             $opts['exectime_percent'] = $v;
         }
         else {
-            $opts['exectime_percent'] = $this->proxy->config->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
+            $opts['exectime_percent'] = $this->proxy->getConfig()->exectime_percent ?? static::EXEC_TIMEOUT_DEFAULT;
         }
 
         // rootdir_replace.
         $opts['rootdir_replace'] = $arg_opts && isset($options['rootdir_replace']) ?
             ((bool) $options['rootdir_replace']) :
-            ($this->proxy->config->rootdir_replace ?? static::ROOT_DIR_REPLACE);
+            ($this->proxy->getConfig()->rootdir_replace ?? static::ROOT_DIR_REPLACE);
 
         // wrappers; default to zero.
         if ($arg_opts && isset($options['wrappers']) && is_int($v = $options['wrappers']) && $v > 0) {
@@ -457,7 +457,7 @@ class Inspector implements InspectorInterface
                 $output = $this->nspct($subject);
             }
             else {
-                $output = $this->trc($subject && $subject instanceof \Throwable ? $subject : null);
+                $output = $this->trc($subject instanceof \Throwable ? $subject : null);
             }
 
             // Don't enclose in tag in cli mode.
@@ -476,9 +476,9 @@ class Inspector implements InspectorInterface
             $len_preface = strlen($this->preface);
             $len_output = strlen($output);
             if ($len_output + $len_preface + static::OUTPUT_MARGIN > $opts['output_max']) {
-                $output = $this->proxy->unicode->truncateToByteLength(
+                $output = $this->proxy->getUnicode()->truncateToByteLength(
                     $output,
-                    $opts['output_max'] - $len_preface + static::OUTPUT_MARGIN
+                    $opts['output_max'] - ($len_preface + static::OUTPUT_MARGIN)
                 );
                 $this->preface .= static::FORMAT['newline'] . 'Truncated.';
             }
@@ -509,7 +509,7 @@ class Inspector implements InspectorInterface
      *
      * @return string
      */
-    public function toString($noPreface = false) : string
+    public function toString(bool $noPreface = false): string
     {
         return ($noPreface || !$this->preface ? '' : ($this->preface . static::FORMAT['newline']))
             . $this->output;
@@ -518,7 +518,7 @@ class Inspector implements InspectorInterface
     /**
      * @return string
      */
-    public function __toString() : string
+    public function __toString(): string
     {
         return $this->toString();
     }
@@ -532,14 +532,15 @@ class Inspector implements InspectorInterface
      *      True: get options bucket too.
      *
      * @return array {
-     *      @var string $preface
-     *      @var string $output
-     *      @var int $length  Byte (ASCII) length.
-     *      @var string $fileLine
-     *      @var int $code
+     *     string $preface
+     *     string $output
+     *     int $length
+     *         Byte (ASCII) length.
+     *     string $fileLine
+     *     int $code
      * }
      */
-    public function toArray(bool $options = false) : array
+    public function toArray(bool $options = false): array
     {
         $a = [
             'preface' => $this->preface,
@@ -567,7 +568,7 @@ class Inspector implements InspectorInterface
      *
      * {@inheritDoc}
      */
-    public function log($level = 'debug', $message = '', array $context = [])
+    public function log(string|int $level = 'debug', $message = '', array $context = []): void
     {
         // Leave $level validation to PSR logger (or equivalent).
 
@@ -603,24 +604,6 @@ class Inspector implements InspectorInterface
     }
 
     /**
-     * @deprecated  Use toArray() instead, this method will removed soon.
-     *
-     * @see Inspector::toArray()
-     *
-     * Triggers PHP error; E_USER_DEPRECATED.
-     *
-     * @return array
-     */
-    public function get() : array
-    {
-        @trigger_error(
-            __CLASS__ . '::' . __METHOD__ . ' method is deprecated and will be removed soon, use toArray() instead.',
-            E_USER_DEPRECATED
-        );
-        return $this->toArray();
-    }
-
-    /**
      * Whether inspection output length exceeds maximum.
      *
      * @see Inspector::OUTPUT_DEFAULT
@@ -628,7 +611,7 @@ class Inspector implements InspectorInterface
      *
      * @return bool
      */
-    public function exceedsLength() : bool
+    public function exceedsLength(): bool
     {
         if ($this->length > $this->options['output_max']) {
             $this->abort = true;
@@ -655,7 +638,7 @@ class Inspector implements InspectorInterface
     /**
      * @var int
      */
-    protected static $requestTime = -1;
+    protected static int $requestTime = -1;
 
     /**
      * Whether inspection duration is about to exceed maximum.
@@ -669,7 +652,7 @@ class Inspector implements InspectorInterface
      *
      * @return bool
      */
-    public function exceedsTime() : bool
+    public function exceedsTime(): bool
     {
         $started = static::$requestTime;
         if ($started < 1) {
@@ -713,7 +696,7 @@ class Inspector implements InspectorInterface
     /**
      * @var int
      */
-    protected static $nInspections = 0;
+    protected static int $nInspections = 0;
 
     /**
      * @recursive
@@ -726,7 +709,7 @@ class Inspector implements InspectorInterface
      * @throws \LogicException
      *      Failing recursion depth control.
      */
-    protected function nspct($subject, $depth = 0) : string
+    protected function nspct(mixed $subject, int $depth = 0): string
     {
         if ($this->abort) {
             return '';
@@ -855,7 +838,7 @@ class Inspector implements InspectorInterface
                                 $output .= $key . ': (string:0:0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                             }
                             else {
-                                $output .= $key . ': (string:' . $this->proxy->unicode->strlen($element) . ':'
+                                $output .= $key . ': (string:' . $this->proxy->getUnicode()->strlen($element) . ':'
                                     . $len_bytes . ':0) ' . static::FORMAT['quote'] . '...' . static::FORMAT['quote'];
                             }
                         }
@@ -906,13 +889,13 @@ class Inspector implements InspectorInterface
                 if (!$len_bytes) {
                     $output .= '0:0) ' . static::FORMAT['quote'] . static::FORMAT['quote'];
                 }
-                elseif (!$this->proxy->unicode->validate($subject)) {
+                elseif (!$this->proxy->getUnicode()->validate($subject)) {
                     // Last delimiter is pipe because logstash may fail
                     // on N:N:N sequence.
                     $output .= '?:' . $len_bytes . '|0) *INVALID_UTF8*';
                 }
                 else {
-                    $len_unicode = $this->proxy->unicode->strlen($subject);
+                    $len_unicode = $this->proxy->getUnicode()->strlen($subject);
                     $output .= $len_unicode . ':' . $len_bytes;
                     $truncate = $this->options['truncate'];
                     if (!$truncate) {
@@ -926,8 +909,8 @@ class Inspector implements InspectorInterface
                             $this->rootDirLength
                             && $len_unicode >= $this->rootDirLength
                             && (
-                                $this->proxy->unicode->strpos($subject, '/') !== false
-                                || (DIRECTORY_SEPARATOR == '\\' && $this->proxy->unicode->strpos($subject, '\\') !== false)
+                                $this->proxy->getUnicode()->strpos($subject, '/') !== false
+                                || (DIRECTORY_SEPARATOR == '\\' && $this->proxy->getUnicode()->strpos($subject, '\\') !== false)
                             )
                         ) {
                             $siteroot_replace = true;
@@ -943,7 +926,7 @@ class Inspector implements InspectorInterface
                                 $siteroot_replace = false;
                                 $subject = $this->proxy->rootDirReplace($subject);
                             }
-                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
+                            $subject = $this->proxy->getUnicode()->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
                         // Remove document root after truncation.
@@ -965,8 +948,8 @@ class Inspector implements InspectorInterface
                             );
                         }
                         // Re-truncate, in case subject's gotten longer.
-                        if ($this->proxy->unicode->strlen($subject) > $truncate) {
-                            $subject = $this->proxy->unicode->substr($subject, 0, $truncate);
+                        if ($this->proxy->getUnicode()->strlen($subject) > $truncate) {
+                            $subject = $this->proxy->getUnicode()->substr($subject, 0, $truncate);
                             $trunced_to = $truncate;
                         }
 
@@ -1005,7 +988,7 @@ class Inspector implements InspectorInterface
      * @throws \TypeError
      *      Arg throwableOrNull not \Throwable or null.
      */
-    protected function trc(?\Throwable $throwableOrNull) : string
+    protected function trc(?\Throwable $throwableOrNull): string
     {
         // Received Throwable, by arg.
         if ($throwableOrNull) {
@@ -1152,7 +1135,7 @@ class Inspector implements InspectorInterface
      * @return string
      *      Empty if no success.
      */
-    protected function fileLine() : string
+    protected function fileLine(): string
     {
         $trace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
         // Find first frame whose file isn't named like our library files.
@@ -1184,7 +1167,7 @@ class Inspector implements InspectorInterface
     /**
      * @return string
      */
-    protected function preface() : string
+    protected function preface(): string
     {
         if ($this->kind == 'variable') {
             $preface = '[Inspect variable|#' . static::$nInspections . '|depth:' . $this->options['depth']
@@ -1223,18 +1206,15 @@ class Inspector implements InspectorInterface
      *
      * @return string
      */
-    public static function getType($subject)
+    public static function getType(mixed $subject): string
     {
         if (!is_object($subject)) {
             $type = gettype($subject);
-            switch ($type) {
-                case 'double':
-                    return 'float';
-                case 'NULL':
-                    return 'null';
-                default:
-                    return $type;
-            }
+            return match ($type) {
+                'double' => 'float',
+                'NULL' => 'null',
+                default => $type,
+            };
         }
         return get_class($subject);
     }
@@ -1251,7 +1231,7 @@ class Inspector implements InspectorInterface
      * @throws \InvalidArgumentException
      *      If arg var isn't integer/float nor number-like when stringified.
      */
-    public static function numberToString($var) : string
+    public static function numberToString(mixed $var): string
     {
         static $precision;
         if (!$precision) {

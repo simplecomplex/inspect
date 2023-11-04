@@ -529,17 +529,6 @@
         // Format all current inspection outputs.
         inspect.formatOutput(true);
 
-        /**
-         * @deprecated
-         */
-        inspect.formatInspectOutput = function(find, context) {
-          inspect.formatOutput(find, context);
-        };
-        /**
-         * @deprecated
-         */
-        inspect.formatTraceOutput = function() {};
-
       })();
     });
   }

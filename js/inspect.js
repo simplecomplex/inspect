@@ -82,7 +82,7 @@
             if (u.getAttributeNode) { // element
               // document has getElementsByTagName, but not getAttributeNode
               // - document.documentElement has both.
-              return u.tagName.toLowerCase === 'img' ? 'image' : 'element';
+              return u.tagName.toLowerCase() === 'img' ? 'image' : 'element';
             }
             if (u.nodeType) {
               switch (u.nodeType) {
@@ -434,7 +434,7 @@
       var u, le, i, es = '' + er, s = !backtrace ? es : 'Backtrace', lmt = limit || trcLmt;
       // gecko, chromium.
       if ((u = er.stack)) {
-        if ((le = (u = (u.replace(/\r/, '').split(/\n/))).length)) {
+        if ((u = (u.replace(/\r/, '').split(/\n/))).length) {
           // chromium first line is error toString().
           i = u[0] === es ? 1 : 0;
           if (backtrace) {

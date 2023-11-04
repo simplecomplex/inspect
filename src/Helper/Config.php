@@ -2,7 +2,7 @@
 /**
  * SimpleComplex PHP Inspect
  * @link      https://github.com/simplecomplex/inspect
- * @copyright Copyright (c) 2011-2017 Jacob Friis Mathiasen
+ * @copyright Copyright (c) 2011-2023 Jacob Friis Mathiasen
  * @license   https://github.com/simplecomplex/inspect/blob/master/LICENSE (MIT License)
  */
 declare(strict_types=1);
@@ -72,14 +72,14 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @var object|null
      */
-    protected $config;
+    protected ?object $config;
 
     /**
      * For count()'ing and foreach'ing.
      *
      * @var string[]
      */
-    protected $explorableIndex;
+    protected array $explorableIndex;
 
     /**
      * @param object|null $config
@@ -169,7 +169,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return bool
      */
-    public function __isset($name) : bool
+    public function __isset(string $name): bool
     {
         return in_array($name, $this->explorableIndex, true) && $this->__get($name) !== null;
     }
@@ -182,7 +182,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return int
      */
-    public function count() : int
+    public function count(): int
     {
         return count($this->explorableIndex);
     }
@@ -195,7 +195,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return void
      */
-    public function rewind() : void
+    public function rewind(): void
     {
         reset($this->explorableIndex);
     }
@@ -205,7 +205,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return string
      */
-    public function key() : string
+    public function key(): string
     {
         return current($this->explorableIndex);
     }
@@ -215,7 +215,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return mixed
      */
-    public function current()
+    public function current(): mixed
     {
         return $this->__get(current($this->explorableIndex));
     }
@@ -225,7 +225,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return void
      */
-    public function next() : void
+    public function next(): void
     {
         next($this->explorableIndex);
     }
@@ -235,7 +235,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return bool
      */
-    public function valid() : bool
+    public function valid(): bool
     {
         // The null check is cardinal; without it foreach runs out of bounds.
         $key = key($this->explorableIndex);
@@ -250,7 +250,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return \stdClass
      */
-    public function toObject() : \stdClass
+    public function toObject(): \stdClass
     {
         $o = new \stdClass();
         foreach ($this->explorableIndex as $property) {
@@ -264,7 +264,7 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
      *
      * @return array
      */
-    public function toArray() : array
+    public function toArray(): array
     {
         $a = [];
         foreach ($this->explorableIndex as $property) {
@@ -276,9 +276,9 @@ class Config implements \Countable, \Iterator /*~ Traversable*/, \JsonSerializab
     /**
      * JSON serializes to object listing all publicly readable properties.
      *
-     * @return string
+     * @return mixed
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): mixed
     {
         return $this->toObject();
     }
