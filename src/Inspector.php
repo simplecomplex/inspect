@@ -568,7 +568,7 @@ class Inspector implements InspectorInterface
      *
      * {@inheritDoc}
      */
-    public function log($level = 'debug', $message = '', array $context = []): void
+    public function log(string|int $level = 'debug', $message = '', array $context = []): void
     {
         // Leave $level validation to PSR logger (or equivalent).
 
@@ -601,24 +601,6 @@ class Inspector implements InspectorInterface
             }
             error_log('' . $level . ': ' . $msg);
         }
-    }
-
-    /**
-     * @deprecated  Use toArray() instead, this method will removed soon.
-     *
-     * @see Inspector::toArray()
-     *
-     * Triggers PHP error; E_USER_DEPRECATED.
-     *
-     * @return array
-     */
-    public function get(): array
-    {
-        @trigger_error(
-            __CLASS__ . '::' . __METHOD__ . ' method is deprecated and will be removed soon, use toArray() instead.',
-            E_USER_DEPRECATED
-        );
-        return $this->toArray();
     }
 
     /**
