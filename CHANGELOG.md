@@ -6,11 +6,14 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 ## [Unreleased]
 
+### Changed
+- Require PHP ^8.1.
+
 ### Fixed
 - Type-hinting.
 - Code style.
 - Fix that output max margin was added, not subtracted.
-- Require PHP ^8.1.
+- Remove obsolete release notes.
 
 ## [3.1.1] - 2021-04-19
 ### Fixed
