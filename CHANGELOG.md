@@ -5,7 +5,13 @@ using the [Keep a CHANGELOG](https://keepachangelog.com/) principles.
 
 
 ## [Unreleased]
+### Added
 
+### Changed
+
+### Fixed
+
+## [4.0.0] - 2023-11-04
 ### Changed
 - Require PHP ^8.1.
 
